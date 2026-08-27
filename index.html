@@ -141,13 +141,17 @@ a:hover{text-decoration:underline}
 .side-user .un{font-size:13px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .side-user .ut{font-size:11px; color:var(--muted)}
 .main{flex:1; padding:26px 30px 60px; max-width:1180px; margin:0 auto; width:100%}
+#bottom-nav{display:none; position:fixed; left:0; right:0; bottom:0; z-index:800; background:var(--panel); border-top:1px solid var(--line); padding-bottom:env(safe-area-inset-bottom, 0px)}
+#bottom-nav .bnav-btn{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:8px 4px; min-height:54px; font-size:11px; font-weight:600; color:var(--muted)}
+#bottom-nav .bnav-btn .ico{width:22px; height:22px}
+#bottom-nav .bnav-btn.active{color:var(--primary); background:var(--primary-soft)}
+#bottom-nav .bnav-btn.active .ico{color:var(--primary)}
 @media (max-width:860px){
   .shell{flex-direction:column}
-  .sidebar{width:100%; height:auto; position:static; flex-direction:row; flex-wrap:nowrap; padding:10px; border-right:none; border-bottom:1px solid var(--line); align-items:center; overflow-x:auto}
-  .side-logo{padding:0 10px 0 0}
-  .nav-btn{padding:8px 10px; font-size:13px; white-space:nowrap; flex-shrink:0}
-  .side-foot,.side-user{display:none}
-  .main{padding:18px 14px 50px}
+  .sidebar{display:none}
+  #bottom-nav{display:flex}
+  .main{padding:18px 14px calc(72px + env(safe-area-inset-bottom, 0px))}
+  #toast-wrap{left:12px; right:12px; bottom:calc(64px + env(safe-area-inset-bottom, 0px)); max-width:none}
 }
 @media (max-width:720px){
   .topbar h1{font-size:19px}
@@ -352,7 +356,7 @@ a:hover{text-decoration:underline}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.2.0<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.2.2<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main">
@@ -453,6 +457,7 @@ a:hover{text-decoration:underline}
           <div class="kv"><span class="kk">单次学习词数</span><span class="vv"><select id="set-study-mode" style="width:150px"><option value="daily">每日目标</option><option value="fixed">自定义数量</option><option value="all">全部剩余</option></select></span></div>
           <div class="kv" id="set-fixed-row"><span class="kk">自定义数量</span><span class="vv"><input type="number" id="set-study-fixed" min="1" max="500" style="width:90px; text-align:center"></span></div>
           <div class="kv"><span class="kk">学习顺序</span><span class="vv"><select id="set-study-order" style="width:150px"><option value="random">随机</option><option value="alpha">按字母顺序</option></select></span></div>
+          <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
           <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
           <div class="kv"><span class="kk">显示音标</span><span class="vv"><label class="switch"><input type="checkbox" id="set-phon"><span class="sl"></span></label></span></div>
           <div class="kv"><span class="kk">默认剔除衍生词</span><span class="vv"><label class="switch"><input type="checkbox" id="set-deriv"><span class="sl"></span></label></span></div>
@@ -482,7 +487,7 @@ a:hover{text-decoration:underline}
       </div>
       <div class="card">
         <div class="card-title"><span class="dot" style="background:var(--accent)"></span>关于与扩展</div>
-        <div class="kv"><span class="kk">版本</span><span class="vv">1.2.0</span></div>
+        <div class="kv"><span class="kk">版本</span><span class="vv">1.2.2</span></div>
         <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
         <div class="kv"><span class="kk">数据源</span><span class="vv">KyleBing / mahavivo 开源词库</span></div>
         <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
@@ -494,6 +499,14 @@ a:hover{text-decoration:underline}
     </section>
   </main>
 </div>
+
+<nav id="bottom-nav">
+  <button class="bnav-btn active" data-page="dashboard" onclick="AppUI.go('dashboard')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>概览</button>
+  <button class="bnav-btn" data-page="english" onclick="AppUI.go('english')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>英语</button>
+  <button class="bnav-btn" data-page="math" onclick="AppUI.go('math')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg></span>数学</button>
+  <button class="bnav-btn" data-page="library" onclick="AppUI.go('library')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg></span>词库</button>
+  <button class="bnav-btn" data-page="settings" onclick="AppUI.go('settings')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>设置</button>
+</nav>
 
 <div id="toast-wrap"></div>
 <div id="modal-root"></div>
@@ -676,7 +689,7 @@ const AppAuth = {
   defaultData(){
     const deployed = typeof location !== 'undefined' && location.protocol === 'https:';
     return {
-      settings: { daily: 20, phon: true, deriv: true, theme: 'auto', useOnline: true, studyMode: 'daily', studyFixed: 30, studyOrder: 'random', uiScale: 100, cloud: { enabled: deployed, lastSync: 0, endpoint: '' } },
+      settings: { daily: 20, phon: true, deriv: true, theme: 'auto', useOnline: true, studyMode: 'daily', studyFixed: 30, studyOrder: 'random', uiScale: 100, autoScale: true, cloud: { enabled: deployed, lastSync: 0, endpoint: '' } },
       filter: { target: 'cet4', bases: ['primary','middle','hs'], deriv: true, presetName: '' },
       presets: [],
       wordState: {},
@@ -1433,7 +1446,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.2.0', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.2.2', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -1514,6 +1527,7 @@ const AppUI = {
     this.page = page;
     document.onkeydown = null;
     $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+    $$('.bnav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
     ['dashboard','english','math','library','settings'].forEach(p => {
       $('#page-'+p).hidden = p !== page;
     });
@@ -1591,13 +1605,22 @@ const AppUI = {
     $('#set-study-mode').value = s.studyMode || 'daily';
     $('#set-study-fixed').value = s.studyFixed || 30;
     $('#set-study-order').value = s.studyOrder || 'random';
-    $('#set-scale').value = s.uiScale || 100;
-    $('#set-scale-val').textContent = (s.uiScale || 100) + '%';
+    $('#set-autoscale').checked = s.autoScale !== false;
     $('#set-scale').oninput = () => {
-      const v = $('#set-scale').value;
-      $('#set-scale-val').textContent = v + '%';
-      applyScale(parseInt(v, 10));
+      const d = AppAuth.data();
+      d.settings.autoScale = false;
+      AppAuth.save(d);
+      $('#set-scale-val').textContent = $('#set-scale').value + '%';
+      applyScale(parseInt($('#set-scale').value, 10));
     };
+    $('#set-autoscale').onchange = () => {
+      const d = AppAuth.data();
+      d.settings.autoScale = $('#set-autoscale').checked;
+      AppAuth.save(d);
+      applyScale();
+      syncScaleUI();
+    };
+    syncScaleUI();
     $('#set-fixed-row').hidden = (s.studyMode || 'daily') !== 'fixed';
     $('#set-study-mode').onchange = () => { $('#set-fixed-row').hidden = $('#set-study-mode').value !== 'fixed'; };
     $('#set-phon').checked = s.phon;
@@ -1729,8 +1752,18 @@ function applyTheme(){
   const dark = s === 'dark' || (s === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
 }
+function autoScaleValue(){
+  const w = window.innerWidth || document.documentElement.clientWidth || 1280;
+  if(w <= 860) return 100; // 手机/平板由响应式布局接管，不额外缩放
+  const raw = Math.round((w / 1280) * 100 / 5) * 5;
+  return clamp(raw, 100, 130);
+}
 function applyScale(v){
-  const cur = (v != null) ? v : (parseInt(AppAuth.data().settings.uiScale, 10) || 100);
+  const s = AppAuth.data().settings;
+  let cur;
+  if(v != null) cur = v;
+  else if(s.autoScale !== false) cur = autoScaleValue();
+  else cur = parseInt(s.uiScale, 10) || 100;
   const scale = clamp(cur, 85, 150) / 100;
   const el = document.documentElement;
   if('zoom' in el.style){
@@ -1739,6 +1772,25 @@ function applyScale(v){
     el.style.fontSize = Math.round(scale * 100) + '%';
   }
 }
+function syncScaleUI(){
+  const el = $('#set-scale'), lab = $('#set-scale-val');
+  if(!el || !lab) return;
+  const s = AppAuth.data().settings;
+  const cur = (s.autoScale !== false) ? autoScaleValue() : (parseInt(s.uiScale, 10) || 100);
+  el.value = cur;
+  lab.textContent = cur + '%';
+}
+let scaleResizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(scaleResizeTimer);
+  scaleResizeTimer = setTimeout(() => {
+    const s = AppAuth.data().settings;
+    if(s.autoScale !== false){
+      applyScale();
+      syncScaleUI();
+    }
+  }, 300);
+});
 if(window.matchMedia){
   const mql = window.matchMedia('(prefers-color-scheme: dark)');
   if(mql.addEventListener) mql.addEventListener('change', applyTheme);
@@ -2331,6 +2383,7 @@ const AppSettings = {
     d.settings.studyMode = $('#set-study-mode').value;
     d.settings.studyFixed = clamp(parseInt($('#set-study-fixed').value) || 30, 1, 500);
     d.settings.studyOrder = $('#set-study-order').value;
+    d.settings.autoScale = $('#set-autoscale').checked;
     d.settings.uiScale = clamp(parseInt($('#set-scale').value) || 100, 85, 150);
     d.settings.phon = $('#set-phon').checked;
     d.settings.deriv = $('#set-deriv').checked;
@@ -2339,6 +2392,7 @@ const AppSettings = {
     AppAuth.save(d);
     applyTheme();
     applyScale();
+    syncScaleUI();
     toast('偏好已保存');
   },
   exportData(){ AppData.export(); },
