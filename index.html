@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="个人学习系统：英语四级六级词汇精筛与背诵">
-<title>个人学习系统 · 英语词汇精筛</title>
+<meta name="description" content="StudyLens — personal English vocabulary learning system">
+<title>StudyLens · Personal Learning System</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%93%3C/text%3E%3C/svg%3E">
 <style>
 :root{
@@ -114,6 +114,8 @@ a:hover{text-decoration:underline}
 .auth-logo .logo-ico{width:46px; height:46px; border-radius:13px; background:linear-gradient(135deg,var(--primary),var(--accent)); display:flex; align-items:center; justify-content:center; font-size:22px; box-shadow:0 6px 18px rgba(79,109,245,.35)}
 .auth-card h2{font-size:24px; font-weight:800}
 .auth-card .lead{color:var(--muted); font-size:13.5px; margin-bottom:22px}
+.auth-brand{font-size:31px; font-weight:300; letter-spacing:.34em; text-align:center; background:linear-gradient(135deg,var(--primary),var(--accent)); -webkit-background-clip:text; background-clip:text; color:transparent; margin-left:.34em}
+.auth-tagline{text-align:center; color:var(--muted); font-size:12px; letter-spacing:.14em; margin-top:7px; margin-bottom:22px}
 .field{margin-bottom:14px}
 .field label{display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--muted)}
 .field input{width:100%}
@@ -130,6 +132,7 @@ a:hover{text-decoration:underline}
 .side-logo .logo-ico{width:38px; height:38px; border-radius:11px; background:linear-gradient(135deg,var(--primary),var(--accent)); display:flex; align-items:center; justify-content:center; font-size:19px; box-shadow:0 5px 14px rgba(79,109,245,.3)}
 .side-logo b{font-size:16px; font-weight:800}
 .side-logo small{display:block; font-size:11px; color:var(--muted); font-weight:500}
+.side-brand{font-size:18px; font-weight:300; letter-spacing:.34em; padding:10px 12px 16px; background:linear-gradient(135deg,var(--primary),var(--accent)); -webkit-background-clip:text; background-clip:text; color:transparent; border-bottom:1px solid var(--line); margin-bottom:12px}
 .nav-btn{display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:11px; font-size:14px; font-weight:600; color:var(--muted); transition:all .15s; text-align:left; width:100%}
 .nav-btn .ico{font-size:17px; width:22px; text-align:center}
 .nav-btn:hover{background:var(--panel2); color:var(--text)}
@@ -157,10 +160,7 @@ a:hover{text-decoration:underline}
   .topbar h1{font-size:19px}
   .auth-wrap{padding:22px 16px; align-items:flex-start}
   .auth-card{width:100%; max-width:440px; margin:0 auto; padding:30px 24px 26px}
-  .auth-logo{flex-direction:column; gap:12px; text-align:center; justify-content:center}
-  .auth-logo .logo-ico{width:58px; height:58px; border-radius:17px; box-shadow:0 8px 22px rgba(79,109,245,.35)}
-  .auth-card h2{font-size:22px; text-align:center}
-  .auth-logo .muted{text-align:center}
+  .auth-brand{font-size:27px}
   .auth-card .lead{text-align:center; margin:12px auto 24px; max-width:330px}
   .field label{font-size:13.5px; margin-bottom:7px}
   .field input{font-size:16px; padding:13px 15px; border-radius:12px; min-height:48px}
@@ -195,8 +195,7 @@ a:hover{text-decoration:underline}
   .topbar .btn{padding:8px 12px}
   .auth-wrap{padding:16px 14px}
   .auth-card{padding:26px 20px 22px}
-  .auth-logo .logo-ico{width:52px; height:52px}
-  .auth-card h2{font-size:20px}
+  .auth-brand{font-size:24px}
 }
 
 /* checkboxes for books */
@@ -321,7 +320,8 @@ a:hover{text-decoration:underline}
 <!-- ============ 登录页 ============ -->
 <div id="view-auth" class="auth-wrap">
   <div class="auth-card">
-    <div class="auth-logo"><div class="logo-ico"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg></div><div><h2>个人学习系统</h2><div class="muted" style="font-size:12.5px">英语词汇精筛与学习</div></div></div>
+    <div class="auth-brand">STUDYLENS</div>
+    <div class="auth-tagline">Personal English Vocabulary System</div>
     <p class="lead">面向大学生的英语词汇学习工具。以个人已学词汇为基础，自动生成专属生词表，支持四级、六级及高中等词库自由组合筛选。</p>
     <div id="auth-err" class="auth-err"></div>
     <div id="auth-login">
@@ -345,7 +345,7 @@ a:hover{text-decoration:underline}
 <!-- ============ 主应用 ============ -->
 <div id="view-main" class="shell" hidden>
   <aside class="sidebar">
-    <div class="side-logo"><div class="logo-ico"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg></div><div><b>个人学习系统</b><small>英语词汇精筛</small></div></div>
+    <div class="side-brand">STUDYLENS</div>
     <button class="nav-btn active" data-page="dashboard" onclick="AppUI.go('dashboard')"><span class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>学习概览</button>
     <button class="nav-btn" data-page="english" onclick="AppUI.go('english')"><span class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>英语词汇</button>
     <button class="nav-btn" data-page="math" onclick="AppUI.go('math')"><span class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg></span>数学</button>
@@ -356,7 +356,7 @@ a:hover{text-decoration:underline}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.2.2<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.2.3<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main">
@@ -487,7 +487,7 @@ a:hover{text-decoration:underline}
       </div>
       <div class="card">
         <div class="card-title"><span class="dot" style="background:var(--accent)"></span>关于与扩展</div>
-        <div class="kv"><span class="kk">版本</span><span class="vv">1.2.2</span></div>
+        <div class="kv"><span class="kk">版本</span><span class="vv">1.2.3</span></div>
         <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
         <div class="kv"><span class="kk">数据源</span><span class="vv">KyleBing / mahavivo 开源词库</span></div>
         <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
@@ -1446,7 +1446,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.2.2', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.2.3', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -2662,91 +2662,6 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
     return submitJson(data);
   }
 
-  function buildUI() {
-    var wrap = document.createElement("div");
-    wrap.style.cssText = "position:fixed;z-index:99998;right:16px;bottom:16px;font:14px/1.5 system-ui,sans-serif";
-    var btn = document.createElement("button");
-    btn.textContent = "用户中心";
-    btn.style.cssText = "cursor:pointer;border:0;border-radius:999px;padding:10px 16px;background:#1d4ed8;color:#fff;font:inherit;box-shadow:0 4px 14px rgba(0,0,0,.25)";
-    var card = document.createElement("div");
-    card.style.cssText = "display:none;position:absolute;right:0;bottom:56px;width:280px;background:#fff;color:#111;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:14px;box-sizing:border-box";
-    wrap.appendChild(btn);
-    wrap.appendChild(card);
-    document.body.appendChild(wrap);
-
-    function input(id, ph, type) {
-      var i = document.createElement("input");
-      i.id = id;
-      i.type = type || "text";
-      i.placeholder = ph;
-      i.style.cssText = "width:100%;box-sizing:border-box;margin:4px 0;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font:inherit";
-      return i;
-    }
-
-    function button(id, text, primary) {
-      var b = document.createElement("button");
-      b.id = id;
-      b.textContent = text;
-      b.style.cssText = "width:100%;margin:6px 0;padding:9px;border:0;border-radius:8px;cursor:pointer;font:inherit;color:#fff;background:" + (primary ? "#1d4ed8" : "#64748b");
-      return b;
-    }
-
-    function render() {
-      card.innerHTML = "";
-      if (session) {
-        var title = document.createElement("div");
-        title.textContent = "已登录";
-        title.style.cssText = "font-weight:600;margin-bottom:8px";
-        card.appendChild(title);
-        var e1 = document.createElement("div");
-        e1.textContent = "邮箱：" + (session.email || "");
-        var e2 = document.createElement("div");
-        e2.textContent = "用户名：" + ((session.user_metadata && session.user_metadata.username) || "");
-        card.appendChild(e1);
-        card.appendChild(e2);
-        var out = button("sitedb-logout", "退出登录", false);
-        out.addEventListener("click", function () { logout(); render(); });
-        card.appendChild(out);
-      } else {
-        var t2 = document.createElement("div");
-        t2.textContent = "登录 / 注册";
-        t2.style.cssText = "font-weight:600;margin-bottom:8px";
-        card.appendChild(t2);
-        var email = input("sitedb-email", "邮箱", "email");
-        var pass = input("sitedb-password", "密码（至少 6 位）", "password");
-        var name = input("sitedb-username", "用户名（注册时填写）", "text");
-        card.appendChild(email);
-        card.appendChild(pass);
-        card.appendChild(name);
-        var lg = button("sitedb-login", "登录", true);
-        lg.addEventListener("click", function () {
-          login(email.value.trim(), pass.value).then(function () {
-            toast("登录成功", true);
-            render();
-          }).catch(function (e) { toast("登录失败：" + e.message); });
-        });
-        var rg = button("sitedb-register", "注册", false);
-        rg.addEventListener("click", function () {
-          register(email.value.trim(), name.value.trim(), pass.value).then(function (u) {
-            if (u && u.identities && u.identities.length === 0) {
-              toast("请查收邮件完成确认后再登录");
-            } else {
-              toast("注册成功", true);
-            }
-            render();
-          }).catch(function (e) { toast("注册失败：" + e.message); });
-        });
-        card.appendChild(lg);
-        card.appendChild(rg);
-      }
-    }
-
-    btn.addEventListener("click", function () {
-      card.style.display = card.style.display === "none" ? "block" : "none";
-      render();
-    });
-  }
-
   window.SiteDB = {
     register: register,
     login: login,
@@ -2757,11 +2672,6 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
     config: CFG
   };
 
-  if (document.body) {
-    buildUI();
-  } else {
-    window.addEventListener("DOMContentLoaded", buildUI);
-  }
 })();
 
 </script>
