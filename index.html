@@ -376,7 +376,7 @@ a:hover{text-decoration:underline}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.2.4<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.2.5<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main">
@@ -508,7 +508,7 @@ a:hover{text-decoration:underline}
       </div>
       <div class="card">
         <div class="card-title"><span class="dot" style="background:var(--accent)"></span>关于与扩展</div>
-        <div class="kv"><span class="kk">版本</span><span class="vv">1.2.4</span></div>
+        <div class="kv"><span class="kk">版本</span><span class="vv">1.2.5</span></div>
         <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
         <div class="kv"><span class="kk">数据源</span><span class="vv">KyleBing / mahavivo 开源词库</span></div>
         <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
@@ -1475,7 +1475,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.2.4', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.2.5', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -2110,7 +2110,7 @@ const AppStudy = {
     if(s.idx >= s.deck.length){
       this.clearSession();
       box.innerHTML = '<div class="study-done"><div class="big">'+icon('checkCircle', 44)+'</div><h3>本轮学习完成</h3>' +
-      '<p class="muted">本轮共学习 '+s.deck.length+' 个单词：认识 '+s.marks.good+' 词，模糊 '+s.marks.hard+' 词，不认识 '+s.marks.again+' 词。评分已记录到学习记录。</p>' +
+      '<p class="muted">本轮共学习 '+s.deck.length+' 个单词：认识 '+s.marks.good+' 词，不认识 '+s.marks.again+' 词。评分已记录到学习记录。</p>' +
       '<div style="display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap"><button class="btn btn-primary" onclick="AppStudy.start()">再来一轮</button><button class="btn" onclick="AppUI.englishTab(\'record\')">查看学习记录</button><button class="btn" onclick="AppUI.englishTab(\'review\')">开始复习</button></div></div>';
       burstFx(box.querySelector('.study-done'), 10);
       return;
@@ -2126,9 +2126,8 @@ const AppStudy = {
       '<div id="fc-body" style="width:100%">'+(s.revealed ? '<div class="reveal-in">'+cardBody(e)+'</div>' : '<button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示答案</button>')+'</div></div>' +
       '<div class="fc-btns">' +
       '<button class="btn again" onclick="AppStudy.mark(\'again\')">不认识</button>' +
-      '<button class="btn hard" onclick="AppStudy.mark(\'hard\')">模糊</button>' +
       '<button class="btn good" onclick="AppStudy.mark(\'good\')">认识</button></div>' +
-      '<div class="fc-hint"><span class="kbd">空格</span> 显示答案 · <span class="kbd">1</span> 不认识 · <span class="kbd">2</span> 模糊 · <span class="kbd">3</span> 认识 · <span class="kbd">Esc</span> 退出</div>' +
+      '<div class="fc-hint"><span class="kbd">空格</span> 显示答案 · <span class="kbd">1</span> 不认识 · <span class="kbd">2</span> 认识 · <span class="kbd">Esc</span> 退出</div>' +
       '</div>';
     fillPh(e);
     this.bindKeys();
@@ -2162,8 +2161,7 @@ const AppStudy = {
     AppUI._keyHandler = e => {
       if(e.key === ' '){ e.preventDefault(); if(this.state && !this.state.revealed) this.reveal(); }
       else if(e.key === '1') this.mark('again');
-      else if(e.key === '2') this.mark('hard');
-      else if(e.key === '3') this.mark('good');
+      else if(e.key === '2') this.mark('good');
       else if(e.key === 'Escape'){ AppUI._keyHandler = null; AppUI.englishTab('filter'); }
     };
     document.onkeydown = AppUI._keyHandler;
@@ -2264,15 +2262,13 @@ const AppReview = {
       '<div id="fc-body" style="width:100%">'+(s.revealed ? cardBody(e) : '<button class="btn btn-primary btn-lg" onclick="AppReview.reveal()">显示答案</button>')+'</div></div>' +
       '<div class="fc-btns">' +
       '<button class="btn again" onclick="AppReview.mark(\'again\')">忘了</button>' +
-      '<button class="btn hard" onclick="AppReview.mark(\'hard\')">模糊</button>' +
       '<button class="btn good" onclick="AppReview.mark(\'good\')">记得</button></div>' +
-      '<div class="fc-hint"><span class="kbd">空格</span> 显示答案 · <span class="kbd">1/2/3</span> 评分 · <span class="kbd">Esc</span> 结束</div></div>';
+      '<div class="fc-hint"><span class="kbd">空格</span> 显示答案 · <span class="kbd">1</span> 忘了 · <span class="kbd">2</span> 记得 · <span class="kbd">Esc</span> 结束</div></div>';
     fillPh(e);
     document.onkeydown = e2 => {
       if(e2.key === ' '){ e2.preventDefault(); if(this.state && !this.state.revealed) this.reveal(); }
       else if(e2.key === '1') this.mark('again');
-      else if(e2.key === '2') this.mark('hard');
-      else if(e2.key === '3') this.mark('good');
+      else if(e2.key === '2') this.mark('good');
       else if(e2.key === 'Escape') this.stop();
     };
   },
