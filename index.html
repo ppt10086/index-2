@@ -154,7 +154,8 @@ a:hover{text-decoration:underline}
   .sidebar{display:none}
   #bottom-nav{display:flex}
   .main{padding:18px 14px calc(72px + env(safe-area-inset-bottom, 0px))}
-  #toast-wrap{left:12px; right:12px; bottom:calc(64px + env(safe-area-inset-bottom, 0px)); max-width:none}
+  #toast-wrap{top:calc(12px + env(safe-area-inset-top, 0px)); bottom:auto; left:12px; right:12px; max-width:none; align-items:center}
+  .toast{animation:slideDown .25s ease-out}
 }
 @media (max-width:720px){
   .topbar h1{font-size:19px}
@@ -196,6 +197,24 @@ a:hover{text-decoration:underline}
   .auth-wrap{padding:16px 14px}
   .auth-card{padding:26px 20px 22px}
   .auth-brand{font-size:24px}
+}
+@keyframes slideDown{from{opacity:0; transform:translateY(-14px)}to{opacity:1; transform:none}}
+
+/* 学习交互特效（克制使用，开源 Lucide 图形） */
+.fc-btns{position:relative}
+.fc-btns .btn:active{transform:scale(.95)}
+.fx-burst{position:absolute; left:50%; top:50%; width:0; height:0; pointer-events:none; z-index:60}
+.fx-spark{position:absolute; left:0; top:0; transform:translate(-50%,-50%); animation:fx-float .75s ease-out forwards; opacity:0}
+@keyframes fx-float{
+  0%{opacity:0; transform:translate(-50%,-50%) scale(.5)}
+  15%{opacity:1}
+  100%{opacity:0; transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.05) rotate(var(--rot))}
+}
+.reveal-in{animation:fx-reveal .28s ease-out}
+@keyframes fx-reveal{from{opacity:0; transform:translateY(10px)}to{opacity:1; transform:none}}
+.study-done{position:relative}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important}
 }
 
 /* checkboxes for books */
@@ -246,7 +265,8 @@ a:hover{text-decoration:underline}
 
 /* toast & modal */
 #toast-wrap{position:fixed; right:18px; bottom:18px; z-index:999; display:flex; flex-direction:column; gap:10px; max-width:340px}
-.toast{background:var(--panel); border:1px solid var(--line2); border-radius:12px; box-shadow:var(--shadow); padding:12px 16px; font-size:13.5px; display:flex; gap:9px; align-items:flex-start; animation:slidein .25s}
+#toast-wrap{pointer-events:none}
+.toast{background:var(--panel); border:1px solid var(--line2); border-radius:12px; box-shadow:var(--shadow); padding:12px 16px; font-size:13.5px; display:flex; gap:9px; align-items:flex-start; animation:slidein .25s; pointer-events:auto}
 .toast.ok i{color:var(--accent)}
 .toast.err i{color:var(--danger)}
 .toast.warn i{color:var(--warn)}
@@ -356,7 +376,7 @@ a:hover{text-decoration:underline}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.2.3<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.2.4<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main">
@@ -460,6 +480,7 @@ a:hover{text-decoration:underline}
           <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
           <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
           <div class="kv"><span class="kk">显示音标</span><span class="vv"><label class="switch"><input type="checkbox" id="set-phon"><span class="sl"></span></label></span></div>
+          <div class="kv"><span class="kk">联网自动用在线词库</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoonline"><span class="sl"></span></label></span></div>
           <div class="kv"><span class="kk">默认剔除衍生词</span><span class="vv"><label class="switch"><input type="checkbox" id="set-deriv"><span class="sl"></span></label></span></div>
           <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div>
           <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap">
@@ -487,7 +508,7 @@ a:hover{text-decoration:underline}
       </div>
       <div class="card">
         <div class="card-title"><span class="dot" style="background:var(--accent)"></span>关于与扩展</div>
-        <div class="kv"><span class="kk">版本</span><span class="vv">1.2.3</span></div>
+        <div class="kv"><span class="kk">版本</span><span class="vv">1.2.4</span></div>
         <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
         <div class="kv"><span class="kk">数据源</span><span class="vv">KyleBing / mahavivo 开源词库</span></div>
         <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
@@ -570,6 +591,7 @@ const ICONS = {
   logout:'<path d="m16 17 5-5-5-5" /> <path d="M21 12H9" /> <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />',
   share:'<circle cx="18" cy="5" r="3" /> <circle cx="6" cy="12" r="3" /> <circle cx="18" cy="19" r="3" /> <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" /> <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />',
   x:'<path d="M18 6 6 18" /> <path d="m6 6 12 12" />',
+  sparkles:'<path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/>',
   penLine:'<path d="M13 21h8" /> <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />',
   database:'<ellipse cx="12" cy="5" rx="9" ry="3" /> <path d="M3 5V19A9 3 0 0 0 21 19V5" /> <path d="M3 12A9 3 0 0 0 21 12" />',
   minusCircle:'<circle cx="12" cy="12" r="10" /> <path d="M8 12h8" />',
@@ -689,12 +711,13 @@ const AppAuth = {
   defaultData(){
     const deployed = typeof location !== 'undefined' && location.protocol === 'https:';
     return {
-      settings: { daily: 20, phon: true, deriv: true, theme: 'auto', useOnline: true, studyMode: 'daily', studyFixed: 30, studyOrder: 'random', uiScale: 100, autoScale: true, cloud: { enabled: deployed, lastSync: 0, endpoint: '' } },
+      settings: { daily: 20, phon: true, deriv: true, theme: 'auto', useOnline: true, autoOnline: true, studyMode: 'daily', studyFixed: 30, studyOrder: 'random', uiScale: 100, autoScale: true, cloud: { enabled: deployed, lastSync: 0, endpoint: '' } },
       filter: { target: 'cet4', bases: ['primary','middle','hs'], deriv: true, presetName: '' },
       presets: [],
       wordState: {},
       stats: { created: now(), studyDays: 0, lastStudyDay: '', totalStudy: 0, totalKnown: 0, totalReview: 0 },
-      meta: { updated: 0 }
+      meta: { updated: 0 },
+      studySession: null
     };
   },
   current(){ return Store.get('session', null); },
@@ -1023,9 +1046,15 @@ const WL = {
   },
   async ensure(id, opts){
     const o = (opts && typeof opts === 'object') ? opts : { force: !!opts };
-    if(this.cache.has(id) && !o.force) return this.cache.get(id);
     const def = this.byId(id);
     if(!def) return { entries:[], source:'none' };
+    if(this.cache.has(id) && !o.force){
+      const c = this.cache.get(id);
+      const wantOnline = o.preferOnline === true && o.network !== false &&
+        c.source === 'embed' && def.online && def.online.length &&
+        AppAuth.data().settings.useOnline;
+      if(!wantOnline) return c;
+    }
     this.status.set(id, 'loading');
     AppUI.onListStatus && AppUI.onListStatus();
     let entries = null, source = 'none';
@@ -1446,7 +1475,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.2.3', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.2.4', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -1624,6 +1653,7 @@ const AppUI = {
     $('#set-fixed-row').hidden = (s.studyMode || 'daily') !== 'fixed';
     $('#set-study-mode').onchange = () => { $('#set-fixed-row').hidden = $('#set-study-mode').value !== 'fixed'; };
     $('#set-phon').checked = s.phon;
+    $('#set-autoonline').checked = s.autoOnline !== false;
     $('#set-deriv').checked = s.deriv;
     $('#set-theme').value = s.theme;
     AppSettings.renderCloud();
@@ -1821,6 +1851,7 @@ const AppFilterUI = {
       }
       if(!silent) toast('筛选完成，剩余生词 '+r.kept.length+' 个');
       AppUI.renderResult();
+      if(!silent) this.autoUpgradeOnline();
     }catch(e){
       toast('筛选失败：'+e.message, 'err');
     }finally{
@@ -1893,6 +1924,22 @@ const AppFilterUI = {
     const name = (WL.byId(r.targetId)||{}).name + '-专属生词-' + todayStr() + '.txt';
     download(name, r.kept.map(e => e.w).join('\n'));
     toast('已导出 '+r.kept.length+' 个生词');
+  },
+  async autoUpgradeOnline(){
+    const d = AppAuth.data();
+    if(d.settings.autoOnline === false) return;
+    if(typeof navigator !== 'undefined' && navigator.onLine === false) return;
+    const f = d.filter;
+    if(!f.target) return;
+    try{
+      await WL.ensure(f.target, { network: true, preferOnline: true });
+      for(const id of f.bases) await WL.ensure(id, { network: true, preferOnline: true });
+      const cur = AppAuth.data().filter;
+      if(cur.target === f.target && JSON.stringify(cur.bases) === JSON.stringify(f.bases)){
+        const r = await AppFilter.apply(false);
+        AppUI.renderResult();
+      }
+    }catch(e){}
   }
 };
 
@@ -1943,6 +1990,22 @@ const AppStudy = {
       box.innerHTML = '<div class="card empty"><div class="big">'+icon('bookOpen', 40)+'</div><h3 style="margin-bottom:8px">尚未生成个人词表</h3><p>请先在「词表筛选」中设置主词库与次词库，生成专属词表。</p><div style="margin-top:16px"><button class="btn btn-primary" onclick="AppUI.englishTab(\'filter\')">前往筛选</button></div></div>';
       return;
     }
+    const ss = AppAuth.data().studySession;
+    if(ss && !ss.done && ss.words && ss.words.length && ss.idx > 0 && ss.idx < ss.words.length){
+      const r = AppFilter.result;
+      const match = r && ss.targetId === r.targetId && ss.deriv === r.deriv &&
+        JSON.stringify(ss.baseIds || []) === JSON.stringify(r.baseIds || []);
+      box.innerHTML =
+        '<div class="card" style="text-align:center;padding:30px;border-color:var(--accent)">' +
+        '<div style="margin-bottom:10px">'+icon('refresh', 40)+'</div>' +
+        '<h3 style="font-size:19px;margin-bottom:6px">继续上次的学习进度</h3>' +
+        '<div class="muted" style="margin-bottom:18px">上次进行到 第 <b>'+(ss.idx+1)+' / '+ss.words.length+'</b> 个'+(match?'（'+r.targetName+'）':'')+'。进度已保存，可随时接着学。</div>' +
+        '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">' +
+        '<button class="btn btn-primary" onclick="AppStudy.resume()">'+icon('play')+' 继续学习</button>' +
+        '<button class="btn" onclick="AppStudy.restartFresh()">重新开始</button></div>' +
+        '<div class="fc-hint">学习进度会持续保存到云端，退出后回来仍可继续。</div></div>';
+      return;
+    }
     const r = AppFilter.result;
     const known = r.kept.filter(e => SRS.isKnown(r.targetId, e.w)).length;
     const s = AppAuth.data().settings;
@@ -1978,19 +2041,78 @@ const AppStudy = {
     const deck = this.buildDeck();
     if(!deck.length){
       toast('当前词表中已没有需要学习的单词', 'ok');
+      this.clearSession();
       this.renderSetup();
       return;
     }
     this.state = { mode:'study', deck, idx:0, revealed:false, round:0, marks:{ good:0, hard:0, again:0 } };
+    this.saveSession();
     this.render();
+  },
+  saveSession(){
+    const s = this.state;
+    if(!s) return;
+    const d = AppAuth.data();
+    const r = AppFilter.result;
+    d.studySession = {
+      targetId: r ? r.targetId : '',
+      baseIds: r ? r.baseIds : [],
+      deriv: r ? r.deriv : false,
+      words: s.deck.map(e => e.w),
+      idx: s.idx,
+      round: s.round || 0,
+      marks: s.marks || { good: 0, hard: 0, again: 0 },
+      updatedAt: now(),
+      done: s.idx >= s.deck.length
+    };
+    AppAuth.save(d);
+  },
+  clearSession(){
+    const d = AppAuth.data();
+    if(d.studySession){
+      d.studySession = null;
+      AppAuth.save(d);
+    }
+  },
+  sessionMatches(ss){
+    const r = AppFilter.result;
+    return !!(r && ss && ss.targetId === r.targetId && ss.deriv === r.deriv &&
+      JSON.stringify(ss.baseIds || []) === JSON.stringify(r.baseIds || []));
+  },
+  async resume(){
+    const ss = AppAuth.data().studySession;
+    if(!ss || !ss.words || !ss.words.length){ this.renderSetup(); return; }
+    if(!this.sessionMatches(ss)){
+      const d = AppAuth.data();
+      d.filter = { target: ss.targetId || 'cet4', bases: ss.baseIds || ['primary','middle','hs'], deriv: ss.deriv !== false, presetName: '' };
+      AppAuth.save(d);
+      await AppFilter.apply(true);
+    }
+    const r = AppFilter.result;
+    const deck = [];
+    for(const w of ss.words){
+      const e = r.kept.find(x => Morph.norm(x.w) === Morph.norm(w));
+      if(e) deck.push(e);
+    }
+    if(!deck.length){ this.clearSession(); this.renderSetup(); return; }
+    const idx = Math.min(ss.idx || 0, deck.length);
+    this.state = { mode:'study', deck, idx, revealed:false, round:ss.round || 0, marks:ss.marks || { good:0, hard:0, again:0 } };
+    this.saveSession();
+    this.render();
+  },
+  restartFresh(){
+    this.clearSession();
+    this.renderSetup();
   },
   render(){
     const box = $('#tab-study');
     const s = this.state;
     if(s.idx >= s.deck.length){
+      this.clearSession();
       box.innerHTML = '<div class="study-done"><div class="big">'+icon('checkCircle', 44)+'</div><h3>本轮学习完成</h3>' +
       '<p class="muted">本轮共学习 '+s.deck.length+' 个单词：认识 '+s.marks.good+' 词，模糊 '+s.marks.hard+' 词，不认识 '+s.marks.again+' 词。评分已记录到学习记录。</p>' +
       '<div style="display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap"><button class="btn btn-primary" onclick="AppStudy.start()">再来一轮</button><button class="btn" onclick="AppUI.englishTab(\'record\')">查看学习记录</button><button class="btn" onclick="AppUI.englishTab(\'review\')">开始复习</button></div></div>';
+      burstFx(box.querySelector('.study-done'), 10);
       return;
     }
     const e = s.deck[s.idx];
@@ -2001,7 +2123,7 @@ const AppStudy = {
       '<div class="study-meta"><span>第 '+(s.idx+1)+' / '+total+' 个</span><span class="tag '+(known?'tag-green':'tag-orange')+'">'+(known?'已掌握':'学习中')+'</span></div>' +
       '<div class="bar" style="margin-bottom:16px"><i style="width:'+Math.round(s.idx/total*100)+'%"></i></div>' +
       '<div class="flashcard"><div class="fc-word">'+esc(e.w)+'</div>' +
-      '<div id="fc-body" style="width:100%">'+(s.revealed ? cardBody(e) : '<button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示答案</button>')+'</div></div>' +
+      '<div id="fc-body" style="width:100%">'+(s.revealed ? '<div class="reveal-in">'+cardBody(e)+'</div>' : '<button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示答案</button>')+'</div></div>' +
       '<div class="fc-btns">' +
       '<button class="btn again" onclick="AppStudy.mark(\'again\')">不认识</button>' +
       '<button class="btn hard" onclick="AppStudy.mark(\'hard\')">模糊</button>' +
@@ -2032,7 +2154,9 @@ const AppStudy = {
     }
     s.revealed = false;
     s.round++;
+    this.saveSession();
     this.render();
+    if(level === 'good') burstFx(document.querySelector('#tab-study .fc-btns'), 8);
   },
   bindKeys(){
     AppUI._keyHandler = e => {
@@ -2076,6 +2200,27 @@ function fillPh(e){
       if(el) el.textContent = ph;
     });
   }
+}
+function burstFx(anchor, count){
+  if(!anchor) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'fx-burst';
+  const n = count || 8;
+  for(let i = 0; i < n; i++){
+    const p = document.createElement('span');
+    p.className = 'fx-spark';
+    p.innerHTML = icon('sparkles', 14);
+    const ang = Math.random() * Math.PI * 2;
+    const dist = 34 + Math.random() * 36;
+    p.style.setProperty('--dx', Math.cos(ang) * dist + 'px');
+    p.style.setProperty('--dy', Math.sin(ang) * dist + 'px');
+    p.style.setProperty('--rot', (Math.random() * 160 - 80) + 'deg');
+    p.style.color = ['var(--accent)','var(--primary)','var(--warn)'][i % 3];
+    p.style.animationDelay = (Math.random() * 0.08) + 's';
+    wrap.appendChild(p);
+  }
+  anchor.appendChild(wrap);
+  setTimeout(() => { if(wrap.parentNode) wrap.parentNode.removeChild(wrap); }, 900);
 }
 
 /* ================= 复习 ================= */
@@ -2136,6 +2281,7 @@ const AppReview = {
     const s = this.state; if(!s) return;
     const e = s.deck[s.idx];
     SRS.mark(s.targetId, e.w, level);
+    if(level === 'good') burstFx(document.querySelector('#tab-review .fc-btns'), 8);
     if(level === 'again'){
       const again = s.deck.splice(s.idx, 1)[0];
       s.deck.splice(s.deck.length, 0, again);
@@ -2386,6 +2532,7 @@ const AppSettings = {
     d.settings.autoScale = $('#set-autoscale').checked;
     d.settings.uiScale = clamp(parseInt($('#set-scale').value) || 100, 85, 150);
     d.settings.phon = $('#set-phon').checked;
+    d.settings.autoOnline = $('#set-autoonline').checked;
     d.settings.deriv = $('#set-deriv').checked;
     d.settings.theme = $('#set-theme').value;
     d.filter.deriv = d.settings.deriv;
@@ -2538,7 +2685,7 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
     if(AppAuth.current()){
       AppUI.init();
       // 后台预载词库（内置/缓存，不联网）
-      WL.ensure('primary', {network:false}).then(() => WL.ensure('middle', {network:false})).then(() => WL.ensure('hs', {network:false})).then(() => WL.ensure('cet4', {network:false})).catch(()=>{});
+      WL.ensure('primary', {network:false}).then(() => WL.ensure('middle', {network:false})).then(() => WL.ensure('hs', {network:false})).then(() => WL.ensure('cet4', {network:false})).then(() => AppFilterUI.autoUpgradeOnline()).catch(()=>{});
     } else {
       AppAuth.showAuth();
     }
