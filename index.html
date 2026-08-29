@@ -376,7 +376,7 @@ a:hover{text-decoration:underline}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.2.8<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.2.9<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main">
@@ -1483,7 +1483,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.2.8', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.2.9', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -2121,12 +2121,21 @@ const AppStudy = {
     }
     const r = AppFilter.result;
     const deck = [];
+    const seen = new Set();
+    const cur = (ss.idx < ss.words.length) ? Morph.norm(ss.words[ss.idx]) : null;
     for(const w of ss.words){
-      const e = r.kept.find(x => Morph.norm(x.w) === Morph.norm(w));
+      const n = Morph.norm(w);
+      if(seen.has(n)) continue; // 旧会话可能含去重前的重复词，恢复时剔除
+      seen.add(n);
+      const e = r.kept.find(x => Morph.norm(x.w) === n);
       if(e) deck.push(e);
     }
     if(!deck.length){ this.clearSession(); this.renderSetup(); return; }
-    const idx = Math.min(ss.idx || 0, deck.length);
+    let idx = Math.min(ss.idx || 0, Math.max(0, deck.length - 1));
+    if(cur){
+      const ni = deck.findIndex(x => Morph.norm(x.w) === cur);
+      if(ni >= 0) idx = ni;
+    }
     this.state = { mode:'study', deck, idx, revealed:false, round:ss.round || 0, marks:ss.marks || { good:0, hard:0, again:0 } };
     this.saveSession();
     this.render();
@@ -2186,7 +2195,7 @@ const AppStudy = {
     s.round++;
     this.saveSession();
     this.render();
-    if(level === 'good') burstFx(document.querySelector('#tab-study .fc-btns'), 8);
+    if(level === 'good') burstFx(document.querySelector('#tab-study .fc-btns .good'), 8);
   },
   bindKeys(){
     AppUI._keyHandler = e => {
@@ -2234,13 +2243,18 @@ function burstFx(anchor, count){
   if(!anchor) return;
   const wrap = document.createElement('div');
   wrap.className = 'fx-burst';
+  const r = anchor.getBoundingClientRect();
+  const container = (anchor.closest && anchor.closest('.fc-btns')) || anchor;
+  const cr = container.getBoundingClientRect();
+  wrap.style.left = (r.left - cr.left + r.width / 2) + 'px';
+  wrap.style.top = (r.top - cr.top + r.height / 2) + 'px';
   const n = count || 8;
   for(let i = 0; i < n; i++){
     const p = document.createElement('span');
     p.className = 'fx-spark';
-    p.innerHTML = icon('sparkles', 14);
+    p.innerHTML = icon('sparkles', 22);
     const ang = Math.random() * Math.PI * 2;
-    const dist = 34 + Math.random() * 36;
+    const dist = 42 + Math.random() * 48;
     p.style.setProperty('--dx', Math.cos(ang) * dist + 'px');
     p.style.setProperty('--dy', Math.sin(ang) * dist + 'px');
     p.style.setProperty('--rot', (Math.random() * 160 - 80) + 'deg');
@@ -2308,7 +2322,7 @@ const AppReview = {
     const s = this.state; if(!s) return;
     const e = s.deck[s.idx];
     SRS.mark(s.targetId, e.w, level);
-    if(level === 'good') burstFx(document.querySelector('#tab-review .fc-btns'), 8);
+    if(level === 'good') burstFx(document.querySelector('#tab-review .fc-btns .good'), 8);
     if(level === 'again'){
       const again = s.deck.splice(s.idx, 1)[0];
       s.deck.splice(s.deck.length, 0, again);
