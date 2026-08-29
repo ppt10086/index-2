@@ -376,7 +376,7 @@ a:hover{text-decoration:underline}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.2.7<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.2.8<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main">
@@ -1039,6 +1039,7 @@ const WL = {
   async initIDB(){ if(!this.idbReady && !IDB.fail){ try{ await IDB.open(); }catch(e){} this.idbReady = true; } },
 
   embedEntries(id){
+    if(typeof EMBEDDED === 'undefined') return null;
     const e = EMBEDDED[id];
     if(!e) return null;
     if(e.kind === 'words') return e.words.map(w => ({ w, ph:'', def:'', phrases:[] }));
@@ -1482,7 +1483,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.2.7', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.2.8', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -1518,7 +1519,7 @@ WL.count = function(id){
   if(c && c.entries && c.entries.length) return c.entries.length;
   const def = this.byId(id);
   if(def && def.embed){
-    const e = EMBEDDED[id];
+    const e = (typeof EMBEDDED !== 'undefined') ? EMBEDDED[id] : null;
     if(e && e.words) return e.words.length;
   }
   return EST[id] || 0;
@@ -2698,6 +2699,9 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
 /* ================= 启动 ================= */
 (function boot(){
   try{
+    if(typeof EMBEDDED === 'undefined'){
+      toast('内置词库数据缺失：当前文件可能不完整或为旧版缓存，请重新获取最新版文件', 'err');
+    }
     // 部署器注入的用户中心与本应用登录重复，隐藏其悬浮按钮
     function hideSiteDBUI(){
       try{
