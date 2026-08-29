@@ -376,7 +376,7 @@ a:hover{text-decoration:underline}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.2.12<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.2.13<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main">
@@ -1004,8 +1004,111 @@ const Dict = {
   async attach(word, onPh){
     const ph = await this.get(word);
     if(ph) onPh(ph);
+  },
+  /* ---- 释义缺失时的在线翻译兜底（结果缓存） ---- */
+  trMem: new Map(),
+  trQueue: Promise.resolve(),
+  async tr(word){
+    const key = Morph.norm(word);
+    if(!key) return '';
+    if(this.trMem.has(key)) return this.trMem.get(key);
+    try{
+      const cached = localStorage.getItem('sl.dicttr.'+key);
+      if(cached){ this.trMem.set(key, cached); return cached; }
+    }catch(e){}
+    const job = this.trQueue.then(() => this._fetchTr(word));
+    this.trQueue = job.then(() => {}, () => {});
+    const txt = await job;
+    if(txt){
+      this.trMem.set(key, txt);
+      try{ localStorage.setItem('sl.dicttr.'+key, txt); }catch(e){}
+    }
+    return txt;
+  },
+  async _fetchTr(word){
+    let txt = await this._youdaoTr(word);
+    if(!txt) txt = await this._gtxTr(word);
+    return txt;
+  },
+  _youdaoTr(word){
+    const n = Morph.norm(word);
+    return new Promise(resolve => {
+      const cb = '__ydtr_' + Math.floor(Math.random()*1e9).toString(36);
+      const s = document.createElement('script');
+      let done = false;
+      const timer = setTimeout(() => { if(!done){ done = true; cleanup(); resolve(''); } }, 8000);
+      function cleanup(){
+        try{ delete window[cb]; }catch(e){}
+        if(s.parentNode) s.parentNode.removeChild(s);
+        clearTimeout(timer);
+      }
+      window[cb] = data => {
+        if(done) return;
+        done = true;
+        try{
+          const es = (data && data.data && data.data.entries) || [];
+          const hit = es.find(x => x && Morph.norm(x.entry) === n) || es[0];
+          if(hit && hit.explain){
+            const t = String(hit.explain).replace(/\s+/g,' ').trim();
+            cleanup();
+            resolve(t.length > 160 ? t.slice(0,160)+'…' : t);
+            return;
+          }
+        }catch(e){}
+        cleanup();
+        resolve('');
+      };
+      s.src = 'https://dict.youdao.com/suggest?le=en&doctype=json&callback='+cb+'&q='+encodeURIComponent(word);
+      document.body.appendChild(s);
+    });
+  },
+  async _gtxTr(word){
+    try{
+      const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-CN&dt=t&q='+encodeURIComponent(word);
+      const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      const timer = ctrl ? setTimeout(() => ctrl.abort(), 12000) : null;
+      const r = await fetch(url, { signal: ctrl ? ctrl.signal : undefined });
+      if(timer) clearTimeout(timer);
+      if(!r.ok) return '';
+      const j = await r.json();
+      const seg = Array.isArray(j) && j[0] && j[0][0] && j[0][0][0];
+      return seg ? String(seg).replace(/\s+/g,' ').trim() : '';
+    }catch(e){ return ''; }
+  },
+  fillDef(e, el){
+    if(!e) return;
+    const has = (typeof e.def === 'string' && e.def) || (Array.isArray(e.def) && e.def.length);
+    if(has) return;
+    this.tr(e.w).then(txt => {
+      if(!txt) return;
+      e.def = txt;
+      try{
+        const r = AppFilter.result;
+        if(r){
+          const c = WL.cache.get(r.targetId);
+          if(c && c.entries){
+            const ent = c.entries.find(x => Morph.norm(x.w) === Morph.norm(e.w));
+            if(ent && !((typeof ent.def === 'string' && ent.def) || (Array.isArray(ent.def) && ent.def.length))) ent.def = txt;
+          }
+        }
+      }catch(err){}
+      if(el && el.isConnected){ el.textContent = txt; el.classList.remove('muted'); }
+    });
   }
 };
+
+function fillDictCells(root){
+  if(!root) return;
+  root.querySelectorAll('[data-dw]').forEach(td => {
+    const w = td.getAttribute('data-dw');
+    Dict.tr(w).then(txt => {
+      if(txt && td.isConnected){
+        td.textContent = txt.length > 80 ? txt.slice(0, 80) + '…' : txt;
+        td.removeAttribute('data-dw');
+      }
+    });
+  });
+}
 
 /* ================= 词库注册与同步 ================= */
 const KB_BASE = 'https://cdn.jsdelivr.net/gh/KyleBing/english-vocabulary@master/full_line_tsv/simple/%E6%AD%A3%E5%BA%8F/';
@@ -1484,7 +1587,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.2.12', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.2.13', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -2239,6 +2342,8 @@ const AppStudy = {
       '<div class="fc-hint"><span class="kbd">空格</span> 显示答案 · <span class="kbd">1</span> 不认识 · <span class="kbd">2</span> 认识 · <span class="kbd">Esc</span> 退出</div>' +
       '</div>';
     fillPh(e);
+    const fdEl = document.getElementById('fc-def');
+    if(fdEl) Dict.fillDef(e, fdEl);
     this.bindKeys();
   },
   reveal(){
@@ -2286,7 +2391,7 @@ function cardBody(e){
   } else if(Array.isArray(e.def) && e.def.length){
     defHtml = '<div class="fc-def">'+e.def.map(([p,v]) => '<div>'+(p?'<b>'+esc(p)+'.</b> ':'')+esc(v)+'</div>').join('')+'</div>';
   } else {
-    defHtml = '<div class="fc-def muted">词库未收录释义，可在词库中心更新词表后查看</div>';
+    defHtml = '<div class="fc-def muted" id="fc-def">词库未收录释义，正在获取在线翻译…</div>';
   }
   let phHtml = '';
   if(e.phrases && e.phrases.length){
@@ -2379,6 +2484,8 @@ const AppReview = {
       '<button class="btn good" onclick="AppReview.mark(\'good\')">记得</button></div>' +
       '<div class="fc-hint"><span class="kbd">空格</span> 显示答案 · <span class="kbd">1</span> 忘了 · <span class="kbd">2</span> 记得 · <span class="kbd">Esc</span> 结束</div></div>';
     fillPh(e);
+    const fdEl = document.getElementById('fc-def');
+    if(fdEl) Dict.fillDef(e, fdEl);
     document.onkeydown = e2 => {
       if(e2.key === ' '){ e2.preventDefault(); if(this.state && !this.state.revealed) this.reveal(); }
       else if(e2.key === '1') this.mark('again');
@@ -2447,7 +2554,7 @@ const AppRecord = {
         ? '<button class="btn btn-sm" onclick="AppRecord.mark(\''+r.listId+'\',\''+enc+'\',\'again\')">标记遗忘</button>'
         : '<button class="btn btn-sm" onclick="AppRecord.mark(\''+r.listId+'\',\''+enc+'\',\'good\')">标记认识</button><button class="btn btn-sm" onclick="AppRecord.mark(\''+r.listId+'\',\''+enc+'\',\'again\')">标记遗忘</button>';
       const del = '<button class="btn btn-sm btn-danger" onclick="AppRecord.remove(\''+r.listId+'\',\''+enc+'\')">移出记录</button>';
-      return '<tr><td class="w">'+esc(r.word)+'</td><td class="df">'+esc(def)+'</td><td>'+listTag+' '+status+'</td><td style="text-align:center">'+r.reps+'</td><td class="muted" style="font-size:12px">'+(r.last?fmtDate(r.last):'—')+'</td><td class="muted" style="font-size:12px">'+dueTxt+'</td><td class="op">'+act+' '+del+'</td></tr>';
+      return '<tr><td class="w">'+esc(r.word)+'</td><td class="df"'+(def?'':' data-dw="'+esc(r.word)+'"')+'>'+(def?esc(def):'…')+'</td><td>'+listTag+' '+status+'</td><td style="text-align:center">'+r.reps+'</td><td class="muted" style="font-size:12px">'+(r.last?fmtDate(r.last):'—')+'</td><td class="muted" style="font-size:12px">'+dueTxt+'</td><td class="op">'+act+' '+del+'</td></tr>';
     }).join('');
     const pager = '<div class="pager"><button class="btn btn-sm" onclick="AppRecord.page--;AppRecord.render()" '+(this.page<=1?'disabled':'')+'>上一页</button><span>第 '+this.page+' / '+pages+' 页 · 共 '+total+' 条</span><button class="btn btn-sm" onclick="AppRecord.page++;AppRecord.render()" '+(this.page>=pages?'disabled':'')+'>下一页</button></div>';
     box.innerHTML =
@@ -2474,6 +2581,7 @@ const AppRecord = {
         ? '<div class="table-scroll"><table class="wlist"><thead><tr><th>单词</th><th>释义</th><th>状态</th><th style="text-align:center">复习次数</th><th>上次学习</th><th>下次复习</th><th>操作</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+pager
         : '<div class="empty"><div class="big">'+icon('file', 40)+'</div><p>该范围内还没有学习记录，开始背单词后会自动记录每个词的评分与复习安排。</p><div style="margin-top:12px"><button class="btn btn-primary" onclick="AppUI.englishTab(\'study\')">去背单词</button></div></div>') +
       '</div>';
+    fillDictCells(box);
   },
   defOf(listId, word){
     const c = WL.cache.get(listId);
@@ -2540,7 +2648,8 @@ const AppBrowse = {
         ? '<span class="tag tag-green">已掌握</span>'
         : (c ? (c.due <= now() ? '<span class="tag tag-orange">待复习</span>' : '<span class="tag tag-blue">学习中</span>') : '');
       const enc = encodeURIComponent(e.w);
-      return '<tr><td class="w">'+esc(e.w)+'</td><td class="ph">'+esc(e.ph||'')+'</td><td class="df">'+esc(defText(e, 80))+'</td><td class="op"><button onclick="AppBrowse.detail(\''+enc+'\')">详情</button>'+(stTag?' '+stTag:'')+'</td></tr>';
+      const def = defText(e, 80);
+      return '<tr><td class="w">'+esc(e.w)+'</td><td class="ph">'+esc(e.ph||'')+'</td><td class="df"'+(def?'':' data-dw="'+esc(e.w)+'"')+'>'+(def?esc(def):'…')+'</td><td class="op"><button onclick="AppBrowse.detail(\''+enc+'\')">详情</button>'+(stTag?' '+stTag:'')+'</td></tr>';
     }).join('');
     const pager = '<div class="pager"><button class="btn btn-sm" onclick="AppBrowse.page--;AppBrowse.render()" '+(this.page<=1?'disabled':'')+'>‹ 上一页</button><span>第 '+this.page+' / '+pages+' 页 · 共 '+total+' 词</span><button class="btn btn-sm" onclick="AppBrowse.page++;AppBrowse.render()" '+(this.page>=pages?'disabled':'')+'>下一页 ›</button></div>';
     box.innerHTML =
@@ -2551,6 +2660,7 @@ const AppBrowse = {
       '</div>' +
       (total ? '<div class="table-scroll"><table class="wlist"><thead><tr><th>单词</th><th>音标</th><th>释义</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'+pager : '<div class="empty"><div class="big">'+icon('search', 40)+'</div><p>未找到匹配的单词。</p></div>') +
       '</div>';
+    fillDictCells(box);
   },
   detail(w){
     w = decodeURIComponent(w);
@@ -2565,7 +2675,7 @@ const AppBrowse = {
       '<button class="close" onclick="AppUI.closeModal()">×</button>' +
       '<div class="word-detail"><div class="wd">'+esc(e.w)+'</div>' +
       '<div class="wmeta">'+(e.ph?'<span class="tag tag-blue">'+esc(e.ph)+'</span>':'<span class="tag tag-blue" id="wd-ph"></span>')+(known?'<span class="tag tag-green">已掌握</span>':'<span class="tag tag-orange">学习中</span>')+'</div>' +
-      (Array.isArray(e.def) && e.def.length ? '<div class="sec">释义</div><ul>'+e.def.map(([p,v]) => '<li>'+(p?'<b>'+esc(p)+'.</b> ':'')+esc(v)+'</li>').join('')+'</ul>' : (typeof e.def === 'string' && e.def ? '<div class="sec">释义</div><div class="muted">'+esc(e.def)+'</div>' : '<div class="muted">词库未收录释义</div>')) +
+      (Array.isArray(e.def) && e.def.length ? '<div class="sec">释义</div><ul>'+e.def.map(([p,v]) => '<li>'+(p?'<b>'+esc(p)+'.</b> ':'')+esc(v)+'</li>').join('')+'</ul>' : (typeof e.def === 'string' && e.def ? '<div class="sec">释义</div><div class="muted">'+esc(e.def)+'</div>' : '<div class="sec">释义</div><div class="muted" id="wd-def">词库未收录释义，正在获取在线翻译…</div>')) +
       (Array.isArray(e.phrases) && e.phrases.length ? '<div class="sec">词组搭配</div><ul>'+e.phrases.slice(0,8).map(([p,v]) => '<li><b>'+esc(p)+'</b>'+(v?' · '+esc(v):'')+'</li>').join('')+'</ul>' : '') +
       '<div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap">' +
       '<a class="btn btn-sm" href="'+link+'" target="_blank" rel="noopener">'+icon('external')+' 在有道词典查看</a>' +
@@ -2577,6 +2687,9 @@ const AppBrowse = {
         const el = $('#wd-ph');
         if(el) el.textContent = ph;
       });
+    }
+    if(!((typeof e.def === 'string' && e.def) || (Array.isArray(e.def) && e.def.length))){
+      Dict.fillDef(e, $('#wd-def'));
     }
   }
 };
