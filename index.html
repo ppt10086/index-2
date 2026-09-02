@@ -530,6 +530,93 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
 
 /* 深色下玻璃层级修正 */
 [data-theme="dark"] .auth-card::after{opacity:.5}
+
+/* ============ StudyLens UI v4 · 无框化 ============
+   设计规范（长期有效）：网页界面不再使用“单独成表格状”的条条框框来分区。
+   信息层级由 留白分区、列表、竖向/横向分割线、通栏色块 承担；
+   仅在真正需要聚焦/隔离的地方保留单一表面（学习卡片、登录卡、弹窗、通知）。
+   本层全局移除容器盒框，并把主界面改为开放的版面节奏。 */
+.card{background:transparent; border:0; box-shadow:none; border-radius:0; padding:0}
+.card + .card{margin-top:42px}
+.card-title{font-size:15px; letter-spacing:-.005em; margin-bottom:18px; color:var(--text)}
+.card-title .dot{width:22px; height:2px; border-radius:99px; background:linear-gradient(90deg,var(--primary),var(--accent))}
+
+/* 主界面：开放指标带（不再是一格一格的盒子） */
+#page-dashboard .grid-4{gap:28px 40px}
+#dash-stats .stat{background:transparent; border:0; box-shadow:none; padding:2px 2px 6px; border-radius:0}
+#dash-stats .stat:hover{translate:none; box-shadow:none}
+#dash-stats .stat-body{gap:3px}
+#dash-stats .stat .k{font-size:12px; letter-spacing:.08em; text-transform:uppercase}
+#dash-stats .stat .v{font-size:34px; font-weight:820; letter-spacing:-.03em}
+#dash-stats .stat .d{font-size:12.5px}
+#dash-stats .stat-ico{width:34px; height:34px; background:transparent; border-radius:0}
+#dash-stats .stat-ico .ico-svg{width:26px; height:26px}
+#page-dashboard .grid-2{gap:44px; align-items:start}
+#page-dashboard .grid-2 .card{min-width:0}
+@media (max-width:640px){
+  #dash-stats .stat .v{font-size:28px}
+  #page-dashboard .grid-2{gap:38px}
+}
+
+/* 通用指标卡、汇总带同样无框 */
+.stat{background:transparent; border:0; box-shadow:none; border-radius:0; padding:6px 8px}
+.stat:hover{translate:none; box-shadow:none}
+.stat-ico{background:transparent; border-radius:0}
+.filter-summary{background:transparent; border:0; overflow:visible; margin:8px 0 22px}
+.filter-summary .stat{background:transparent; padding:10px 22px}
+.filter-summary .stat + .stat{border-left:1px solid var(--line)}
+@media (max-width:860px){.filter-summary .stat + .stat{border-left:none; border-top:1px solid var(--line)}}
+
+/* 数据表只保留分隔线，不套外壳 */
+.table-scroll{border:0; border-radius:0; background:transparent}
+.wlist th{background:var(--bg)}
+.wlist tr:hover td{background:transparent}
+.wlist td{border-bottom:1px solid var(--line)}
+
+/* 数学规划：开放式项目列 */
+.placeholder-grid{gap:34px 48px; grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.ph-card{background:transparent; border:0; box-shadow:none; border-radius:0; padding:2px 4px; text-align:left; position:relative}
+.ph-card:hover{translate:none; box-shadow:none; scale:1}
+.ph-card .pico{font-size:20px; margin-bottom:14px; color:var(--primary)}
+.ph-card .pico .ico-svg{width:22px; height:22px}
+.ph-card h4{font-size:16px; margin-bottom:6px}
+.ph-card p{font-size:13px; color:var(--muted); max-width:40ch; line-height:1.7}
+.ph-card .soon{display:inline-flex; align-items:center; margin-top:12px}
+.ph-card.ready{background:transparent; border:0}
+
+/* 设置与内容区块：分组靠标题、留白与分割线 */
+#page-settings .card{padding:0}
+#page-settings .card-title{margin-bottom:16px}
+#page-settings .grid-2{gap:44px}
+#page-settings .grid-2 .card{min-width:0}
+.kv{padding:13px 2px; border-bottom:1px solid var(--line)}
+.kv .kk{padding-top:6px}
+.note-box{background:transparent; border-top:1px solid var(--line); border-radius:0; padding:16px 2px 4px; color:var(--muted)}
+.banner{border-radius:14px}
+
+/* 筛选工作台：开放步骤与列表 */
+#tab-filter .card + .card{margin-top:46px}
+#tab-filter .card-title{margin-bottom:20px}
+.zone{margin-bottom:44px}
+.zone:last-child{margin-bottom:6px}
+.zone-head{margin-bottom:12px}
+.vlist > .book-opt{padding:14px 10px}
+.search-row{margin-bottom:20px}
+.chips{margin-top:14px}
+
+/* 词库中心与学习记录列表：分隔线而非盒子 */
+#library-list{column-gap:44px}
+.lib-row{padding:15px 10px}
+.lib-group{margin-bottom:38px}
+.empty{padding:48px 10px}
+
+/* 移动端压缩版面节奏 */
+@media (max-width:720px){
+  .card + .card{margin-top:34px}
+  #tab-filter .card + .card{margin-top:36px}
+  .zone{margin-bottom:34px}
+  .filter-summary .stat{padding:12px 14px}
+}
 </style>
 </head>
 <body>
@@ -575,7 +662,7 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.4.0<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.5.0<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -707,7 +794,7 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
       </div>
       <div class="card">
         <div class="card-title"><span class="dot" style="background:var(--accent)"></span>关于与扩展</div>
-        <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.4.0</span></div>
+        <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.5.0</span></div>
         <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
         <div class="kv"><span class="kk">数据源</span><span class="vv">KyleBing / mahavivo 开源词库</span></div>
         <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
@@ -1840,7 +1927,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.4.0', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.5.0', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
