@@ -7,9 +7,9 @@
 <title>StudyLens · Personal Learning System</title>
 <meta name="theme-color" content="#f6f4fb">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/plus-jakarta-sans@5/index.css" media="print" onload="this.media='all'">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%236c3bf5'/%3E%3Cpath d='M15 19a5 5 0 0 1 5-5h5a8 8 0 0 1 8 8v24a6 6 0 0 0-6-6H15z' fill='%23fff'/%3E%3Cpath d='M49 19a5 5 0 0 0-5-5h-5a8 8 0 0 0-8 8v24a6 6 0 0 1 6-6h12z' fill='%23fff' opacity='.82'/%3E%3C/svg%3E">
 <style>
-@import url('https://cdn.jsdelivr.net/npm/@fontsource-variable/plus-jakarta-sans@5/index.css');
 :root{
   --bg:#f6f4fb; --panel:#ffffff; --panel2:#f0edf8; --panel3:#faf9fd;
   --text:#221b38; --muted:#6b6482; --line:#e8e3f2; --line2:#d9d2ea;
@@ -617,6 +617,36 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
   .zone{margin-bottom:34px}
   .filter-summary .stat{padding:12px 14px}
 }
+
+/* ============ StudyLens UI v5 · 性能层 ============
+   原则：观感不变，减少持续性的 GPU 合成与主线程长任务。
+   1) 大尺寸/随内容滚动的表面不再做逐帧 backdrop blur（保留玻璃色调）；
+   2) 模糊动效改为纯渐变光斑（无 filter:blur），移动端不再持续重绘；
+   3) 重型排版（text-wrap:pretty）不再作用于表格单元格与列表项。 */
+html{scroll-behavior:auto}
+
+/* 大面积、贴滚动内容的玻璃表面：保留色调，去掉逐帧模糊 */
+.sidebar{background:var(--glass-strong); -webkit-backdrop-filter:none; backdrop-filter:none}
+@media (max-width:1079px){ #english-tabs{background:var(--glass-strong); -webkit-backdrop-filter:none; backdrop-filter:none} }
+#bottom-nav{background:color-mix(in srgb, var(--panel) 93%, transparent); -webkit-backdrop-filter:none; backdrop-filter:none}
+
+/* 登录光斑：用柔和渐变代替 46px 模糊滤镜（视觉一致，GPU 成本大幅下降） */
+.auth-wrap::before,.auth-wrap::after{filter:none}
+.auth-wrap::before{background:radial-gradient(circle at 38% 38%, rgba(150,120,255,.38), rgba(150,120,255,.12) 46%, transparent 70%)}
+.auth-wrap::after{background:radial-gradient(circle at 55% 45%, rgba(52,196,142,.36), rgba(52,196,142,.1) 48%, transparent 72%)}
+
+/* 静态展示的玻璃仍保留（登录卡、弹窗） */
+.auth-card,.modal{-webkit-backdrop-filter:blur(18px) saturate(1.3); backdrop-filter:blur(18px) saturate(1.3)}
+
+/* 重型排版只保留在段落；表格/列表恢复常规排布 */
+p{text-wrap:pretty}
+li,td,th{text-wrap:normal}
+
+/* 悬停阴影转场改为合成器友好属性，避免逐像素重绘 */
+.stat,.ph-card{transition-property:translate,background-color,border-color; transition-duration:var(--dur)}
+.stat:hover,.ph-card:hover{box-shadow:none}
+.flashcard{transition-property:border-color,box-shadow; transition-duration:var(--dur)}
+.card,.lib-row,.book-opt,.modal{transition-property:background-color,border-color,translate,scale}
 </style>
 </head>
 <body>
@@ -662,7 +692,7 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.5.0<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.5.1<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -794,7 +824,7 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
       </div>
       <div class="card">
         <div class="card-title"><span class="dot" style="background:var(--accent)"></span>关于与扩展</div>
-        <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.5.0</span></div>
+        <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.5.1</span></div>
         <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
         <div class="kv"><span class="kk">数据源</span><span class="vv">KyleBing / mahavivo 开源词库</span></div>
         <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
@@ -1509,9 +1539,7 @@ const WL = {
         const cached = await cachedText(id);
         const text = cached || await this.fetchFiles(def.online);
         if(!cached) IDB.put('w:'+id, text);
-        entries = def.defs === true
-          ? WL.parseTsv(text, true)
-          : WL.parseTsv(text, false);
+        entries = await this.parseTsvAsync(text, def.defs === true);
         source = 'online';
       }catch(e){ entries = null; }
     }
@@ -1519,7 +1547,7 @@ const WL = {
       // 网络不可用/关闭时，优先使用已缓存的在线版
       const cached = await cachedText(id);
       if(cached){
-        entries = def.defs === true ? WL.parseTsv(cached, true) : WL.parseTsv(cached, false);
+        entries = await this.parseTsvAsync(cached, def.defs === true);
         source = 'online';
       }
     }
@@ -1536,6 +1564,8 @@ const WL = {
     const parts = [];
     for(const f of files){
       parts.push(await fetchWithMirrors(f));
+      // 大文件之间让出主线程，避免同步解析造成长时间卡顿
+      await new Promise(r => setTimeout(r, 0));
     }
     return parts.join('\n');
   },
@@ -1555,6 +1585,32 @@ const WL = {
         item.phrases = parseDefCell(parts[2]);
       }
       out.push(item);
+    }
+    return out;
+  },
+  async parseTsvAsync(text, withDefs){
+    // 分片解析：每处理 1200 行让出一次主线程，保持界面流畅（结果与 parseTsv 一致）
+    const lines = text.split(/\r?\n/);
+    const out = [];
+    const seen = new Set();
+    for(let i = 0; i < lines.length; i++){
+      const parts = lines[i].split('\t');
+      const w = (parts[0]||'').trim();
+      if(w){
+        const key = Morph.norm(w);
+        if(!seen.has(key)){
+          seen.add(key);
+          const item = { w, ph:'', def:[], phrases:[] };
+          if(withDefs){
+            item.def = parseDefCell(parts[1]);
+            item.phrases = parseDefCell(parts[2]);
+          }
+          out.push(item);
+        }
+      }
+      if((i & 1023) === 1023 && lines.length > 2000){
+        await new Promise(r => setTimeout(r, 0));
+      }
     }
     return out;
   },
@@ -1927,7 +1983,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.5.0', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.5.1', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -3326,7 +3382,12 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
     if(AppAuth.current()){
       AppUI.init();
       // 后台预载词库（内置/缓存，不联网）
-      WL.ensure('primary', {network:false}).then(() => WL.ensure('middle', {network:false})).then(() => WL.ensure('hs', {network:false})).then(() => WL.ensure('cet4', {network:false})).then(() => AppFilterUI.autoUpgradeOnline()).catch(()=>{});
+      WL.ensure('primary', {network:false}).then(() => WL.ensure('middle', {network:false})).then(() => WL.ensure('hs', {network:false})).then(() => WL.ensure('cet4', {network:false})).then(() => {
+        // 联网升级延后到空闲时段执行，避免打开网页瞬间抢占主线程
+        const upgrade = () => AppFilterUI.autoUpgradeOnline();
+        if(typeof requestIdleCallback === 'function') requestIdleCallback(upgrade, { timeout: 2000 });
+        else setTimeout(upgrade, 500);
+      }).catch(()=>{});
     } else {
       AppAuth.showAuth();
     }
