@@ -354,6 +354,182 @@ p,li,td,th{text-wrap:pretty}
 .range{accent-color:var(--primary)}
 input[type="range"]{accent-color:var(--primary); padding:0; border:none; background:transparent; min-height:28px}
 input[type="range"]:focus-visible{box-shadow:none; outline:2px solid var(--primary); outline-offset:3px; border-radius:99px}
+
+/* ============ StudyLens UI v3 · 整体重构层 ============
+   统一运动/玻璃/留白 token；分类改为 留白分区 + 列表 + 通栏色块 + 竖向分割线 */
+:root{
+  --ease:cubic-bezier(.2,0,0,1);
+  --ease-out:cubic-bezier(.22,1,.36,1);
+  --dur:170ms; --dur-slow:340ms;
+  --space-xs:6px; --space-sm:10px; --space-md:16px; --space-lg:26px; --space-xl:40px;
+  --glass:rgba(255,255,255,.7); --glass-strong:rgba(255,255,255,.86);
+  --glass-line:rgba(34,27,56,.08);
+  --amb-a:rgba(124,92,255,.10); --amb-b:rgba(14,159,110,.08); --amb-c:rgba(63,140,255,.07);
+  --skel-hi:rgba(255,255,255,.55);
+}
+[data-theme="dark"]{
+  --glass:rgba(28,24,41,.62); --glass-strong:rgba(30,25,44,.82);
+  --glass-line:rgba(241,237,250,.08);
+  --amb-a:rgba(150,120,255,.13); --amb-b:rgba(52,196,142,.09); --amb-c:rgba(91,124,255,.10);
+  --skel-hi:rgba(255,255,255,.06);
+}
+body{position:relative}
+/* 沉浸式环境光：整站呼吸感的底色来源（静态、低对比，不干扰阅读） */
+body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(1100px 560px at 12% -10%, var(--amb-a), transparent 62%),
+    radial-gradient(900px 620px at 105% 30%, var(--amb-c), transparent 60%),
+    radial-gradient(760px 520px at 50% 118%, var(--amb-b), transparent 62%);
+}
+
+/* ---- 液态玻璃工具层（用于悬浮式界面元素） ---- */
+.sidebar,#bottom-nav,#english-tabs,.auth-card,.modal{
+  background:var(--panel);
+}
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .sidebar,#bottom-nav,#english-tabs,.auth-card,.modal{
+    background:var(--glass);
+    -webkit-backdrop-filter:blur(22px) saturate(1.35);
+    backdrop-filter:blur(22px) saturate(1.35);
+  }
+}
+.sidebar,#bottom-nav{border-color:var(--glass-line)}
+
+/* ---- 登录页：沉浸式背景 ---- */
+.auth-wrap{position:relative; overflow:hidden; isolation:isolate;
+  background:
+    radial-gradient(1200px 700px at 16% -12%, rgba(124,92,255,.22), transparent 58%),
+    radial-gradient(1000px 640px at 96% 18%, rgba(63,140,255,.16), transparent 60%),
+    radial-gradient(900px 700px at 60% 130%, rgba(14,159,110,.18), transparent 58%),
+    var(--bg)}
+.auth-wrap::before,.auth-wrap::after{content:""; position:absolute; border-radius:50%; pointer-events:none; z-index:0;
+  filter:blur(46px); opacity:.5; will-change:transform}
+.auth-wrap::before{width:360px; height:360px; left:-90px; top:-70px;
+  background:radial-gradient(circle at 35% 35%, rgba(150,120,255,.55), transparent 68%);
+  animation:orb-drift-a 26s var(--ease-out) infinite alternate}
+.auth-wrap::after{width:420px; height:420px; right:-120px; bottom:-130px;
+  background:radial-gradient(circle at 62% 40%, rgba(52,196,142,.5), transparent 68%);
+  animation:orb-drift-b 32s var(--ease-out) infinite alternate}
+@keyframes orb-drift-a{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(60px,44px,0) scale(1.12)}}
+@keyframes orb-drift-b{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(-70px,-36px,0) scale(1.1)}}
+.auth-card{position:relative; z-index:1; border-color:var(--glass-line); box-shadow:0 0 0 1px var(--glass-line), var(--shadow)}
+.auth-card::after{content:""; position:absolute; inset:1px; border-radius:24px; pointer-events:none;
+  background:linear-gradient(160deg, rgba(255,255,255,.5), transparent 42%), linear-gradient(320deg, rgba(255,255,255,.24), transparent 40%)}
+[data-theme="dark"] .auth-card::after{background:linear-gradient(160deg, rgba(255,255,255,.05), transparent 44%)}
+@media (prefers-reduced-motion: reduce){
+  .auth-wrap::before,.auth-wrap::after{animation:none}
+}
+
+/* ---- 主区留白与内容节奏 ---- */
+.main{padding-top:34px; padding-bottom:84px}
+.card{border-radius:20px}
+#page-dashboard > .grid{margin-top:24px}
+#page-dashboard .topbar{margin-bottom:26px}
+#page-english .topbar,#page-math .topbar,#page-library .topbar,#page-settings .topbar{margin-bottom:24px}
+.grid-4{gap:18px}
+.filter-summary{gap:0; margin:4px 0 18px; grid-template-columns:repeat(3,minmax(0,1fr)); background:var(--panel3); border:1px solid var(--line); border-radius:18px; overflow:hidden}
+.filter-summary .stat{border:none; box-shadow:none; border-radius:0; background:transparent; padding:16px 18px; min-width:0}
+.filter-summary .stat + .stat{border-left:1px solid var(--line)}
+@media (max-width:860px){.filter-summary{grid-template-columns:1fr}.filter-summary .stat + .stat{border-left:none; border-top:1px solid var(--line)}}
+
+/* ---- 英语模块分类：桌面竖向列表/通栏色块，窄屏横向分区 ---- */
+#page-english{min-width:0}
+@media (min-width:1080px){
+  #page-english{display:grid; grid-template-columns:228px minmax(0,1fr); align-items:start}
+  #page-english > .topbar{grid-column:1 / -1}
+  #english-tabs{grid-column:1; grid-row:2; margin:0; padding:10px 8px; flex-direction:column; gap:6px;
+    position:sticky; top:24px; align-self:start; border:1px solid var(--glass-line); border-radius:20px;
+    background:transparent !important}
+  #english-tabs button{justify-content:flex-start; width:100%; padding:12px 15px; border-radius:13px; position:relative}
+  #english-tabs button + button::before{content:""; position:absolute; top:0; left:14px; right:14px; height:1px; background:var(--line)}
+  #english-tabs button.active{background:linear-gradient(180deg,var(--primary-soft),transparent 120%); color:var(--primary); box-shadow:none}
+  #tab-filter,#tab-study,#tab-review,#tab-browse,#tab-record{grid-column:2; grid-row:2; min-width:0; border-left:1px solid var(--line); padding-left:34px}
+}
+@media (max-width:1079px){
+  #english-tabs{background:var(--glass-strong); border:1px solid var(--glass-line); border-radius:16px; padding:6px; gap:4px; margin-bottom:22px}
+  #english-tabs button{border-radius:11px}
+}
+@media (max-width:720px){
+  #english-tabs{flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none}
+  #english-tabs::-webkit-scrollbar{display:none}
+  #english-tabs button{flex:0 0 auto; white-space:nowrap}
+}
+
+/* ---- 分类列表：竖向分割线 + 列表行 ---- */
+.zone{margin-bottom:var(--space-xl)}
+.zone:last-child{margin-bottom:8px}
+.zone-head{display:flex; align-items:center; gap:9px; font-size:12px; font-weight:750; letter-spacing:.12em; color:var(--muted); margin:0 2px 10px; text-transform:uppercase}
+.zone-head::before{content:""; width:14px; height:2px; border-radius:99px; background:linear-gradient(90deg,var(--primary),var(--accent)); opacity:.8}
+.vlist{list-style:none}
+.vlist > .book-opt{border:0; border-radius:0; background:transparent; padding:13px 10px; margin:0; box-shadow:none; width:100%}
+.vlist > .book-opt + .book-opt{border-top:1px solid var(--line)}
+.vlist > .book-opt:hover{background:var(--panel2)}
+.vlist > .book-opt.sel{background:var(--primary-soft); border-radius:14px; border:0; box-shadow:inset 0 0 0 1px rgba(108,59,245,.16)}
+.vlist > .book-opt.sel + .book-opt{border-top:0; margin-top:2px}
+.book-opt .bname{font-size:14.5px}
+.book-opt input{margin-top:5px}
+
+/* 次词库列表内嵌卡片式视觉提示 */
+.zone .checkbox-line{margin:4px 2px 0}
+
+/* ---- 词库中心：通栏分组 + 瀑布流栅格 ---- */
+#library-list{columns:2; column-gap:30px}
+.lib-group{break-inside:avoid; margin:0 0 var(--space-lg); display:block}
+.lib-head{display:flex; align-items:center; gap:10px; font-size:12px; font-weight:750; letter-spacing:.12em; color:var(--muted); margin:2px 2px 6px; text-transform:uppercase}
+.lib-head::before{content:""; width:14px; height:2px; border-radius:99px; background:linear-gradient(90deg,var(--primary),var(--accent)); opacity:.8}
+.lib-row{border:0; border-radius:0; background:transparent; box-shadow:none; padding:14px 10px; margin:0}
+.lib-row + .lib-row{border-top:1px solid var(--line)}
+.lib-row:hover{background:var(--panel2); box-shadow:none; border-radius:14px}
+@media (max-width:1000px){#library-list{columns:1}}
+
+/* ---- 骨架屏 ---- */
+.skeleton{position:relative; overflow:hidden; background:var(--panel2); border-radius:12px; min-height:16px}
+.skeleton::after{content:""; position:absolute; inset:0; transform:translateX(-100%);
+  background:linear-gradient(90deg, transparent, var(--skel-hi), transparent);
+  animation:shimmer 1.5s var(--ease) infinite}
+@keyframes shimmer{to{transform:translateX(100%)}}
+.skel-list{display:flex; flex-direction:column; gap:10px}
+.skel-row{height:54px}
+.skel-line{height:14px; width:60%}
+.skel-line.w80{width:80%}
+.skel-line.w40{width:40%}
+
+/* ---- 空状态：方向而非气氛 ---- */
+.empty{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:56px 20px}
+.empty .big{width:72px; height:72px; border-radius:22px; display:flex; align-items:center; justify-content:center; background:var(--panel2); color:var(--muted); margin-bottom:8px; transition:scale var(--dur) var(--ease)}
+.empty .big .ico-svg{width:30px; height:30px}
+.empty h3{margin:6px 0 2px}
+.empty p{max-width:46ch}
+
+/* ---- 卡片微交互：克制的浮起与呼吸 ---- */
+.stat,.ph-card,.lib-row:hover,.book-opt:hover{transition-property:background-color,box-shadow,border-color,scale,translate; transition-duration:var(--dur); transition-timing-function:var(--ease-out)}
+.stat:hover{translate:0 -2px; box-shadow:var(--shadow)}
+.ph-card{position:relative; overflow:hidden}
+.ph-card:hover{translate:0 -3px; box-shadow:var(--shadow)}
+.ph-card.ready{background:var(--accent-soft)}
+.flashcard{transition:translate var(--dur-slow) var(--ease-out), box-shadow var(--dur-slow) var(--ease-out), border-color var(--dur) var(--ease)}
+
+/* ---- 设置：表单分组 + 竖向分割线 ---- */
+.kv{padding:11px 2px}
+#page-settings .card{padding:24px}
+#page-settings .kv .kk{letter-spacing:.01em}
+#page-settings .card-title{margin-bottom:6px}
+
+/* ---- 结果区/横幅细节 ---- */
+.banner{border-radius:16px}
+.note-box{border-radius:13px}
+.search-row .btn{align-self:center}
+.bar{background:var(--panel2)}
+
+/* ---- 沉浸登录移动端适配 ---- */
+@media (max-width:720px){
+  .auth-card{box-shadow:0 0 0 1px var(--glass-line), 0 30px 70px -30px rgba(63,44,130,.5)}
+  .auth-wrap::before{width:230px; height:230px; left:-60px; top:-40px}
+  .auth-wrap::after{width:280px; height:280px; right:-90px; bottom:-100px}
+}
+
+/* 深色下玻璃层级修正 */
+[data-theme="dark"] .auth-card::after{opacity:.5}
 </style>
 </head>
 <body>
@@ -399,7 +575,7 @@ input[type="range"]:focus-visible{box-shadow:none; outline:2px solid var(--prima
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.3.0<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.4.0<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -531,7 +707,7 @@ input[type="range"]:focus-visible{box-shadow:none; outline:2px solid var(--prima
       </div>
       <div class="card">
         <div class="card-title"><span class="dot" style="background:var(--accent)"></span>关于与扩展</div>
-        <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.3.0</span></div>
+        <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.4.0</span></div>
         <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
         <div class="kv"><span class="kk">数据源</span><span class="vv">KyleBing / mahavivo 开源词库</span></div>
         <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
@@ -1664,7 +1840,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.3.0', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.4.0', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -1980,8 +2156,8 @@ const AppUI = {
     box.innerHTML =
       '<div class="card"><div class="card-title"><span class="dot"></span>① 选择主词库（要学习的词库）</div>' +
       '<div class="note-box" style="margin-top:-4px">说明：主词库与次词库可自由组合。例如以高中词库为主、剔除初中词汇，或以六级词库为主、剔除四级词汇。</div>' +
-      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px">'+
-      groups.map(g => g[2].map(mainHtml).join('')).join('') + '</div></div>' +
+      groups.map(g => '<section class="zone"><div class="zone-head">'+g[1]+'</div><div class="vlist">' + g[2].map(mainHtml).join('') + '</div></section>').join('') +
+      '</div>' +
       '<div class="card"><div class="card-title"><span class="dot" style="background:var(--accent)"></span>② 勾选次词库（主词库中与次词库重复的词会被剔除）</div>' +
       '<div class="muted small" style="margin-bottom:10px">已选主词库：<b style="color:var(--primary)">'+esc((WL.byId(f.target)||{}).name||'未选择')+'</b> · 衍生词剔除同样生效（如 happy→happily/happiness/unhappy）</div>' +
       '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">' +
@@ -1995,7 +2171,7 @@ const AppUI = {
       groups.map(g => {
         const ids = g[2].filter(id => id !== f.target);
         if(!ids.length) return '';
-        return '<div style="margin-bottom:14px"><div class="muted" style="font-weight:700;margin-bottom:8px">'+g[1]+'</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px">'+ids.map(subHtml).join('')+'</div></div>';
+        return '<section class="zone"><div class="zone-head">'+g[1]+'</div><div class="vlist">'+ids.map(subHtml).join('')+'</div></section>';
       }).join('') +
       '<label class="checkbox-line" style="margin-top:6px"><input type="checkbox" id="f-deriv" '+(f.deriv?'checked':'')+'> <span><b>同时剔除衍生词</b>（名词复数、动词时态、形容词副词变化及常见派生词，如 happy→happily/happiness/unhappy）</span></label>' +
       '<div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">' +
@@ -2841,7 +3017,9 @@ const AppLibrary = {
     const status = $('#library-status');
     const d = AppAuth.data();
     if(this.syncing){
-      status.innerHTML = '<div class="banner info"><span class="spinner"></span> 正在更新词库，请稍候…（首次更新需下载完整词表）</div>';
+      status.innerHTML = '<div class="banner info">'+icon('cloud')+' <span>正在更新词库…</span></div>';
+      box.innerHTML = '<div class="skel-list">'+Array.from({length:4}, () => '<div class="skeleton skel-row"></div>').join('')+'</div>';
+      return;
     } else {
       const total = WL.cache.size ? Array.from(WL.cache.values()).reduce((s,v)=>s+(v.entries?v.entries.length:0),0) : 0;
       status.innerHTML = '<div class="banner info">'+icon('cloud')+' <span>在线词表通过多个镜像更新并缓存在本机；离线时自动使用内置词表。当前已加载 <b>'+fmtN(total)+'</b> 个词条'+(d.settings.useOnline?'':'，联网更新已关闭')+'。</span></div>';
@@ -2858,7 +3036,7 @@ const AppLibrary = {
           '<span class="tag '+st.cls+'">'+st.txt+'</span><span class="tag">'+fmtN(count)+' 词</span>' +
           '<div class="lact">'+onlineBtn+'</div></div>';
       }).join('');
-      return '<div style="margin-bottom:8px"><div class="muted" style="font-weight:700;margin:10px 0 8px">'+label+'</div>'+items+'</div>';
+      return '<section class="lib-group"><h2 class="lib-head">'+label+'</h2>'+items+'</section>';
     }).join('');
   },
   async syncOne(id){
