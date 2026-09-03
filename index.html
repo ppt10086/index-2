@@ -714,6 +714,21 @@ li,td,th{text-wrap:normal}
   .rm-item.doing .rm-dot{animation:none}
 }
 
+/* ============ UI v6.1 · 数据可见性 ============ */
+.wk{display:flex; gap:12px; align-items:flex-end; margin:16px 0 12px; padding:18px 2px 0; border-top:1px dashed var(--line)}
+.wk-col{flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; min-width:0}
+.wk-bar{width:100%; max-width:34px; min-height:6px; border-radius:8px 8px 4px 4px;
+  background:linear-gradient(180deg,var(--primary),var(--accent)); opacity:.92; position:relative}
+.wk-bar.off{background:var(--panel2); opacity:.75}
+.wk-bar i{position:absolute; left:0; right:0; top:-16px; text-align:center; font-style:normal; font-size:10.5px;
+  color:var(--muted); font-variant-numeric:tabular-nums; line-height:1}
+.wk-col span{font-size:10.5px; color:var(--muted); white-space:nowrap}
+.rm-details{font-size:13px; margin:2px 0 16px; border-top:1px dashed var(--line); padding-top:10px}
+.rm-details summary{cursor:pointer; color:var(--primary); font-weight:650; font-size:13px; display:inline-block}
+.rm-line{margin:9px 0 0; color:var(--muted); line-height:1.9; word-break:break-word}
+.rm-line b{color:var(--text)}
+@media (max-width:480px){ .wk{gap:8px} .wk-col span{font-size:9.5px} }
+
 /* 引导内选项遵循“无框化”：列表行 + 细分隔线，不用独立盒子 */
 .ob-opts{gap:0}
 .ob-opt{border:0; border-radius:0; background:transparent; padding:13px 12px}
@@ -770,7 +785,7 @@ li,td,th{text-wrap:normal}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.6.0<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.6.1<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -825,10 +840,10 @@ li,td,th{text-wrap:normal}
       <div class="card" style="margin-top:16px">
         <div class="card-title"><span class="dot"></span>功能规划</div>
         <div class="roadmap">
-          <div class="rm-item done"><div class="rm-dot"></div><div><b>错题本</b><span>按知识点归集错题，支持定期重做与错误率统计</span></div><span class="tag tag-green">规划完成</span></div>
-          <div class="rm-item doing"><div class="rm-dot"></div><div><b>公式手册</b><span>高等数学、线性代数、概率论常用公式检索与收藏</span></div><span class="tag tag-orange">开发中</span></div>
-          <div class="rm-item todo"><div class="rm-dot"></div><div><b>每日一题</b><span>依据学习进度推送习题，自动记录正确率</span></div><span class="tag">规划中</span></div>
-          <div class="rm-item todo"><div class="rm-dot"></div><div><b>知识图谱</b><span>呈现章节知识点关联，便于定位薄弱环节</span></div><span class="tag">规划中</span></div>
+          <div class="rm-item done"><div class="rm-dot"></div><div><b>错题本</b><span>按知识点归集错题，支持定期重做与错误率统计</span></div><span class="tag tag-green">v1.7 排期中</span></div>
+          <div class="rm-item doing"><div class="rm-dot"></div><div><b>公式手册</b><span>高等数学、线性代数、概率论常用公式检索与收藏</span></div><span class="tag tag-orange">v1.8 开发中</span></div>
+          <div class="rm-item todo"><div class="rm-dot"></div><div><b>每日一题</b><span>依据学习进度推送习题，自动记录正确率</span></div><span class="tag">评估中</span></div>
+          <div class="rm-item todo"><div class="rm-dot"></div><div><b>知识图谱</b><span>呈现章节知识点关联，便于定位薄弱环节</span></div><span class="tag">评估中</span></div>
         </div>
         <div class="small muted" style="margin-top:14px">按上述顺序逐步开发并随版本更新发布；现有英语功能不受影响。</div>
       </div>
@@ -861,9 +876,11 @@ li,td,th{text-wrap:normal}
           <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap">
             <button class="btn btn-sm" data-icon="download" onclick="AppSettings.exportData()">导出数据备份</button>
             <button class="btn btn-sm" data-icon="upload" onclick="AppSettings.importData()">导入备份</button>
+            <button class="btn btn-sm" data-icon="refresh" onclick="AppData.restoreAuto()">恢复自动备份</button>
             <button class="btn btn-sm btn-danger" data-icon="trash" onclick="AppSettings.deleteAccount()">删除账号</button>
             <button class="btn btn-sm btn-danger" data-icon="logout" onclick="AppAuth.logout()">退出登录</button>
           </div>
+          <div class="kv" style="margin-top:12px"><span class="kk">最近自动备份</span><span class="vv" id="auto-back-info">—</span></div>
           <input type="file" id="import-file" accept=".json" hidden onchange="AppSettings.onImport(event)">
         </div>
         <div class="card">
@@ -875,6 +892,8 @@ li,td,th{text-wrap:normal}
           <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
           <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
           <div class="kv"><span class="kk">显示音标</span><span class="vv"><label class="switch"><input type="checkbox" id="set-phon"><span class="sl"></span></label></span></div>
+          <div class="kv"><span class="kk">发音口音</span><span class="vv"><select id="set-voice" style="width:150px"><option value="en-US">美音</option><option value="en-GB">英音</option></select></span></div>
+          <div class="kv"><span class="kk">翻卡自动朗读</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autospeak"><span class="sl"></span></label></span></div>
           <div class="kv"><span class="kk">联网自动用在线词库</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoonline"><span class="sl"></span></label></span></div>
           <div class="kv"><span class="kk">默认剔除衍生词</span><span class="vv"><label class="switch"><input type="checkbox" id="set-deriv"><span class="sl"></span></label></span></div>
           <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div>
@@ -903,7 +922,7 @@ li,td,th{text-wrap:normal}
       </div>
       <div class="card">
         <div class="card-title"><span class="dot" style="background:var(--accent)"></span>关于与扩展</div>
-        <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.6.0</span></div>
+        <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.6.1</span></div>
         <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
         <div class="kv"><span class="kk">数据源</span><span class="vv">KyleBing / mahavivo 开源词库</span></div>
         <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
@@ -941,6 +960,15 @@ const DAY = 86400000;
 const todayStr = () => { const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
 const fmtN = n => n>=10000 ? (n/10000).toFixed(1)+'万' : String(n);
 const fmtDate = ts => { const d = new Date(ts); const m = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'][d.getMonth()]; return m+' '+d.getDate()+'日'; };
+const relTime = ts => {
+  if(!ts) return '';
+  const diff = now() - ts;
+  if(diff < 60000) return '刚刚';
+  if(diff < 3600000) return Math.floor(diff/60000)+' 分钟前';
+  if(diff < 86400000) return Math.floor(diff/3600000)+' 小时前';
+  if(diff < 7*86400000) return Math.floor(diff/86400000)+' 天前';
+  return fmtDate(ts);
+};
 const clamp = (n,a,b) => Math.max(a, Math.min(b,n));
 function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
 function download(name, content, type){
@@ -1148,7 +1176,7 @@ const AppAuth = {
   defaultData(){
     const deployed = typeof location !== 'undefined' && location.protocol === 'https:';
     return {
-      settings: { daily: 20, phon: true, deriv: true, theme: 'auto', useOnline: true, autoOnline: true, studyMode: 'daily', studyFixed: 30, studyOrder: 'random', uiScale: 100, autoScale: true, onboarded: false, cloud: { enabled: deployed, lastSync: 0, endpoint: '' } },
+      settings: { daily: 20, phon: true, deriv: true, theme: 'auto', useOnline: true, autoOnline: true, studyMode: 'daily', studyFixed: 30, studyOrder: 'random', uiScale: 100, autoScale: true, onboarded: false, voice: 'en-US', autoSpeak: false, cloud: { enabled: deployed, lastSync: 0, endpoint: '' } },
       filter: { target: 'cet4', bases: ['primary','middle','hs'], deriv: true, presetName: '' },
       presets: [],
       wordState: {},
@@ -2039,12 +2067,15 @@ function speakWord(w){
       toast('当前浏览器不支持发音', 'warn');
       return;
     }
+    let lang = 'en-US';
+    try{ const st = AppAuth.data().settings; if(st && st.voice === 'en-GB') lang = 'en-GB'; }catch(e){}
     const u = new SpeechSynthesisUtterance(String(w || ''));
-    u.lang = 'en-US';
+    u.lang = lang;
     u.rate = 0.92;
     const pick = () => {
       const voices = window.speechSynthesis.getVoices();
-      const v = voices.find(x => /en[-_]US/i.test(x.lang)) || voices.find(x => /^en/i.test(x.lang));
+      const want = new RegExp(lang.replace('-', '[-_]'), 'i');
+      const v = voices.find(x => want.test(x.lang)) || voices.find(x => /^en/i.test(x.lang));
       if(v) u.voice = v;
     };
     pick();
@@ -2073,10 +2104,11 @@ const AppFilter = {
     const kept = [];
     const keptSeen = new Set();
     let exact = 0, derived = 0;
+    const removedExactS = [], removedDerivedS = [];
     for(const e of target.entries){
       const n = Morph.norm(e.w);
-      if(exactSet.has(n)){ exact++; continue; }
-      if(f.deriv && Morph.isKnown(e.w, knownSet)){ derived++; continue; }
+      if(exactSet.has(n)){ exact++; if(removedExactS.length < 12) removedExactS.push(e.w); continue; }
+      if(f.deriv && Morph.isKnown(e.w, knownSet)){ derived++; if(removedDerivedS.length < 12) removedDerivedS.push(e.w); continue; }
       if(keptSeen.has(n)) continue; // 词表内重复词条只保留一个
       keptSeen.add(n);
       kept.push(e);
@@ -2089,6 +2121,8 @@ const AppFilter = {
       total: target.entries.length,
       removedExact: exact,
       removedDerived: derived,
+      removedExactS,
+      removedDerivedS,
       kept
     };
     return this.result;
@@ -2111,7 +2145,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.6.0', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.6.1', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -2134,6 +2168,43 @@ const AppData = {
       }catch(e){ toast('导入失败：'+e.message, 'err'); }
     };
     rd.readAsText(file);
+  },
+  autoBackup(){
+    try{
+      const s = AppAuth.current();
+      if(!s) return;
+      const d = AppAuth.data();
+      const snap = { app:'个人学习系统', version:'1.6.1', exported:new Date().toISOString(), user:s.user, data:d };
+      if(IDB.db){
+        IDB.put('backup:auto', snap);
+      } else {
+        localStorage.setItem('sl.backup.auto', JSON.stringify(snap));
+      }
+      Store.set('autoback', { ts: Date.now(), total: d.stats.totalStudy || 0 });
+    }catch(e){}
+  },
+  backupMeta(){ return Store.get('autoback', null); },
+  restoreAuto(){
+    const m = this.backupMeta();
+    if(!m){ toast('暂无自动备份（完成一轮学习后会自动生成）', 'warn'); return; }
+    if(prompt('将用最近一次自动备份覆盖当前数据（备份时间：'+fmtDate(m.ts)+' '+new Date(m.ts).toLocaleTimeString()+'）。\n输入「恢复」确认：') !== '恢复'){
+      toast('已取消', 'warn');
+      return;
+    }
+    const s = AppAuth.current();
+    if(!s) return;
+    const load = IDB.db
+      ? IDB.get('backup:auto')
+      : Promise.resolve((() => { try{ return JSON.parse(localStorage.getItem('sl.backup.auto') || 'null'); }catch(e){ return null; } })());
+    load.then(snap => {
+      if(!snap || !snap.data){ toast('备份数据不可用', 'err'); return; }
+      Store.set('u.'+s.user, snap.data);
+      WL.cache.clear();
+      AppFilter.result = null;
+      AppAuth.save(snap.data);
+      toast('已从自动备份恢复');
+      AppUI.init();
+    }).catch(() => toast('恢复失败', 'err'));
   }
 };
 
@@ -2244,6 +2315,8 @@ const AppUI = {
     $('#set-user').textContent = AppAuth.displayName();
     $('#set-daily').value = AppAuth.data().settings.daily;
     $('#set-phon').checked = AppAuth.data().settings.phon;
+    if($('#set-voice')) $('#set-voice').value = (AppAuth.data().settings.voice === 'en-GB') ? 'en-GB' : 'en-US';
+    if($('#set-autospeak')) $('#set-autospeak').checked = !!AppAuth.data().settings.autoSpeak;
     $('#set-deriv').checked = AppAuth.data().settings.deriv;
     $('#set-theme').value = AppAuth.data().settings.theme;
     $('#set-modcount').textContent = Modules.registry.length;
@@ -2344,17 +2417,34 @@ const AppUI = {
     const totalWords = WL.cache.size ? Array.from(WL.cache.values()).reduce((s,v)=>s+(v.entries?v.entries.length:0),0) : 0;
     const dayStart = new Date(); dayStart.setHours(0,0,0,0);
     let todayMarks = 0;
+    let lastTs = 0;
     for(const k in d.wordState){ if(d.wordState[k].last >= dayStart.getTime()) todayMarks++; }
+    for(const k in d.wordState){ const v = d.wordState[k]; if(v.last > lastTs) lastTs = v.last; }
     $('#dash-stats').innerHTML = [
       ['book','本地词库', totalWords || '—', totalWords ? '内置词表与在线词表合计' : '词表尚未加载', 'stat-blue'],
       ['checkCircle','已掌握词汇', known, '连续认识两次后计入掌握', 'stat-green'],
       ['clock','待复习', due, due ? '今日到期单词数' : '今日无到期单词', 'stat-orange'],
       ['flame','累计学习天数', d.stats.studyDays + (d.stats.lastStudyDay===todayStr()?1:0), '坚持每日复习', 'stat-red']
     ].map(x => '<div class="stat"><span class="stat-ico '+x[4]+'">'+icon(x[0])+'</span><div class="stat-body"><span class="k">'+x[1]+'</span><span class="v">'+x[2]+'</span><span class="d">'+x[3]+'</span></div></div>').join('');
+    // 近 7 日学习趋势（来自每日学习日志，纯 CSS 柱状，无第三方图表依赖）
+    const log = d.stats.dayLog || {};
+    const days7 = [];
+    const dd = new Date(); dd.setHours(0,0,0,0);
+    const wd = ['日','一','二','三','四','五','六'];
+    for(let i = 6; i >= 0; i--){
+      const c = new Date(dd.getTime() - i*86400000);
+      const key = c.getFullYear()+'-'+String(c.getMonth()+1).padStart(2,'0')+'-'+String(c.getDate()).padStart(2,'0');
+      days7.push({ key, n: log[key] || 0, label: i===0 ? '今' : '周'+wd[c.getDay()] });
+    }
+    const max7 = Math.max(1, ...days7.map(x => x.n));
+    const bars = days7.map(x =>
+      '<div class="wk-col" title="'+x.key+' · '+x.n+' 词"><div class="wk-bar'+(x.n?'':' off')+'" style="height:'+Math.round(Math.max(6, x.n/max7*64))+'px"><i>'+(x.n||'')+'</i></div><span>'+x.label+'</span></div>'
+    ).join('');
     $('#dash-progress').innerHTML =
       '<div style="display:flex;justify-content:space-between;align-items:baseline;font-size:14px;margin-bottom:4px"><span class="muted">今日已学习</span><b>'+todayMarks+' 词</b></div>' +
-      '<div class="bar" style="margin:8px 0 10px"><i style="width:'+Math.min(100, Math.round(todayMarks / Math.max(1, d.settings.daily) * 100))+'%"></i></div>' +
-      '<div class="muted small">学习量可按每日计划自由调整，可在「设置」中配置。</div>';
+      '<div class="bar" style="margin:8px 0 6px"><i style="width:'+Math.min(100, Math.round(todayMarks / Math.max(1, d.settings.daily) * 100))+'%"></i></div>' +
+      '<div class="wk">'+bars+'</div>' +
+      '<div class="muted small">'+(lastTs ? '上次学习：'+relTime(lastTs)+' · ' : '')+'每日目标 '+d.settings.daily+' 词，可在「设置」调整。</div>';
     const tip = $('#dash-english-tip');
     if(AppFilter.result){
       const r = AppFilter.result;
@@ -2371,8 +2461,9 @@ const AppUI = {
       ['target','每日一题','依据学习进度推送习题，记录正确率'],
       ['share','知识图谱','呈现章节知识点关联，便于定位薄弱环节']
     ];
-    $('#math-grid').innerHTML = '<div class="placeholder-grid">' + items.map(x =>
-      '<div class="ph-card"><div class="pico">'+icon(x[0], 30)+'</div><h4>'+x[1]+'</h4><p>'+x[2]+'</p><span class="soon">待上线</span></div>'
+    const phases = ['v1.7 · 排期中','v1.8 · 开发中','评估中','评估中'];
+    $('#math-grid').innerHTML = '<div class="placeholder-grid">' + items.map((x,i) =>
+      '<div class="ph-card"><div class="pico">'+icon(x[0], 30)+'</div><h4>'+x[1]+'</h4><p>'+x[2]+'</p><span class="soon">'+phases[i]+'</span></div>'
     ).join('') + '</div>';
   },
   renderSettings(){
@@ -2400,9 +2491,18 @@ const AppUI = {
     $('#set-fixed-row').hidden = (s.studyMode || 'daily') !== 'fixed';
     $('#set-study-mode').onchange = () => { $('#set-fixed-row').hidden = $('#set-study-mode').value !== 'fixed'; };
     $('#set-phon').checked = s.phon;
+    if($('#set-voice')) $('#set-voice').value = (s.voice === 'en-GB') ? 'en-GB' : 'en-US';
+    if($('#set-autospeak')) $('#set-autospeak').checked = !!s.autoSpeak;
     $('#set-autoonline').checked = s.autoOnline !== false;
     $('#set-deriv').checked = s.deriv;
     $('#set-theme').value = s.theme;
+    const bmEl = document.getElementById('auto-back-info');
+    if(bmEl){
+      const bm = AppData.backupMeta();
+      bmEl.textContent = bm
+        ? fmtDate(bm.ts) + ' ' + new Date(bm.ts).toLocaleTimeString() + ' · ' + fmtN(bm.total) + ' 词'
+        : '尚无（完成一轮学习后自动生成）';
+    }
     AppSettings.renderCloud();
   },
   closeModal(){ $('#modal-root').innerHTML = ''; },
@@ -2513,6 +2613,11 @@ const AppUI = {
       '</div>' +
       '<div class="bar" style="margin:6px 0 14px"><i style="width:'+keptPct+'%;background:linear-gradient(90deg,var(--warn),var(--accent))"></i></div>' +
       '<div class="muted small" style="margin-bottom:14px">主词库 <b>'+tDef.name+'</b> 共 '+r.total+' 词，剔除 <b>'+baseNames+'</b> 中已出现的 '+r.removedExact+' 个单词'+(r.deriv?'及衍生形式 '+r.removedDerived+' 个':'')+'，'+(r.kept.length===0?'主词库中已无需要新学的单词。':'剩余生词 '+r.kept.length+' 个。')+'</div>' +
+      ((r.removedExactS && r.removedExactS.length) || (r.removedDerivedS && r.removedDerivedS.length)
+        ? '<details class="rm-details"><summary>查看剔除示例（各取前 12 个）</summary>' +
+          (r.removedExactS && r.removedExactS.length ? '<div class="rm-line"><b>直接重合：</b>'+r.removedExactS.map(esc).join('、')+'</div>' : '') +
+          (r.removedDerivedS && r.removedDerivedS.length ? '<div class="rm-line"><b>衍生剔除：</b>'+r.removedDerivedS.map(esc).join('、')+'</div>' : '') +
+          '</details>' : '') +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">' +
       '<button class="btn btn-primary" onclick="AppUI.englishTab(\'study\')">'+icon('play')+' 开始背诵（'+r.kept.length+' 词）</button>' +
       '<button class="btn" onclick="AppFilterUI.exportList()">'+icon('download')+' 导出词表</button>' +
@@ -3013,6 +3118,7 @@ const AppStudy = {
     const s = this.state;
     if(s.idx >= s.deck.length){
       this.clearSession();
+      AppData.autoBackup();
       box.innerHTML = '<div class="study-done"><div class="big">'+icon('checkCircle', 44)+'</div><h3>本轮学习完成</h3>' +
       '<p class="muted" role="status">本轮共学习 '+s.deck.length+' 个单词'+(s.requested && s.requested > s.deck.length ? '（申请 '+s.requested+' 个，词表仅剩 '+s.deck.length+' 个）' : '')+'：认识 '+s.marks.good+' 词，模糊 '+(s.marks.hard||0)+' 词，不认识 '+s.marks.again+' 词。评分已记录到学习记录。</p>' +
       '<div style="display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap"><button class="btn btn-primary" onclick="AppStudy.start()">再来一轮</button><button class="btn" onclick="AppUI.englishTab(\'record\')">查看学习记录</button><button class="btn" onclick="AppUI.englishTab(\'review\')">开始复习</button></div></div>';
@@ -3038,6 +3144,11 @@ const AppStudy = {
     const fdEl = document.getElementById('fc-def');
     if(fdEl) Dict.fillDef(e, fdEl);
     this.bindKeys();
+    const vst = AppAuth.data().settings;
+    if(vst && vst.autoSpeak && !s.revealed){
+      const curIdx = s.idx;
+      setTimeout(() => { if(AppStudy.state && AppStudy.state.idx === curIdx && !AppStudy.state.revealed) AppStudy.speak(); }, 180);
+    }
   },
   reveal(){
     if(!this.state) return;
@@ -3186,6 +3297,11 @@ const AppReview = {
     fillPh(e);
     const fdEl = document.getElementById('fc-def');
     if(fdEl) Dict.fillDef(e, fdEl);
+    const vst = AppAuth.data().settings;
+    if(vst && vst.autoSpeak && !s.revealed){
+      const curIdx = s.idx;
+      setTimeout(() => { if(AppReview.state && AppReview.state.idx === curIdx && !AppReview.state.revealed) AppReview.speak(); }, 180);
+    }
     document.onkeydown = e2 => {
       if(e2.key === ' '){ e2.preventDefault(); if(this.state && !this.state.revealed) this.reveal(); }
       else if(e2.key === '1') this.mark('again');
@@ -3463,6 +3579,8 @@ const AppSettings = {
     d.settings.autoScale = $('#set-autoscale').checked;
     d.settings.uiScale = clamp(parseInt($('#set-scale').value) || 100, 85, 150);
     d.settings.phon = $('#set-phon').checked;
+    d.settings.voice = $('#set-voice').value === 'en-GB' ? 'en-GB' : 'en-US';
+    d.settings.autoSpeak = $('#set-autospeak').checked;
     d.settings.autoOnline = $('#set-autoonline').checked;
     d.settings.deriv = $('#set-deriv').checked;
     d.settings.theme = $('#set-theme').value;
