@@ -817,6 +817,7 @@ li,td,th{text-wrap:normal}
     </div>
     <div class="auth-switch"><span id="auth-switch-tip">还没有账号？</span> <button id="auth-switch-btn" onclick="AppAuth.toggleMode()">注册新账号</button></div>
     <div class="guest-row"><button class="btn btn-sm" onclick="AppAuth.guest()">以试用模式进入</button></div>
+    <div id="cloud-badge" class="muted small" style="margin-top:10px;text-align:center"></div>
     <div class="feature-hint">账号数据保存在本机浏览器中，可在「设置」中导出备份；试用模式同样可用全部功能。</div>
     <noscript><div style="margin-top:14px;padding:12px;background:var(--warn-soft);border-radius:12px;font-size:13px;color:var(--warn)">当前浏览器禁用了 JavaScript，无法使用本应用。请在浏览器设置中开启 JavaScript 后刷新。</div></noscript>
   </div>
@@ -835,7 +836,7 @@ li,td,th{text-wrap:normal}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.7.2<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.7.3<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -959,7 +960,7 @@ li,td,th{text-wrap:normal}
               <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存外观</button>
             </div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.7.2</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.7.3</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用单文件离线优先设计：内置精简词表离线可用，联网后在「设置 → 词库中心」更新完整词表；账号数据走云端存储，同时支持本地自动备份。</div>
@@ -1345,21 +1346,32 @@ const AppAuth = {
     const u = $('#login-user').value.trim(), p = $('#login-pass').value;
     if(!u || !p) return this.err('请输入用户名和密码');
     const users = Store.get('users', {});
-    let rec = users[u] || null;
-    if(!rec && Supa.active()){
+    let rec = null;
+    const cloudMode = Supa.active();
+    let cloudDown = false;
+    if(cloudMode){
       try{
         const cloud = await Supa.findAccount(u);
         if(cloud) rec = { salt: cloud.salt, hash: cloud.hash, created: cloud.created_at ? Date.parse(cloud.created_at) : now() };
-      }catch(e){}
+        else rec = null;
+      }catch(e){
+        // 云端暂时不可达：允许用本机记录离线登录，但明确提示
+        cloudDown = true;
+        rec = users[u] || null;
+      }
+    } else {
+      rec = users[u] || null;
+    }
+    if(!rec){
+      return this.err(cloudMode && !cloudDown
+        ? '云端没有账号「'+u+'」（数据库已清空或该账号不在此站点）。本机旧记录不会自动上传；如需重新开始，请清除本站数据后注册新账号。'
+        : '用户名或密码不正确');
     }
     if(!rec || rec.hash !== hashPW(p, rec.salt)) return this.err('用户名或密码不正确');
-    if(!users[u] && rec){ users[u] = rec; Store.set('users', users); }
-    if(Supa.active()){
+    if(cloudMode && cloudDown) toast('云端暂时不可用，已使用本机记录登录', 'warn');
+    if(cloudMode && !cloudDown){
+      if(!users[u]){ users[u] = rec; Store.set('users', users); }
       try{
-        const cloud = await Supa.findAccount(u);
-        if(!cloud){
-          await Supa.insertAccount({ username: u, salt: rec.salt, hash: rec.hash });
-        }
         const cloudData = await Supa.loadData(u);
         const localData = Store.get('u.'+u, this.defaultData());
         if(cloudData){
@@ -1374,6 +1386,13 @@ const AppAuth = {
     }
     toast('登录成功');
     this.enter({ user: u, loginAt: now() });
+  },
+  staleLocal(){
+    // 云端账号已不存在（例如数据库被清空）：作废本机旧会话，回到登录页并说明
+    Store.remove('session');
+    Store.remove('users');
+    this.showAuth();
+    this.err('云端已无此账号（数据库可能已被清空）。本机旧登录已失效；请清除本站数据后重新注册，或导入备份恢复。');
   },
   guest(){
     toast('已进入试用模式，数据保存在本机浏览器');
@@ -1395,6 +1414,16 @@ const AppAuth = {
     $('#auth-switch-tip').textContent = login ? '还没有账号？' : '已有账号？';
     $('#auth-switch-btn').textContent = login ? '注册新账号' : '直接登录';
     $('#auth-err').style.display = 'none';
+    const badge = $('#cloud-badge');
+    if(badge){
+      if(Supa.active()){
+        badge.textContent = '已连接云端数据库 · 账号以云端为准';
+        badge.style.color = 'var(--accent)';
+      } else {
+        badge.textContent = '未连接云端（本地模式）· 请确认网址为 https://ppt10086.github.io/index-2/';
+        badge.style.color = 'var(--warn)';
+      }
+    }
   },
   err(msg){ const e = $('#auth-err'); e.textContent = msg; e.style.display = 'block'; }
 };
@@ -2309,7 +2338,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.7.2', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.7.3', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -2338,7 +2367,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'1.7.2', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'1.7.3', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -3918,7 +3947,7 @@ window.addEventListener('error', function(e){ showFatal((e.message || '未知错
 window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.reason && e.reason.message) || e.reason || '未知异步错误')); });
 
 /* ================= 启动 ================= */
-(function boot(){
+(async function boot(){
   try{
     if(!EMBEDDED || !EMBEDDED.cet4 || !EMBEDDED.primary || !EMBEDDED.hs || !EMBEDDED.middle){
       toast('内置词库数据缺失，正在尝试从网络补全词库…', 'warn');
@@ -3959,18 +3988,36 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
       }catch(e){}
     });
     WL.initIDB();
-    if(AppAuth.current()){
-      AppUI.init();
-      // 打开应用即把本地最新数据（含上次可能未上传的记录）补传到云端
-      Supa.onDataChanged();
-      Supa.pullMerge();
-      // 后台预载词库（内置/缓存，不联网）
-      WL.ensure('primary', {network:false}).then(() => WL.ensure('middle', {network:false})).then(() => WL.ensure('hs', {network:false})).then(() => WL.ensure('cet4', {network:false})).then(() => {
-        // 联网升级延后到空闲时段执行，避免打开网页瞬间抢占主线程
-        const upgrade = () => AppFilterUI.autoUpgradeOnline();
-        if(typeof requestIdleCallback === 'function') requestIdleCallback(upgrade, { timeout: 2000 });
-        else setTimeout(upgrade, 500);
-      }).catch(()=>{});
+    const bootUser = AppAuth.current();
+    if(bootUser){
+      const initApp = () => {
+        AppUI.init();
+        // 打开应用即把本地最新数据补传到云端，并拉取合并其他设备数据
+        Supa.onDataChanged();
+        Supa.pullMerge();
+        // 后台预载词库（内置/缓存，不联网）
+        WL.ensure('primary', {network:false}).then(() => WL.ensure('middle', {network:false})).then(() => WL.ensure('hs', {network:false})).then(() => WL.ensure('cet4', {network:false})).then(() => {
+          const upgrade = () => AppFilterUI.autoUpgradeOnline();
+          if(typeof requestIdleCallback === 'function') requestIdleCallback(upgrade, { timeout: 2000 });
+          else setTimeout(upgrade, 500);
+        }).catch(()=>{});
+      };
+      if(Supa.active() && bootUser.user !== '__guest__'){
+        try{
+          const acc = await Supa.findAccount(bootUser.user);
+          if(!acc){
+            // 云端账号已不存在（如数据库被清空）：作废本机旧会话，避免本地数据冒充云端
+            AppAuth.staleLocal();
+          } else {
+            initApp();
+          }
+        }catch(e){
+          // 云端暂时不可达：保留本机会话离线可用
+          initApp();
+        }
+      } else {
+        initApp();
+      }
     } else {
       AppAuth.showAuth();
     }
