@@ -836,7 +836,7 @@ li,td,th{text-wrap:normal}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.7.4<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.7.5<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -960,7 +960,7 @@ li,td,th{text-wrap:normal}
               <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存外观</button>
             </div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.7.4</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.7.5</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用单文件离线优先设计：内置精简词表离线可用，联网后在「设置 → 词库中心」更新完整词表；账号数据走云端存储，同时支持本地自动备份。</div>
@@ -1142,7 +1142,11 @@ const Supa = {
   },
   async loadData(username){
     const rows = await this.rest('/rest/v1/sl_data?username=eq.' + encodeURIComponent(username) + '&select=data');
-    return (Array.isArray(rows) && rows[0] && rows[0].data) ? rows[0].data : null;
+    if(Array.isArray(rows) && rows[0] && rows[0].data){
+      this._hadRemote = true;
+      return rows[0].data;
+    }
+    return null;
   },
   async saveData(username, data){
     await this.rest('/rest/v1/sl_data?on_conflict=username', {
@@ -1150,6 +1154,14 @@ const Supa = {
       headers: { 'Prefer': 'resolution=merge-duplicates' },
       body: { username: username, data: data, updated_at: new Date().toISOString() }
     });
+    this._hadRemote = true;
+  },
+  async deleteRemote(username){
+    if(!this.active()) return;
+    let ok = true;
+    try{ await this.rest('/rest/v1/sl_accounts?username=eq.' + encodeURIComponent(username), { method:'DELETE' }); }catch(e){ ok = false; }
+    try{ await this.rest('/rest/v1/sl_data?username=eq.' + encodeURIComponent(username), { method:'DELETE' }); }catch(e){ ok = false; }
+    if(ok) this._hadRemote = false;
   },
   _busy: false,
   _dirty: false,
@@ -1157,6 +1169,7 @@ const Supa = {
   _watchTimer: null,
   lastOk: null,
   lastErr: null,
+  _hadRemote: false,
   async _pump(){
     if(this._busy) return;
     this._busy = true;
@@ -1233,13 +1246,34 @@ const Supa = {
     if(!s || s.user === '__guest__') return;
     try{
       const cloud = await this.loadData(s.user);
-      if(!cloud) return;
+      if(!cloud){
+        // 之前云端确实有过数据、现在拉不到 → 说明账号被删除/清空：另一台设备的操作实时生效
+        if(this._hadRemote){
+          this._hadRemote = false;
+          AppAuth.staleLocal();
+        }
+        return;
+      }
       const local = AppAuth.data();
       const merged = mergeUserData(local, cloud);
       if(JSON.stringify(merged) !== JSON.stringify(local)){
         Store.set('u.'+s.user, merged);
         this._dirty = true;
         this._pump();
+        const resetChange = (local.allResetAt || 0) !== (merged.allResetAt || 0) ||
+          (local.wordResetAt || 0) !== (merged.wordResetAt || 0) ||
+          (local.allResetAt === undefined && merged.allResetAt !== undefined);
+        const busy = (typeof AppStudy !== 'undefined' && AppStudy.state) || (typeof AppReview !== 'undefined' && AppReview.state);
+        try{
+          if(!document.hidden && typeof AppUI !== 'undefined'){
+            if(resetChange && !busy){
+              // 其他设备执行了重置/清除：本机整页刷新以实时呈现
+              AppUI.init();
+            } else if(AppUI.page === 'dashboard' && !busy){
+              AppUI.renderDashboard();
+            }
+          }
+        }catch(e){}
       }
     }catch(e){}
   }
@@ -2208,6 +2242,14 @@ function deepClone(v){ return JSON.parse(JSON.stringify(v)); }
 function mergeUserData(local, cloud){
   const L = (local && typeof local === 'object') ? local : {};
   const C = (cloud && typeof cloud === 'object') ? cloud : {};
+  // 整体重置（恢复出厂 / 恢复备份）拥有最高优先级：谁最近重置过，就以谁的整份数据为准
+  const lAll = L.allResetAt || 0, cAll = C.allResetAt || 0;
+  if(lAll > cAll) return finalizeMerge(L, C);
+  if(cAll > lAll) return finalizeMerge(C, L);
+  // 仅清空学习记录时，以最近一次重置的一端为准（避免另一端把已清空的词合并回来）
+  const lW = L.wordResetAt || 0, cW = C.wordResetAt || 0;
+  if(lW > cW) return finalizeMerge(L, C);
+  if(cW > lW) return finalizeMerge(C, L);
   const out = deepClone(C);
   const ws = {};
   const Lw = L.wordState || {}, Cw = C.wordState || {};
@@ -2240,6 +2282,16 @@ function mergeUserData(local, cloud){
   if(newer.presets) out.presets = deepClone(newer.presets);
   if(newer.studySession) out.studySession = deepClone(newer.studySession);
   out.meta = { updated: Math.max(lu, cu, Date.now()) };
+  if(typeof SRS !== 'undefined' && SRS.countKnown) out.stats.totalKnown = SRS.countKnown(out);
+  return out;
+}
+function finalizeMerge(main, other){
+  const out = deepClone(main);
+  if(!out.meta || typeof out.meta !== 'object') out.meta = {};
+  out.meta.updated = Math.max((main.meta && main.meta.updated) || 0, (other && other.meta && other.meta.updated) || 0, Date.now());
+  out.stats = out.stats || {};
+  out.stats.dayLog = out.stats.dayLog || {};
+  out.stats.totalKnown = 0;
   if(typeof SRS !== 'undefined' && SRS.countKnown) out.stats.totalKnown = SRS.countKnown(out);
   return out;
 }
@@ -2338,7 +2390,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.7.4', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.7.5', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -2367,7 +2419,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'1.7.4', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'1.7.5', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -2391,6 +2443,7 @@ const AppData = {
       : Promise.resolve((() => { try{ return JSON.parse(localStorage.getItem('sl.backup.auto') || 'null'); }catch(e){ return null; } })());
     load.then(snap => {
       if(!snap || !snap.data){ toast('备份数据不可用', 'err'); return; }
+      snap.data.allResetAt = Date.now(); // 恢复备份视为权威整包，向其他设备同步
       Store.set('u.'+s.user, snap.data);
       WL.cache.clear();
       AppFilter.result = null;
@@ -3656,6 +3709,7 @@ const AppRecord = {
       if(this.scope === 'current' && listId !== currentTarget) continue;
       delete d.wordState[k];
     }
+    d.wordResetAt = Date.now(); // 清空记录实时同步到其他设备（不合并旧词回来）
     d.stats.totalKnown = 0;
     AppAuth.save(d);
     toast('学习记录已清空');
@@ -3683,11 +3737,9 @@ const AppBrowse = {
     const slice = entries.slice((this.page-1)*this.per, this.page*this.per);
     const d = AppAuth.data();
     const rows = slice.map(e => {
-      const known = SRS.isKnown(r.targetId, e.w);
       const c = d.wordState[SRS.key(r.targetId, e.w)];
-      const stTag = known
-        ? '<span class="tag tag-green">已掌握</span>'
-        : (c ? (c.due <= now() ? '<span class="tag tag-orange">待复习</span>' : '<span class="tag tag-blue">学习中</span>') : '');
+      const stage = c ? SRS.stageOf(c) : null;
+      const stTag = stage ? '<span class="tag '+stage.cls+'">'+stage.txt+'</span>' : '';
       const enc = encodeURIComponent(e.w);
       const def = defText(e, 80);
       return '<tr><td class="w">'+esc(e.w)+'</td><td class="ph">'+esc(e.ph||'')+'</td><td class="df"'+(def?'':' data-dw="'+esc(e.w)+'"')+'>'+(def?esc(def):'…')+'</td><td class="op"><button onclick="AppBrowse.detail(\''+enc+'\')">详情</button>'+(stTag?' '+stTag:'')+'</td></tr>';
@@ -3710,12 +3762,13 @@ const AppBrowse = {
     const entries = (WL.cache.get(r.targetId) || {}).entries || [];
     const e = entries.find(x => x.w === w) || { w, ph:'', def:'', phrases:[] };
     const d = AppAuth.data();
-    const known = SRS.isKnown(r.targetId, e.w);
+    const st = AppAuth.data().wordState[SRS.key(r.targetId, e.w)];
+    const stage = st ? SRS.stageOf(st) : { txt:'未学习', cls:'tag-blue' };
     const link = 'https://dict.youdao.com/result?word='+encodeURIComponent(e.w);
     openModal(
       '<button class="close" onclick="AppUI.closeModal()">×</button>' +
       '<div class="word-detail"><div class="wd">'+esc(e.w)+'</div>' +
-      '<div class="wmeta">'+(e.ph?'<span class="tag tag-blue">'+esc(e.ph)+'</span>':'<span class="tag tag-blue" id="wd-ph"></span>')+(known?'<span class="tag tag-green">已掌握</span>':'<span class="tag tag-orange">学习中</span>')+'</div>' +
+      '<div class="wmeta">'+(e.ph?'<span class="tag tag-blue">'+esc(e.ph)+'</span>':'<span class="tag tag-blue" id="wd-ph"></span>')+'<span class="tag '+stage.cls+'">'+stage.txt+'</span></div>' +
       (Array.isArray(e.def) && e.def.length ? '<div class="sec">释义</div><ul>'+e.def.map(([p,v]) => '<li>'+(p?'<b>'+esc(p)+'.</b> ':'')+esc(v)+'</li>').join('')+'</ul>' : (typeof e.def === 'string' && e.def ? '<div class="sec">释义</div><div class="muted">'+esc(e.def)+'</div>' : '<div class="sec">释义</div><div class="muted" id="wd-def">词库未收录释义，正在获取在线翻译…</div>')) +
       (Array.isArray(e.phrases) && e.phrases.length ? '<div class="sec">词组搭配</div><ul>'+e.phrases.slice(0,8).map(([p,v]) => '<li><b>'+esc(p)+'</b>'+(v?' · '+esc(v):'')+'</li>').join('')+'</ul>' : '') +
       '<div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap">' +
@@ -3834,6 +3887,7 @@ const AppSettings = {
       delete users[s.user];
       Store.set('users', users);
     }
+    if(Supa.active()) Supa.deleteRemote(s.user);
     Store.remove('u.'+s.user);
     Store.remove('session');
     AppAuth.showAuth();
@@ -3843,6 +3897,7 @@ const AppSettings = {
     if(prompt('危险操作：清空所有学习记录（已掌握、复习进度、连续天数）。\n输入「重置」确认：') !== '重置'){ toast('已取消', 'warn'); return; }
     const d = AppAuth.data();
     d.wordState = {};
+    d.wordResetAt = Date.now();
     d.stats = { created: now(), studyDays: 0, lastStudyDay: '', dayLog: {}, totalStudy: 0, totalKnown: 0, totalReview: 0 };
     AppAuth.save(d);
     toast('学习进度已重置');
@@ -3851,7 +3906,12 @@ const AppSettings = {
   resetAll(){
     if(prompt('危险操作：恢复出厂设置，将清除本账号的全部数据（词单、进度、方案、偏好）。\n输入「恢复出厂」确认：') !== '恢复出厂'){ toast('已取消', 'warn'); return; }
     const s = AppAuth.current();
-    if(s) Store.set('u.'+s.user, AppAuth.defaultData());
+    if(s){
+      const fresh = AppAuth.defaultData();
+      fresh.allResetAt = Date.now();
+      Store.set('u.'+s.user, fresh);
+      AppAuth.save(fresh);
+    }
     WL.cache.clear();
     AppFilter.result = null;
     toast('已恢复默认设置');
@@ -3984,6 +4044,12 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
       await new Promise(r => setTimeout(r, 0));
     }
     Supa.init();
+    // 多设备“实时”同步：前台每 5 秒拉一次云端合并；另一台设备的清除/重置/删号也会在几秒内生效
+    setInterval(() => {
+      if(document.hidden) return;
+      const cur = AppAuth.current();
+      if(cur && cur.user !== '__guest__') Supa.pullMerge();
+    }, 5000);
     // 浏览器前进/后退与直接访问 hash 路由
     window.addEventListener('hashchange', () => {
       try{
