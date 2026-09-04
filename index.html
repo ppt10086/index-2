@@ -835,7 +835,7 @@ li,td,th{text-wrap:normal}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.7.0<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.7.1<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -930,6 +930,7 @@ li,td,th{text-wrap:normal}
           <section class="set-pane" data-pane="account">
             <div class="card-title"><span class="dot"></span>账户</div>
             <div class="kv"><span class="kk">当前账号</span><span class="vv" id="set-user">—</span></div>
+            <div class="kv"><span class="kk">云端实时同步</span><span class="vv" id="sync-status">自动实时上传中</span></div>
             <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap">
               <button class="btn btn-sm btn-danger" data-icon="logout" onclick="AppAuth.logout()">退出登录</button>
             </div>
@@ -958,7 +959,7 @@ li,td,th{text-wrap:normal}
               <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存外观</button>
             </div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.7.0</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.7.1</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用单文件离线优先设计：内置精简词表离线可用，联网后在「设置 → 词库中心」更新完整词表；账号数据走云端存储，同时支持本地自动备份。</div>
@@ -1152,6 +1153,9 @@ const Supa = {
   _busy: false,
   _dirty: false,
   _retryTimer: null,
+  _watchTimer: null,
+  lastOk: null,
+  lastErr: null,
   async _pump(){
     if(this._busy) return;
     this._busy = true;
@@ -1162,14 +1166,21 @@ const Supa = {
         if(!s || s.user === '__guest__') break;
         try{
           await this.saveData(s.user, AppAuth.data());
+          this.lastOk = Date.now();
+          this._syncUI();
           if(this._retryTimer){ clearTimeout(this._retryTimer); this._retryTimer = null; }
         }catch(e){
+          this.lastErr = Date.now();
+          this._syncUI();
           // 上传失败时保留待同步标记，稍后自动重试
           this._dirty = true;
-          if(!this._retryTimer) this._retryTimer = setTimeout(() => { this._retryTimer = null; this._pump(); }, 8000);
+          if(!this._retryTimer) this._retryTimer = setTimeout(() => { this._retryTimer = null; this._pump(); }, 4000);
           break;
         }
       }while(this._dirty);
+      if(this._dirty && !this._watchTimer){
+        this._watchTimer = setTimeout(() => { this._watchTimer = null; this._pump(); }, 1500);
+      }
     }finally{
       this._busy = false;
     }
@@ -1181,6 +1192,20 @@ const Supa = {
     // 每个必要动作完成后立即上传；上传中产生的新变化合并进下一轮，保证最终一致
     this._dirty = true;
     this._pump();
+  },
+  _syncUI(){
+    try{
+      const el = document.getElementById('sync-status');
+      if(!el) return;
+      const ok = this.lastOk || 0, err = this.lastErr || 0;
+      if(ok >= err && ok){
+        el.textContent = '已实时同步 · ' + new Date(ok).toLocaleTimeString();
+      } else if(err > ok){
+        el.textContent = '同步失败，将自动重试';
+      } else {
+        el.textContent = '自动实时上传中';
+      }
+    }catch(e){}
   },
   async flushKeepalive(){
     if(!this.active()) return;
@@ -1255,7 +1280,8 @@ const AppAuth = {
     }
     Store.set('u.'+s.user, d);
     if(!silent) Cloud.onChanged();
-    if(!silent) Supa.onDataChanged();
+    // 任何数据变化都实时上传云端（静默写入也上传，避免遗漏）
+    Supa.onDataChanged();
   },
   showAuth(){
     $('#view-auth').hidden = false;
@@ -2223,7 +2249,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.7.0', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.7.1', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -2252,7 +2278,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'1.7.0', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'1.7.1', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -2593,6 +2619,15 @@ const AppUI = {
     $$('.set-pane').forEach(p => { p.hidden = p.dataset.pane !== cat; });
     const libSec = document.getElementById('page-library');
     if(libSec) libSec.hidden = cat !== 'library';
+    const syncEl = document.getElementById('sync-status');
+    if(syncEl){
+      const cur = AppAuth.current();
+      if(!cur || cur.user === '__guest__' || !Supa.active()){
+        syncEl.textContent = '登录账号后自动实时上传';
+      } else {
+        Supa._syncUI();
+      }
+    }
     if(cat === 'library'){
       try{ AppLibrary.render(); }catch(e){}
     }
@@ -3843,10 +3878,12 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
     if(document.readyState === 'loading') window.addEventListener('DOMContentLoaded', hideSiteDBUI);
     // 离开页面/切后台时，把最新学习进度立即上传云端（防打断丢失）
     function flushNow(){
+      Supa.onDataChanged();
       Supa.flushKeepalive();
       Cloud.flush && Cloud.flush();
     }
     window.addEventListener('pagehide', flushNow);
+    window.addEventListener('beforeunload', () => Supa.flushKeepalive());
     document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') flushNow(); });
     // 浏览器前进/后退与直接访问 hash 路由
     window.addEventListener('hashchange', () => {
@@ -3861,6 +3898,8 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
     WL.initIDB();
     if(AppAuth.current()){
       AppUI.init();
+      // 打开应用即把本地最新数据（含上次可能未上传的记录）补传到云端
+      Supa.onDataChanged();
       // 后台预载词库（内置/缓存，不联网）
       WL.ensure('primary', {network:false}).then(() => WL.ensure('middle', {network:false})).then(() => WL.ensure('hs', {network:false})).then(() => WL.ensure('cet4', {network:false})).then(() => {
         // 联网升级延后到空闲时段执行，避免打开网页瞬间抢占主线程
