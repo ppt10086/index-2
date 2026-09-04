@@ -835,7 +835,7 @@ li,td,th{text-wrap:normal}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.7.1<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.7.2<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -959,7 +959,7 @@ li,td,th{text-wrap:normal}
               <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存外观</button>
             </div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.7.1</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.7.2</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用单文件离线优先设计：内置精简词表离线可用，联网后在「设置 → 词库中心」更新完整词表；账号数据走云端存储，同时支持本地自动备份。</div>
@@ -1224,6 +1224,23 @@ const Supa = {
         keepalive: true
       });
     }catch(e){}
+  },
+  async pullMerge(){
+    // 每次进入/恢复时拉取云端，与本地做记录级合并并回传，保证多设备收敛一致
+    if(!this.active()) return;
+    const s = AppAuth.current();
+    if(!s || s.user === '__guest__') return;
+    try{
+      const cloud = await this.loadData(s.user);
+      if(!cloud) return;
+      const local = AppAuth.data();
+      const merged = mergeUserData(local, cloud);
+      if(JSON.stringify(merged) !== JSON.stringify(local)){
+        Store.set('u.'+s.user, merged);
+        this._dirty = true;
+        this._pump();
+      }
+    }catch(e){}
   }
 };
 
@@ -1294,6 +1311,11 @@ const AppAuth = {
     $('#view-auth').hidden = true;
     $('#view-main').hidden = false;
     AppUI.init();
+    if(session.user !== '__guest__'){
+      // 登录/注册进入后立即与云端做记录级合并，保证多设备一致
+      Supa.onDataChanged();
+      Supa.pullMerge();
+    }
     if(Cloud.enabled()) Cloud.syncOnce(false);
   },
   async register(){
@@ -1341,15 +1363,10 @@ const AppAuth = {
         const cloudData = await Supa.loadData(u);
         const localData = Store.get('u.'+u, this.defaultData());
         if(cloudData){
-          const cu = (cloudData.meta && cloudData.meta.updated) || 0;
-          const lu = (localData.meta && localData.meta.updated) || 0;
-          if(cu >= lu){
-            // 云端较新（或一致）：采用云端数据
-            Store.set('u.'+u, cloudData);
-          } else {
-            // 本地较新（例如刚被打断的学习进度尚未上传完）：保留本地并回传云端
-            await Supa.saveData(u, localData).catch(() => {});
-          }
+          // 记录级合并：两台设备的数据都保留，冲突以最近操作为准，然后回传统一
+          const merged = mergeUserData(localData, cloudData);
+          Store.set('u.'+u, merged);
+          await Supa.saveData(u, merged).catch(() => {});
         } else {
           await Supa.saveData(u, localData).catch(() => {});
         }
@@ -2155,6 +2172,49 @@ function calcStreak(stats){
   return streak;
 }
 
+/* 跨设备数据合并：两台设备的数据按“记录级并集”合并，不再整包覆盖。
+   学习记录(wordState/dayLog)取并集且单条冲突以“最近操作”为准；
+   设置/筛选/学习会话以 meta.updated 较新的一侧为准。 */
+function deepClone(v){ return JSON.parse(JSON.stringify(v)); }
+function mergeUserData(local, cloud){
+  const L = (local && typeof local === 'object') ? local : {};
+  const C = (cloud && typeof cloud === 'object') ? cloud : {};
+  const out = deepClone(C);
+  const ws = {};
+  const Lw = L.wordState || {}, Cw = C.wordState || {};
+  for(const k of new Set(Object.keys(Cw).concat(Object.keys(Lw)))){
+    const a = Cw[k], b = Lw[k];
+    if(a && b) ws[k] = (b.last || 0) >= (a.last || 0) ? deepClone(b) : deepClone(a);
+    else ws[k] = deepClone(a || b);
+  }
+  out.wordState = ws;
+  const dl = {};
+  const Ld = (L.stats && L.stats.dayLog) || {}, Cd = (C.stats && C.stats.dayLog) || {};
+  for(const k of new Set(Object.keys(Cd).concat(Object.keys(Ld)))){
+    dl[k] = Math.max(Cd[k] || 0, Ld[k] || 0);
+  }
+  const cs = C.stats || {}, ls = L.stats || {};
+  const dayKeys = Object.keys(dl).filter(k => dl[k] > 0);
+  out.stats = {
+    created: Math.min(cs.created || Date.now(), ls.created || Date.now()),
+    studyDays: dayKeys.length,
+    lastStudyDay: dayKeys.slice().sort().pop() || (String(cs.lastStudyDay || '').localeCompare(String(ls.lastStudyDay || '')) >= 0 ? cs.lastStudyDay || '' : ls.lastStudyDay || ''),
+    dayLog: dl,
+    totalStudy: Math.max(cs.totalStudy || 0, ls.totalStudy || 0),
+    totalKnown: 0,
+    totalReview: Math.max(cs.totalReview || 0, ls.totalReview || 0)
+  };
+  const lu = (L.meta && L.meta.updated) || 0, cu = (C.meta && C.meta.updated) || 0;
+  const newer = lu >= cu ? L : C;
+  if(newer.settings) out.settings = deepClone(newer.settings);
+  if(newer.filter) out.filter = deepClone(newer.filter);
+  if(newer.presets) out.presets = deepClone(newer.presets);
+  if(newer.studySession) out.studySession = deepClone(newer.studySession);
+  out.meta = { updated: Math.max(lu, cu, Date.now()) };
+  if(typeof SRS !== 'undefined' && SRS.countKnown) out.stats.totalKnown = SRS.countKnown(out);
+  return out;
+}
+
 /* 单词发音（speechSynthesis，失败静默降级） */
 function speakWord(w){
   try{
@@ -2249,7 +2309,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.7.1', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.7.2', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -2278,7 +2338,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'1.7.1', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'1.7.2', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -3884,7 +3944,10 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
     }
     window.addEventListener('pagehide', flushNow);
     window.addEventListener('beforeunload', () => Supa.flushKeepalive());
-    document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') flushNow(); });
+    document.addEventListener('visibilitychange', () => {
+      if(document.visibilityState === 'hidden') flushNow();
+      else Supa.pullMerge();
+    });
     // 浏览器前进/后退与直接访问 hash 路由
     window.addEventListener('hashchange', () => {
       try{
@@ -3900,6 +3963,7 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
       AppUI.init();
       // 打开应用即把本地最新数据（含上次可能未上传的记录）补传到云端
       Supa.onDataChanged();
+      Supa.pullMerge();
       // 后台预载词库（内置/缓存，不联网）
       WL.ensure('primary', {network:false}).then(() => WL.ensure('middle', {network:false})).then(() => WL.ensure('hs', {network:false})).then(() => WL.ensure('cet4', {network:false})).then(() => {
         // 联网升级延后到空闲时段执行，避免打开网页瞬间抢占主线程
