@@ -729,6 +729,57 @@ li,td,th{text-wrap:normal}
 .rm-line b{color:var(--text)}
 @media (max-width:480px){ .wk{gap:8px} .wk-col span{font-size:9.5px} }
 
+/* ============ UI v7 · 交互重构 ============ */
+.fc-ph:empty{display:none}
+
+/* 手机端背诵顶部栏目：固定、不可横向滑动 */
+@media (max-width:860px){
+  #english-tabs{position:sticky; top:0; z-index:130; flex-wrap:nowrap; overflow-x:hidden;
+    justify-content:stretch; border-radius:0 0 16px 16px; margin:-4px -15px 18px; padding:7px 8px;
+    background:var(--glass-strong); border-left:0; border-right:0; border-top:0;
+    -webkit-backdrop-filter:none; backdrop-filter:none; box-shadow:0 6px 18px -10px rgba(34,27,56,.28)}
+  #english-tabs button{flex:1 1 0; min-width:0; padding:9px 3px; font-size:12px; white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis; border-radius:11px}
+  #english-tabs button .ico-svg{width:14px; height:14px; flex-shrink:0}
+}
+
+/* 学习记录：手机端由表格改为纵向信息卡，不再需要横向滚动 */
+@media (max-width:720px){
+  #tab-record .table-scroll{border:0}
+  #tab-record .table-scroll .wlist{min-width:0}
+  #tab-record .wlist thead{display:none}
+  #tab-record .wlist tr{display:block; padding:4px 2px 10px; border-top:1px solid var(--line)}
+  #tab-record .wlist td{display:flex; justify-content:space-between; align-items:flex-start; gap:14px;
+    padding:5px 2px; border:0; font-size:13px; text-align:left}
+  #tab-record .wlist td::before{content:attr(data-l); flex-shrink:0; width:84px;
+    color:var(--muted); font-size:11.5px; font-weight:700; padding-top:2px}
+  #tab-record .wlist td .tag{white-space:nowrap}
+  #tab-record .wlist .op{justify-content:flex-start; flex-wrap:wrap}
+  #tab-record .wlist .op::before{width:84px}
+  #tab-record .wlist .df{max-width:none}
+  #tab-record .wlist tr:hover td{background:transparent}
+}
+
+/* 设置页：iOS 风格二级目录 */
+.set-layout{display:grid; grid-template-columns:216px minmax(0,1fr); gap:34px; align-items:start}
+.set-nav{display:flex; flex-direction:column; gap:6px; position:sticky; top:20px; padding:4px 0}
+.set-cat{display:flex; align-items:center; justify-content:space-between; width:100%; text-align:left;
+  padding:11px 15px; border-radius:13px; font-size:14px; font-weight:650; color:var(--muted);
+  transition:background-color var(--dur) var(--ease), color var(--dur) var(--ease)}
+.set-cat::after{content:""; width:7px; height:7px; border-right:2px solid currentColor; border-top:2px solid currentColor;
+  transform:rotate(45deg); opacity:.55; transition:opacity var(--dur) var(--ease)}
+.set-cat:hover{background:var(--panel2); color:var(--text)}
+.set-cat.active{background:var(--primary-soft); color:var(--primary)}
+.set-panes{min-width:0}
+.set-pane{padding:2px 0 6px}
+.danger-zone{border-top:1px dashed rgba(194,54,54,.35); padding-top:4px; margin-top:8px}
+@media (max-width:860px){
+  .set-layout{grid-template-columns:1fr; gap:16px}
+  .set-nav{flex-direction:row; flex-wrap:wrap; position:static; gap:6px; padding:0}
+  .set-cat{width:auto; padding:8px 13px; font-size:13px}
+  .set-cat::after{display:none}
+}
+
 /* 引导内选项遵循“无框化”：列表行 + 细分隔线，不用独立盒子 */
 .ob-opts{gap:0}
 .ob-opt{border:0; border-radius:0; background:transparent; padding:13px 12px}
@@ -778,14 +829,13 @@ li,td,th{text-wrap:normal}
     <button class="nav-btn active" data-page="dashboard" onclick="AppUI.go('dashboard')"><span class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>概览</button>
     <button class="nav-btn" data-page="english" onclick="AppUI.go('english')"><span class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>英语学习</button>
     <button class="nav-btn" data-page="math" onclick="AppUI.go('math')"><span class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg></span>数学<span class="soon-badge">规划中</span></button>
-    <button class="nav-btn" data-page="library" onclick="AppUI.go('library')"><span class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg></span>词库中心</button>
     <button class="nav-btn" data-page="settings" onclick="AppUI.go('settings')"><span class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>设置</button>
     <div class="nav-sep"></div>
     <div class="side-user">
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.6.1<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.7.0<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -868,68 +918,73 @@ li,td,th{text-wrap:normal}
     <!-- 设置 -->
     <section id="page-settings" hidden>
       <div class="topbar"><div><h1>设置</h1><div class="sub">账号、学习偏好与数据管理</div></div></div>
-      <div class="grid grid-2">
-        <div class="card">
-          <div class="card-title"><span class="dot"></span>账号</div>
-          <div class="kv"><span class="kk">当前账号</span><span class="vv" id="set-user">—</span></div>
-          <div class="kv"><span class="kk">数据位置</span><span class="vv">本机浏览器</span></div>
-          <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap">
-            <button class="btn btn-sm" data-icon="download" onclick="AppSettings.exportData()">导出数据备份</button>
-            <button class="btn btn-sm" data-icon="upload" onclick="AppSettings.importData()">导入备份</button>
-            <button class="btn btn-sm" data-icon="refresh" onclick="AppData.restoreAuto()">恢复自动备份</button>
-            <button class="btn btn-sm btn-danger" data-icon="trash" onclick="AppSettings.deleteAccount()">删除账号</button>
-            <button class="btn btn-sm btn-danger" data-icon="logout" onclick="AppAuth.logout()">退出登录</button>
-          </div>
-          <div class="kv" style="margin-top:12px"><span class="kk">最近自动备份</span><span class="vv" id="auto-back-info">—</span></div>
-          <input type="file" id="import-file" accept=".json" hidden onchange="AppSettings.onImport(event)">
+      <div class="set-layout">
+        <div class="set-nav" role="tablist" aria-label="设置分类">
+          <button class="set-cat active" data-cat="account" onclick="AppSettings.cat('account')">账户</button>
+          <button class="set-cat" data-cat="study" onclick="AppSettings.cat('study')">学习偏好</button>
+          <button class="set-cat" data-cat="appearance" onclick="AppSettings.cat('appearance')">外观与关于</button>
+          <button class="set-cat" data-cat="data" onclick="AppSettings.cat('data')">数据与备份</button>
+          <button class="set-cat" data-cat="library" onclick="AppSettings.cat('library')">词库中心</button>
         </div>
-        <div class="card">
-          <div class="card-title"><span class="dot"></span>学习偏好</div>
-          <div class="kv"><span class="kk">每日目标词数</span><span class="vv"><input type="number" id="set-daily" min="5" max="200" style="width:90px; text-align:center"></span></div>
-          <div class="kv"><span class="kk">单次学习词数</span><span class="vv"><select id="set-study-mode" style="width:150px"><option value="daily">每日目标</option><option value="fixed">自定义数量</option><option value="all">全部剩余</option></select></span></div>
-          <div class="kv" id="set-fixed-row"><span class="kk">自定义数量</span><span class="vv"><input type="number" id="set-study-fixed" min="1" max="500" style="width:90px; text-align:center"></span></div>
-          <div class="kv"><span class="kk">学习顺序</span><span class="vv"><select id="set-study-order" style="width:150px"><option value="random">随机</option><option value="alpha">按字母顺序</option></select></span></div>
-          <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
-          <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
-          <div class="kv"><span class="kk">显示音标</span><span class="vv"><label class="switch"><input type="checkbox" id="set-phon"><span class="sl"></span></label></span></div>
-          <div class="kv"><span class="kk">发音口音</span><span class="vv"><select id="set-voice" style="width:150px"><option value="en-US">美音</option><option value="en-GB">英音</option></select></span></div>
-          <div class="kv"><span class="kk">翻卡自动朗读</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autospeak"><span class="sl"></span></label></span></div>
-          <div class="kv"><span class="kk">联网自动用在线词库</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoonline"><span class="sl"></span></label></span></div>
-          <div class="kv"><span class="kk">默认剔除衍生词</span><span class="vv"><label class="switch"><input type="checkbox" id="set-deriv"><span class="sl"></span></label></span></div>
-          <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div>
-          <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap">
-            <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存偏好</button>
-            <button class="btn btn-sm btn-danger" data-icon="refresh" onclick="AppSettings.resetProgress()">重置学习进度</button>
-            <button class="btn btn-sm btn-danger" data-icon="settings" onclick="AppSettings.resetAll()">恢复出厂设置</button>
-          </div>
+        <div class="set-panes">
+          <section class="set-pane" data-pane="account">
+            <div class="card-title"><span class="dot"></span>账户</div>
+            <div class="kv"><span class="kk">当前账号</span><span class="vv" id="set-user">—</span></div>
+            <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap">
+              <button class="btn btn-sm btn-danger" data-icon="logout" onclick="AppAuth.logout()">退出登录</button>
+            </div>
+          </section>
+          <section class="set-pane" data-pane="study" hidden>
+            <div class="card-title"><span class="dot"></span>学习与背诵</div>
+            <div class="kv"><span class="kk">每日目标词数</span><span class="vv"><input type="number" id="set-daily" min="5" max="200" style="width:90px; text-align:center"></span></div>
+            <div class="kv"><span class="kk">单次学习词数</span><span class="vv"><select id="set-study-mode" style="width:150px"><option value="daily">每日目标</option><option value="fixed">自定义数量</option><option value="all">全部剩余</option></select></span></div>
+            <div class="kv" id="set-fixed-row"><span class="kk">自定义数量</span><span class="vv"><input type="number" id="set-study-fixed" min="1" max="500" style="width:90px; text-align:center"></span></div>
+            <div class="kv"><span class="kk">学习顺序</span><span class="vv"><select id="set-study-order" style="width:150px"><option value="random">随机</option><option value="alpha">按字母顺序</option></select></span></div>
+            <div class="kv"><span class="kk">显示音标</span><span class="vv"><label class="switch"><input type="checkbox" id="set-phon"><span class="sl"></span></label></span></div>
+            <div class="kv"><span class="kk">发音口音</span><span class="vv"><select id="set-voice" style="width:150px"><option value="en-US">美音</option><option value="en-GB">英音</option></select></span></div>
+            <div class="kv"><span class="kk">翻卡自动朗读</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autospeak"><span class="sl"></span></label></span></div>
+            <div class="kv"><span class="kk">联网自动用在线词库</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoonline"><span class="sl"></span></label></span></div>
+            <div class="kv"><span class="kk">默认剔除衍生词</span><span class="vv"><label class="switch"><input type="checkbox" id="set-deriv"><span class="sl"></span></label></span></div>
+            <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap">
+              <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存偏好</button>
+            </div>
+          </section>
+          <section class="set-pane" data-pane="appearance" hidden>
+            <div class="card-title"><span class="dot"></span>外观与关于</div>
+            <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
+            <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
+            <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div>
+            <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap">
+              <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存外观</button>
+            </div>
+            <div class="divider"></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.7.0</span></div>
+            <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
+            <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
+            <div class="note-box" style="margin-top:14px">本系统采用单文件离线优先设计：内置精简词表离线可用，联网后在「设置 → 词库中心」更新完整词表；账号数据走云端存储，同时支持本地自动备份。</div>
+          </section>
+          <section class="set-pane" data-pane="data" hidden>
+            <div class="card-title"><span class="dot"></span>数据与备份</div>
+            <div class="kv"><span class="kk">最近自动备份</span><span class="vv" id="auto-back-info">—</span></div>
+            <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap">
+              <button class="btn btn-sm" data-icon="download" onclick="AppSettings.exportData()">导出数据备份</button>
+              <button class="btn btn-sm" data-icon="upload" onclick="AppSettings.importData()">导入备份</button>
+              <button class="btn btn-sm" data-icon="refresh" onclick="AppData.restoreAuto()">恢复自动备份</button>
+            </div>
+            <input type="file" id="import-file" accept=".json" hidden onchange="AppSettings.onImport(event)">
+            <div class="divider"></div>
+            <div class="danger-zone">
+              <div class="card-title"><span class="dot" style="background:var(--danger)"></span>危险区</div>
+              <p class="muted" style="margin-bottom:12px">以下操作不可直接撤销，均需二次输入确认。</p>
+              <div style="display:flex; gap:8px; flex-wrap:wrap">
+                <button class="btn btn-sm btn-danger" data-icon="refresh" onclick="AppSettings.resetProgress()">重置学习进度</button>
+                <button class="btn btn-sm btn-danger" data-icon="settings" onclick="AppSettings.resetAll()">恢复出厂设置</button>
+                <button class="btn btn-sm btn-danger" data-icon="trash" onclick="AppSettings.deleteAccount()">删除账号</button>
+              </div>
+            </div>
+          </section>
+          <section class="set-pane" data-pane="library" id="set-pane-library" hidden></section>
         </div>
-      </div>
-      <div class="card" style="margin-top:16px">
-        <div class="card-title"><span class="dot" style="background:var(--primary)"></span>云同步</div>
-        <div id="cloud-status" class="muted" style="font-size:13.5px;margin-bottom:12px"></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-sm btn-primary" id="cloud-enable" data-icon="cloud" onclick="AppSettings.cloudEnable()">开启云同步</button>
-          <button class="btn btn-sm" id="cloud-push" data-icon="upload" onclick="AppSettings.cloudPush()">立即上传</button>
-          <button class="btn btn-sm" id="cloud-pull" data-icon="download" onclick="AppSettings.cloudPull()">从云端恢复</button>
-          <button class="btn btn-sm btn-danger" id="cloud-disable" data-icon="x" onclick="AppSettings.cloudDisable()">关闭云同步</button>
-        </div>
-        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <span class="muted" style="font-size:12.5px">同步服务地址（可选）：</span>
-          <input id="cloud-bin" placeholder="默认使用当前网站的数据服务" style="width:300px">
-          <button class="btn btn-sm" data-icon="save" onclick="AppSettings.cloudSetBin()">保存</button>
-        </div>
-        <div class="note-box" style="margin-top:12px">说明：开启后，学习数据（词表、进度、设置）会自动上传到当前网站的数据服务并随账号恢复。网站部署版默认接入云端数据库，数据不再依赖浏览器缓存或本机程序；本机版默认使用本地数据服务。建议定期在「账号」中导出备份。</div>
-      </div>
-      <div class="card">
-        <div class="card-title"><span class="dot" style="background:var(--accent)"></span>关于与扩展</div>
-        <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.6.1</span></div>
-        <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
-        <div class="kv"><span class="kk">数据源</span><span class="vv">KyleBing / mahavivo 开源词库</span></div>
-        <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
-        <div class="note-box" style="margin-top:14px">
-          <b>模块扩展说明：</b>系统按模块化方式组织，新增科目只需在模块清单中登记，即可接入导航与学习概览页；数据存储与词库更新机制对所有模块通用，后续科目可在此基础上直接开发。
-        </div>
-        <div class="small muted">本系统采用单文件离线优先设计：内置精简词表保证离线可用，联网后可在词库中心更新完整词表并缓存；账号数据保存在本机，建议定期导出备份。</div>
       </div>
     </section>
   </main>
@@ -939,7 +994,6 @@ li,td,th{text-wrap:normal}
   <button class="bnav-btn active" data-page="dashboard" onclick="AppUI.go('dashboard')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>概览</button>
   <button class="bnav-btn" data-page="english" onclick="AppUI.go('english')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>英语</button>
   <button class="bnav-btn" data-page="math" onclick="AppUI.go('math')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg></span>数学</button>
-  <button class="bnav-btn" data-page="library" onclick="AppUI.go('library')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg></span>词库</button>
   <button class="bnav-btn" data-page="settings" onclick="AppUI.go('settings')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>设置</button>
 </nav>
 
@@ -2001,7 +2055,8 @@ const SRS = {
     if(level === 'hard'){ cur.s = 'learning'; cur.i = Math.max(0, cur.i - 1); cur.due = now() + DAY; }
     if(level === 'good'){
       cur.i = Math.min(cur.i + 1, this.intervals.length - 1);
-      cur.s = cur.i >= 2 ? 'known' : 'learning';
+      // 完成整条遗忘曲线（到达最后一级间隔）才计为已掌握，其余为学习中
+      cur.s = cur.i >= this.intervals.length - 1 ? 'known' : 'learning';
       cur.due = now() + this.intervals[cur.i] * DAY;
     }
     cur.reps++; cur.last = now();
@@ -2013,19 +2068,33 @@ const SRS = {
       if(d.stats.lastStudyDay) d.stats.studyDays++;
       d.stats.lastStudyDay = today;
     }
-    d.stats.dayLog = d.stats.dayLog || {};
-    d.stats.dayLog[today] = (d.stats.dayLog[today] || 0) + 1;
+    // 进度按“认识”计：不认识/模糊的重复点击不累计（第 9 项）
+    if(level === 'good'){
+      d.stats.dayLog = d.stats.dayLog || {};
+      d.stats.dayLog[today] = (d.stats.dayLog[today] || 0) + 1;
+    }
     AppAuth.save(d);
     return cur;
   },
+  isDone(c){
+    return !!(c && c.s === 'known' && (c.i || 0) >= this.intervals.length - 1);
+  },
   countKnown(d){
     let n = 0;
-    for(const k in d.wordState){ if(d.wordState[k].s === 'known') n++; }
+    for(const k in d.wordState){ if(this.isDone(d.wordState[k])) n++; }
     return n;
   },
   isKnown(listId, w){
     const c = this.get(listId, w);
-    return !!(c && c.s === 'known');
+    return this.isDone(c);
+  },
+  stageOf(c){
+    if(!c) return { txt:'未学习', cls:'tag-blue' };
+    if(this.isDone(c)) return { txt:'已掌握', cls:'tag-green' };
+    const i = c.i || 0;
+    if(i === 0) return { txt:'不认识', cls:'tag-red' };
+    if(i === 1) return { txt:'待复习', cls:'tag-orange' };
+    return { txt:'学习中', cls:'tag-blue' };
   },
   dueCount(listId, entries){
     const d = AppAuth.data();
@@ -2033,7 +2102,7 @@ const SRS = {
     let n = 0;
     for(const e of entries){
       const c = d.wordState[this.key(listId, e.w)];
-      if(c && c.s !== 'known' && c.due <= t) n++;
+      if(c && !this.isDone(c) && c.due <= t) n++;
     }
     return n;
   }
@@ -2085,6 +2154,15 @@ function speakWord(w){
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(u);
   }catch(e){}
+}
+/* 长单词不换行，按长度缩小字号（第 10 项） */
+function fcFontSize(w){
+  const len = String(w || '').length;
+  const base = (typeof window !== 'undefined' && window.innerWidth <= 720) ? 30 : 42;
+  if(len > 26) return 24;
+  if(len > 20) return 27;
+  if(len > 14) return Math.min(base - 6, 34);
+  return base;
 }
 
 /* ================= 筛选引擎 ================= */
@@ -2145,7 +2223,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.6.1', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.7.0', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -2174,7 +2252,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'1.6.1', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'1.7.0', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -2299,7 +2377,8 @@ const AppUI = {
     try{
       const raw = (typeof location !== 'undefined' && location.hash) ? location.hash : '';
       const h = raw.replace(/^#\/?/, '');
-      if(['dashboard','english','math','library','settings'].indexOf(h) >= 0) this.page = h;
+      if(h === 'library'){ AppSettings.catName = 'library'; AppSettings._keepCat = true; this.page = 'settings'; }
+      else if(['dashboard','english','math','settings'].indexOf(h) >= 0) this.page = h;
     }catch(e){}
     const s = AppAuth.current();
     if(!s){ AppAuth.showAuth(); return; }
@@ -2320,8 +2399,14 @@ const AppUI = {
     $('#set-deriv').checked = AppAuth.data().settings.deriv;
     $('#set-theme').value = AppAuth.data().settings.theme;
     $('#set-modcount').textContent = Modules.registry.length;
+    this.mountLibraryPane();
     try{ this.go(this.page); }catch(e){ showFatal(e && e.message ? e.message : String(e)); }
     this.maybeOnboard();
+  },
+  mountLibraryPane(){
+    const pane = document.getElementById('set-pane-library');
+    const sec = document.getElementById('page-library');
+    if(pane && sec && sec.parentNode !== pane) pane.appendChild(sec);
   },
   decorate(){
     // 静态按钮图标（有限装饰）
@@ -2348,11 +2433,14 @@ const AppUI = {
     setTimeout(() => Onboarding.open(), 350);
   },
   go(page, fromHash){
+    if(page === 'library'){ AppSettings.catName = 'library'; AppSettings._keepCat = true; page = 'settings'; }
+    if(page === 'settings' && !AppSettings._keepCat) AppSettings.catName = 'account';
+    AppSettings._keepCat = false;
     this.page = page;
     document.onkeydown = null;
     $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
     $$('.bnav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
-    ['dashboard','english','math','library','settings'].forEach(p => {
+    ['dashboard','english','math','settings'].forEach(p => {
       $('#page-'+p).hidden = p !== page;
     });
     if(page === 'dashboard') this.renderDashboard();
@@ -2415,14 +2503,11 @@ const AppUI = {
       return n;
     })();
     const totalWords = WL.cache.size ? Array.from(WL.cache.values()).reduce((s,v)=>s+(v.entries?v.entries.length:0),0) : 0;
-    const dayStart = new Date(); dayStart.setHours(0,0,0,0);
-    let todayMarks = 0;
     let lastTs = 0;
-    for(const k in d.wordState){ if(d.wordState[k].last >= dayStart.getTime()) todayMarks++; }
     for(const k in d.wordState){ const v = d.wordState[k]; if(v.last > lastTs) lastTs = v.last; }
+    const todayMarks = (d.stats.dayLog && d.stats.dayLog[todayStr()]) || 0;
     $('#dash-stats').innerHTML = [
-      ['book','本地词库', totalWords || '—', totalWords ? '内置词表与在线词表合计' : '词表尚未加载', 'stat-blue'],
-      ['checkCircle','已掌握词汇', known, '连续认识两次后计入掌握', 'stat-green'],
+      ['checkCircle','已掌握词汇', known, '完成整条遗忘曲线后计入掌握', 'stat-green'],
       ['clock','待复习', due, due ? '今日到期单词数' : '今日无到期单词', 'stat-orange'],
       ['flame','累计学习天数', d.stats.studyDays + (d.stats.lastStudyDay===todayStr()?1:0), '坚持每日复习', 'stat-red']
     ].map(x => '<div class="stat"><span class="stat-ico '+x[4]+'">'+icon(x[0])+'</span><div class="stat-body"><span class="k">'+x[1]+'</span><span class="v">'+x[2]+'</span><span class="d">'+x[3]+'</span></div></div>').join('');
@@ -2441,10 +2526,10 @@ const AppUI = {
       '<div class="wk-col" title="'+x.key+' · '+x.n+' 词"><div class="wk-bar'+(x.n?'':' off')+'" style="height:'+Math.round(Math.max(6, x.n/max7*64))+'px"><i>'+(x.n||'')+'</i></div><span>'+x.label+'</span></div>'
     ).join('');
     $('#dash-progress').innerHTML =
-      '<div style="display:flex;justify-content:space-between;align-items:baseline;font-size:14px;margin-bottom:4px"><span class="muted">今日已学习</span><b>'+todayMarks+' 词</b></div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;font-size:14px;margin-bottom:4px"><span class="muted">今日已认识</span><b>'+todayMarks+' 词</b></div>' +
       '<div class="bar" style="margin:8px 0 6px"><i style="width:'+Math.min(100, Math.round(todayMarks / Math.max(1, d.settings.daily) * 100))+'%"></i></div>' +
       '<div class="wk">'+bars+'</div>' +
-      '<div class="muted small">'+(lastTs ? '上次学习：'+relTime(lastTs)+' · ' : '')+'每日目标 '+d.settings.daily+' 词，可在「设置」调整。</div>';
+      '<div class="muted small">'+(lastTs ? '上次学习：'+relTime(lastTs)+' · ' : '')+'每日目标 '+d.settings.daily+' 词 · 仅统计点「认识」的单词，重复「不认识」不累计。</div>';
     const tip = $('#dash-english-tip');
     if(AppFilter.result){
       const r = AppFilter.result;
@@ -2503,11 +2588,18 @@ const AppUI = {
         ? fmtDate(bm.ts) + ' ' + new Date(bm.ts).toLocaleTimeString() + ' · ' + fmtN(bm.total) + ' 词'
         : '尚无（完成一轮学习后自动生成）';
     }
-    AppSettings.renderCloud();
+    const cat = AppSettings.catName || 'account';
+    $$('.set-cat').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+    $$('.set-pane').forEach(p => { p.hidden = p.dataset.pane !== cat; });
+    const libSec = document.getElementById('page-library');
+    if(libSec) libSec.hidden = cat !== 'library';
+    if(cat === 'library'){
+      try{ AppLibrary.render(); }catch(e){}
+    }
   },
   closeModal(){ $('#modal-root').innerHTML = ''; },
   onListStatus(){
-    if(this.page === 'library') AppLibrary.render();
+    if(this.page === 'settings' && (AppSettings.catName || '') === 'library') AppLibrary.render();
     if(this.page === 'dashboard') this.renderDashboard();
   },
   renderFilterTab(){
@@ -2901,7 +2993,7 @@ const AppStudy = {
       if(seen.has(key)) continue;
       seen.add(key);
       const c = st[SRS.key(r.targetId, e.w)];
-      if(c && c.s === 'known') continue;
+      if(c && SRS.isDone(c)) continue;
       n++;
     }
     return n;
@@ -2919,7 +3011,7 @@ const AppStudy = {
       if(seen.has(key)) continue; // 抽词去重
       seen.add(key);
       const c = st[SRS.key(r.targetId, e.w)];
-      if(c && c.s === 'known') continue;
+      if(c && SRS.isDone(c)) continue;
       if(c && c.due <= now()) due.push(e); else fresh.push(e);
     }
     const order = d.settings.studyOrder || 'random';
@@ -3127,18 +3219,19 @@ const AppStudy = {
     }
     const e = s.deck[s.idx];
     const total = s.deck.length;
-    const known = SRS.isKnown(AppFilter.result.targetId, e.w);
+    const curState = AppAuth.data().wordState[SRS.key(AppFilter.result.targetId, e.w)];
+    const stage = curState ? SRS.stageOf(curState) : { txt:'新词', cls:'tag-blue' };
     box.innerHTML =
       '<div class="study-wrap">' +
-      '<div class="study-meta"><span>第 '+(s.idx+1)+' / '+total+' 个</span><span class="tag '+(known?'tag-green':'tag-orange')+'">'+(known?'已掌握':'学习中')+'</span></div>' +
+      '<div class="study-meta"><span>第 '+(s.idx+1)+' / '+total+' 个</span><span class="tag '+stage.cls+'">'+stage.txt+'</span></div>' +
       '<div class="bar" style="margin-bottom:16px" role="progressbar" aria-valuemin="0" aria-valuemax="'+total+'" aria-valuenow="'+(s.idx+1)+'" aria-label="学习进度"><i style="width:'+Math.round(s.idx/total*100)+'%"></i></div>' +
-      '<div class="flashcard"><div class="fc-word-wrap"><span class="fc-word">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppStudy.speak()" aria-label="朗读 '+esc(e.w)+'">'+icon('volume2', 20)+'</button></div>' +
+      '<div class="flashcard"><div class="fc-word-wrap"><span class="fc-word" style="font-size:'+fcFontSize(e.w)+'px;white-space:nowrap">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppStudy.speak()" aria-label="朗读 '+esc(e.w)+'">'+icon('volume2', 20)+'</button></div>' +
+      '<div class="fc-ph" id="fc-ph"></div>' +
       '<div id="fc-body" style="width:100%">'+(s.revealed ? '<div class="reveal-in">'+cardBody(e)+'</div>' : '<button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示答案</button>')+'</div></div>' +
       '<div class="fc-btns">' +
       '<button class="btn again" onclick="AppStudy.mark(\'again\')">不认识</button>' +
-      '<button class="btn hard" onclick="AppStudy.mark(\'hard\')">模糊</button>' +
       '<button class="btn good" onclick="AppStudy.mark(\'good\')">认识</button></div>' +
-      '<div class="fc-hint"><span class="kbd">空格</span> 显示答案 · <span class="kbd">1</span> 不认识 · <span class="kbd">2</span> 认识 · <span class="kbd">3</span> 模糊 · <span class="kbd">Esc</span> 退出</div>' +
+      '<div class="fc-hint"><span class="kbd">空格</span> 显示答案 · <span class="kbd">1</span> 不认识 · <span class="kbd">2</span> 认识 · <span class="kbd">Esc</span> 退出</div>' +
       '</div>';
     fillPh(e);
     const fdEl = document.getElementById('fc-def');
@@ -3185,7 +3278,6 @@ const AppStudy = {
       if(e.key === ' '){ e.preventDefault(); if(this.state && !this.state.revealed) this.reveal(); }
       else if(e.key === '1') this.mark('again');
       else if(e.key === '2') this.mark('good');
-      else if(e.key === '3') this.mark('hard');
       else if(e.key === 'Escape'){ AppUI._keyHandler = null; AppUI.englishTab('filter'); }
     };
     document.onkeydown = AppUI._keyHandler;
@@ -3193,8 +3285,6 @@ const AppStudy = {
 };
 
 function cardBody(e){
-  const d = AppAuth.data().settings;
-  const ph = d.phon ? '<div class="fc-ph" id="fc-ph">'+(e.ph ? esc(e.ph) : '')+'</div>' : '';
   let defHtml = '';
   if(typeof e.def === 'string' && e.def){
     defHtml = '<div class="fc-def">'+esc(e.def)+'</div>';
@@ -3207,7 +3297,7 @@ function cardBody(e){
   if(e.phrases && e.phrases.length){
     phHtml = '<div class="fc-phrases"><b>词组搭配：</b>' + e.phrases.slice(0,4).map(([p,v]) => esc(p)+(v?' · '+esc(v):'')).join('；') + '</div>';
   }
-  return ph + defHtml + phHtml;
+  return defHtml + phHtml;
 }
 function fillPh(e){
   if(!e.ph){
@@ -3263,7 +3353,7 @@ const AppReview = {
     const d = AppAuth.data();
     const due = r.kept.filter(e => {
       const c = d.wordState[SRS.key(r.targetId, e.w)];
-      return c && c.s !== 'known' && c.due <= now();
+      return c && !SRS.isDone(c) && c.due <= now();
     });
     if(!due.length){
       box.innerHTML = '<div class="card empty"><div class="big">'+icon('checkCircle', 40)+'</div><h3 style="margin-bottom:6px">今日复习已完成</h3><p>当前没有到期需要复习的单词。</p><div style="margin-top:14px"><button class="btn btn-primary" onclick="AppUI.englishTab(\'study\')">学习新词</button></div></div>';
@@ -3287,13 +3377,13 @@ const AppReview = {
       '<div class="study-wrap">' +
       '<div class="study-meta"><span>复习 '+(s.idx+1)+' / '+total+'</span><button class="btn btn-sm btn-ghost" onclick="AppReview.stop()">结束复习</button></div>' +
       '<div class="bar" style="margin-bottom:16px" role="progressbar" aria-valuemin="0" aria-valuemax="'+total+'" aria-valuenow="'+(s.idx+1)+'" aria-label="复习进度"><i style="width:'+Math.round(s.idx/total*100)+'%"></i></div>' +
-      '<div class="flashcard"><div class="fc-word-wrap"><span class="fc-word">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppReview.speak()" aria-label="朗读 '+esc(e.w)+'">'+icon('volume2', 20)+'</button></div>' +
+      '<div class="flashcard"><div class="fc-word-wrap"><span class="fc-word" style="font-size:'+fcFontSize(e.w)+'px;white-space:nowrap">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppReview.speak()" aria-label="朗读 '+esc(e.w)+'">'+icon('volume2', 20)+'</button></div>' +
+      '<div class="fc-ph" id="fc-ph"></div>' +
       '<div id="fc-body" style="width:100%">'+(s.revealed ? cardBody(e) : '<button class="btn btn-primary btn-lg" onclick="AppReview.reveal()">显示答案</button>')+'</div></div>' +
       '<div class="fc-btns">' +
       '<button class="btn again" onclick="AppReview.mark(\'again\')">忘了</button>' +
-      '<button class="btn hard" onclick="AppReview.mark(\'hard\')">模糊</button>' +
       '<button class="btn good" onclick="AppReview.mark(\'good\')">记得</button></div>' +
-      '<div class="fc-hint"><span class="kbd">空格</span> 显示答案 · <span class="kbd">1</span> 忘了 · <span class="kbd">2</span> 记得 · <span class="kbd">3</span> 模糊 · <span class="kbd">Esc</span> 结束</div></div>';
+      '<div class="fc-hint"><span class="kbd">空格</span> 显示答案 · <span class="kbd">1</span> 忘了 · <span class="kbd">2</span> 记得 · <span class="kbd">Esc</span> 结束</div></div>';
     fillPh(e);
     const fdEl = document.getElementById('fc-def');
     if(fdEl) Dict.fillDef(e, fdEl);
@@ -3306,7 +3396,6 @@ const AppReview = {
       if(e2.key === ' '){ e2.preventDefault(); if(this.state && !this.state.revealed) this.reveal(); }
       else if(e2.key === '1') this.mark('again');
       else if(e2.key === '2') this.mark('good');
-      else if(e2.key === '3') this.mark('hard');
       else if(e2.key === 'Escape') this.stop();
     };
   },
@@ -3349,13 +3438,17 @@ const AppRecord = {
       recs.push({ listId, word, s:v.s, i:v.i, due:v.due||0, reps:v.reps||0, last:v.last||0 });
     }
     recs.sort((a,b) => (b.last||0) - (a.last||0));
-    const known = recs.filter(r => r.s === 'known').length;
-    const learning = recs.filter(r => r.s === 'learning').length;
-    const dueN = recs.filter(r => r.s === 'learning' && r.due <= now()).length;
+    const stOf = v => SRS.stageOf({ s:v.s, i:v.i||0, due:v.due||0 });
+    const done = recs.filter(r => SRS.isDone({ s:r.s, i:r.i||0, due:r.due||0 })).length;
+    const unknown = recs.filter(r => !SRS.isDone({ s:r.s, i:r.i||0 }) && (r.i||0) === 0).length;
+    const active = recs.filter(r => !SRS.isDone({ s:r.s, i:r.i||0 }) && (r.i||0) >= 1);
+    const dueN = active.filter(r => r.due <= now()).length;
     let list = recs;
-    if(this.filter === 'known') list = list.filter(r => r.s === 'known');
-    if(this.filter === 'learning') list = list.filter(r => r.s === 'learning');
-    if(this.filter === 'due') list = list.filter(r => r.s === 'learning' && r.due <= now());
+    if(this.filter === 'known') list = list.filter(r => SRS.isDone({ s:r.s, i:r.i||0 }));
+    if(this.filter === 'unknown') list = list.filter(r => !SRS.isDone({ s:r.s, i:r.i||0 }) && (r.i||0) === 0);
+    if(this.filter === 'learning') list = list.filter(r => !SRS.isDone({ s:r.s, i:r.i||0 }) && (r.i||0) >= 2);
+    if(this.filter === 'review') list = list.filter(r => !SRS.isDone({ s:r.s, i:r.i||0 }) && (r.i||0) === 1);
+    if(this.filter === 'due') list = active.filter(r => r.due <= now());
     const q = this.q.trim().toLowerCase();
     if(q) list = list.filter(r => r.word.toLowerCase().includes(q));
     const total = list.length;
@@ -3366,33 +3459,35 @@ const AppRecord = {
       (currentTarget ? '<option value="current"'+(this.scope==='current'?' selected':'')+'>当前词表（'+esc((WL.byId(currentTarget)||{}).name)+'）</option>' : '');
     const rows = slice.map(r => {
       const def = this.defOf(r.listId, r.word);
-      const status = r.s === 'known'
-        ? '<span class="tag tag-green">已掌握</span>'
-        : (r.due <= now() ? '<span class="tag tag-orange">待复习</span>' : '<span class="tag tag-blue">学习中</span>');
+      const stage = stOf(r);
+      const status = '<span class="tag '+stage.cls+'">'+stage.txt+'</span>';
       const listTag = '<span class="tag">'+esc((WL.byId(r.listId)||{name:r.listId}).name)+'</span>';
-      const dueTxt = r.s === 'known' ? '—' : (r.due <= now() ? '已到期' : fmtDate(r.due));
+      const isDone = SRS.isDone({ s:r.s, i:r.i||0 });
+      const dueTxt = isDone ? '—' : ((r.i||0) === 0 ? '待认识' : (r.due <= now() ? '已到期' : fmtDate(r.due)));
       const enc = encodeURIComponent(r.word);
-      const act = r.s === 'known'
+      const act = isDone
         ? '<button class="btn btn-sm" onclick="AppRecord.mark(\''+r.listId+'\',\''+enc+'\',\'again\')">标记遗忘</button>'
         : '<button class="btn btn-sm" onclick="AppRecord.mark(\''+r.listId+'\',\''+enc+'\',\'good\')">标记认识</button><button class="btn btn-sm" onclick="AppRecord.mark(\''+r.listId+'\',\''+enc+'\',\'again\')">标记遗忘</button>';
       const del = '<button class="btn btn-sm btn-danger" onclick="AppRecord.remove(\''+r.listId+'\',\''+enc+'\')">移出记录</button>';
-      return '<tr><td class="w">'+esc(r.word)+'</td><td class="df"'+(def?'':' data-dw="'+esc(r.word)+'"')+'>'+(def?esc(def):'…')+'</td><td>'+listTag+' '+status+'</td><td style="text-align:center">'+r.reps+'</td><td class="muted" style="font-size:12px">'+(r.last?fmtDate(r.last):'—')+'</td><td class="muted" style="font-size:12px">'+dueTxt+'</td><td class="op">'+act+' '+del+'</td></tr>';
+      return '<tr><td class="w" data-l="单词">'+esc(r.word)+'</td><td class="df"'+(def?'':' data-dw="'+esc(r.word)+'"')+' data-l="释义">'+(def?esc(def):'…')+'</td><td data-l="词库 / 状态">'+listTag+' '+status+'</td><td data-l="复习次数" class="num" style="text-align:center">'+r.reps+'</td><td class="muted" style="font-size:12px" data-l="上次学习">'+(r.last?fmtDate(r.last):'—')+'</td><td class="muted" style="font-size:12px" data-l="下次复习">'+dueTxt+'</td><td class="op" data-l="操作">'+act+' '+del+'</td></tr>';
     }).join('');
     const pager = '<div class="pager"><button class="btn btn-sm" onclick="AppRecord.page--;AppRecord.render()" '+(this.page<=1?'disabled':'')+'>上一页</button><span>第 '+this.page+' / '+pages+' 页 · 共 '+total+' 条</span><button class="btn btn-sm" onclick="AppRecord.page++;AppRecord.render()" '+(this.page>=pages?'disabled':'')+'>下一页</button></div>';
     box.innerHTML =
       '<div class="card" style="margin-bottom:16px"><div class="card-title"><span class="dot"></span>学习记录总览</div>' +
       '<div class="filter-summary">' +
       '<div class="stat"><span class="stat-ico stat-blue">'+icon('file')+'</span><div class="stat-body"><span class="k">已学习词汇</span><span class="v">'+recs.length+'</span><span class="d">参与过评分的单词总数</span></div></div>' +
-      '<div class="stat"><span class="stat-ico stat-green">'+icon('checkCircle')+'</span><div class="stat-body"><span class="k" style="color:var(--accent)">已掌握</span><span class="v" style="color:var(--accent)">'+known+'</span><span class="d">已按间隔计划复习</span></div></div>' +
-      '<div class="stat"><span class="stat-ico stat-orange">'+icon('clock')+'</span><div class="stat-body"><span class="k">学习中</span><span class="v">'+learning+'</span><span class="d">其中 '+dueN+' 个待复习</span></div></div>' +
+      '<div class="stat"><span class="stat-ico stat-green">'+icon('checkCircle')+'</span><div class="stat-body"><span class="k" style="color:var(--accent)">已掌握</span><span class="v" style="color:var(--accent)">'+done+'</span><span class="d">完成整条遗忘曲线</span></div></div>' +
+      '<div class="stat"><span class="stat-ico stat-orange">'+icon('clock')+'</span><div class="stat-body"><span class="k">进行中</span><span class="v">'+active.length+'</span><span class="d">其中 '+dueN+' 个待复习 · '+unknown+' 个不认识</span></div></div>' +
       '</div></div>' +
       '<div class="card"><div class="card-title"><span class="dot" style="background:var(--accent)"></span>单词状态明细</div>' +
       '<div class="search-row">' +
       '<select id="record-scope" onchange="AppRecord.scope=this.value;AppRecord.page=1;AppRecord.render()">'+scopeOpts+'</select>' +
       '<select id="record-filter" onchange="AppRecord.filter=this.value;AppRecord.page=1;AppRecord.render()">' +
       '<option value="all"'+(this.filter==='all'?' selected':'')+'>全部状态</option>' +
-      '<option value="learning"'+(this.filter==='learning'?' selected':'')+'>学习中</option>' +
-      '<option value="due"'+(this.filter==='due'?' selected':'')+'>待复习</option>' +
+      '<option value="review"'+(this.filter==='review'?' selected':'')+'>待复习（认识 1 次）</option>' +
+      '<option value="learning"'+(this.filter==='learning'?' selected':'')+'>学习中（2 次及以上）</option>' +
+      '<option value="unknown"'+(this.filter==='unknown'?' selected':'')+'>不认识</option>' +
+      '<option value="due"'+(this.filter==='due'?' selected':'')+'>已到期</option>' +
       '<option value="known"'+(this.filter==='known'?' selected':'')+'>已掌握</option></select>' +
       '<input id="record-q" placeholder="搜索单词…" value="'+esc(this.q)+'">' +
       '<button class="btn btn-primary" onclick="AppRecord.q=$(\'#record-q\').value;AppRecord.page=1;AppRecord.render()">搜索</button>' +
@@ -3570,6 +3665,11 @@ const AppLibrary = {
 
 /* ================= 设置 ================= */
 const AppSettings = {
+  catName: 'account',
+  cat(name){
+    this.catName = name;
+    if(AppUI && typeof AppUI.renderSettings === 'function') AppUI.renderSettings();
+  },
   savePrefs(){
     const d = AppAuth.data();
     d.settings.daily = clamp(parseInt($('#set-daily').value) || 20, 5, 200);
@@ -3634,6 +3734,7 @@ const AppSettings = {
     AppUI.init();
   },
   renderCloud(){
+    if(!document.getElementById('cloud-status')) return;
     if(Supa.active()){
       const st = $('#cloud-status');
       st.innerHTML = '当前网站已接入部署器云端数据库（Supabase）。账号与学习数据会自动保存在云端，无需额外设置；本机离线时仍可正常使用。';
@@ -3751,7 +3852,8 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
     window.addEventListener('hashchange', () => {
       try{
         const h = location.hash.replace(/^#\/?/, '');
-        if(['dashboard','english','math','library','settings'].indexOf(h) >= 0 && h !== AppUI.page){
+        if(h === 'library'){ AppSettings.catName = 'library'; AppSettings._keepCat = true; if(AppUI.page !== 'settings') AppUI.go('settings', true); }
+        else if(['dashboard','english','math','settings'].indexOf(h) >= 0 && h !== AppUI.page){
           AppUI.go(h, true);
         }
       }catch(e){}
