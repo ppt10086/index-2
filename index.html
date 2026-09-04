@@ -836,7 +836,7 @@ li,td,th{text-wrap:normal}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.7.3<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.7.4<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -960,7 +960,7 @@ li,td,th{text-wrap:normal}
               <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存外观</button>
             </div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.7.3</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.7.4</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用单文件离线优先设计：内置精简词表离线可用，联网后在「设置 → 词库中心」更新完整词表；账号数据走云端存储，同时支持本地自动备份。</div>
@@ -2338,7 +2338,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.7.3', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.7.4', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -2367,7 +2367,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'1.7.3', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'1.7.4', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -3977,6 +3977,13 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
       if(document.visibilityState === 'hidden') flushNow();
       else Supa.pullMerge();
     });
+    // 部署器注入的云端脚本位于本脚本之后：等其执行完再判断是否已连接云端
+    if(document.readyState === 'loading'){
+      await new Promise(r => document.addEventListener('DOMContentLoaded', r, { once:true }));
+    } else {
+      await new Promise(r => setTimeout(r, 0));
+    }
+    Supa.init();
     // 浏览器前进/后退与直接访问 hash 路由
     window.addEventListener('hashchange', () => {
       try{
