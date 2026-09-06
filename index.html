@@ -780,6 +780,24 @@ li,td,th{text-wrap:normal}
   .set-cat::after{display:none}
 }
 
+/* ============ UI v8 · 学习类型三分类 ============ */
+.study-setup{max-width:680px; margin:0 auto}
+.study-kind{display:flex; flex-direction:column; gap:0; margin:6px 0 4px; border-top:1px solid var(--line)}
+.kind-opt{display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%;
+  padding:14px 12px; text-align:left; border:0; border-bottom:1px solid var(--line);
+  color:var(--text); transition:background-color var(--dur) var(--ease)}
+.kind-opt b{font-size:15px; display:block}
+.kind-opt span{display:block; font-size:12.5px; color:var(--muted); margin-top:2px}
+.kind-opt::after{content:""; width:9px; height:9px; border-right:2px solid var(--muted); border-top:2px solid var(--muted);
+  transform:rotate(45deg); flex-shrink:0; opacity:.5}
+.kind-opt:hover{background:var(--panel2)}
+.kind-opt.sel{background:var(--primary-soft); border-radius:14px; border-bottom-color:transparent; margin:3px 0}
+.kind-opt.sel::after{border-color:var(--primary); opacity:.85}
+@media (max-width:560px){
+  .kind-opt{padding:12px 10px}
+  .kind-opt span{font-size:12px}
+}
+
 /* 引导内选项遵循“无框化”：列表行 + 细分隔线，不用独立盒子 */
 .ob-opts{gap:0}
 .ob-opt{border:0; border-radius:0; background:transparent; padding:13px 12px}
@@ -836,7 +854,7 @@ li,td,th{text-wrap:normal}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.7.5<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.8.0<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -960,7 +978,7 @@ li,td,th{text-wrap:normal}
               <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存外观</button>
             </div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.7.5</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.8.0</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用单文件离线优先设计：内置精简词表离线可用，联网后在「设置 → 词库中心」更新完整词表；账号数据走云端存储，同时支持本地自动备份。</div>
@@ -1307,7 +1325,7 @@ const AppAuth = {
   defaultData(){
     const deployed = typeof location !== 'undefined' && location.protocol === 'https:';
     return {
-      settings: { daily: 20, phon: true, deriv: true, theme: 'auto', useOnline: true, autoOnline: true, studyMode: 'daily', studyFixed: 30, studyOrder: 'random', uiScale: 100, autoScale: true, onboarded: false, voice: 'en-US', autoSpeak: false, cloud: { enabled: deployed, lastSync: 0, endpoint: '' } },
+      settings: { daily: 20, phon: true, deriv: true, theme: 'auto', useOnline: true, autoOnline: true, studyMode: 'daily', studyFixed: 30, studyOrder: 'random', uiScale: 100, autoScale: true, onboarded: false, voice: 'en-US', autoSpeak: false, studyModeChoice: 'new', cloud: { enabled: deployed, lastSync: 0, endpoint: '' } },
       filter: { target: 'cet4', bases: ['primary','middle','hs'], deriv: true, presetName: '' },
       presets: [],
       wordState: {},
@@ -2390,7 +2408,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.7.5', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.8.0', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -2419,7 +2437,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'1.7.5', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'1.8.0', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -3181,33 +3199,48 @@ const AppStudy = {
     if(!r) return [];
     const d = AppAuth.data();
     const st = d.wordState;
-    const due = [], fresh = [];
     const seen = new Set();
+    const mode = this.mode || 'new';
+    const poolNew = [], poolDue = [], poolQuiz = [];
     for(const e of r.kept){
       const key = Morph.norm(e.w);
       if(seen.has(key)) continue; // 抽词去重
       seen.add(key);
       const c = st[SRS.key(r.targetId, e.w)];
-      if(c && SRS.isDone(c)) continue;
-      if(c && c.due <= now()) due.push(e); else fresh.push(e);
+      if(!c){ poolNew.push(e); continue; }
+      if((c.reps || 0) > 0) poolQuiz.push(e);
+      if(!SRS.isDone(c) && c.due <= now()) poolDue.push(e);
     }
     const order = d.settings.studyOrder || 'random';
-    let ordered;
-    if(order === 'alpha'){
-      due.sort((a,b) => a.w.localeCompare(b.w));
-      fresh.sort((a,b) => a.w.localeCompare(b.w));
-      ordered = due.concat(fresh);
-    } else {
-      for(let i=fresh.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [fresh[i],fresh[j]]=[fresh[j],fresh[i]]; }
-      ordered = due.concat(fresh);
-    }
     const s = d.settings;
+    if(mode === 'review'){
+      // 复习计划：只取今日到期（按到期时间优先，其次字母序）
+      poolDue.sort((a,b) => {
+        const ca = st[SRS.key(r.targetId, a.w)] || {}, cb = st[SRS.key(r.targetId, b.w)] || {};
+        return (ca.due || 0) - (cb.due || 0) || a.w.localeCompare(b.w);
+      });
+      this._avail = poolDue.length; this._requested = poolDue.length;
+      return poolDue;
+    }
+    if(mode === 'quiz'){
+      // 学习情况抽测：从已学（参与过评分）词汇中随机抽取指定数量
+      const arr = poolQuiz.slice();
+      for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+      const q = parseInt(($('#study-quiz') || {}).value || '', 10);
+      const want = q > 0 ? q : 10;
+      this._avail = arr.length; this._requested = want;
+      return arr.slice(0, Math.min(arr.length, want));
+    }
+    // 全新词汇：从未参与过评分的词
+    let ordered = poolNew.slice();
+    if(order === 'alpha') ordered.sort((a,b) => a.w.localeCompare(b.w));
+    else { for(let i=ordered.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [ordered[i],ordered[j]]=[ordered[j],ordered[i]]; } }
     const sel = $('#study-limit');
     const lc = this.limitChoice;
-    const mode = sel ? sel.value : (lc ? lc.mode : 'settings');
+    const selMode = sel ? sel.value : (lc ? lc.mode : 'settings');
     let want;
-    if(mode === 'all') want = ordered.length;
-    else if(mode === 'custom'){
+    if(selMode === 'all') want = ordered.length;
+    else if(selMode === 'custom'){
       const c = parseInt((sel ? ($('#study-custom') || {}).value : (lc ? lc.count : 0)) || '', 10);
       want = c > 0 ? c : ordered.length;
     } else if(s.studyMode === 'fixed'){
@@ -3246,45 +3279,90 @@ const AppStudy = {
       return;
     }
     const r = AppFilter.result;
-    const avail = this.avail();
-    const known = r.kept.length - avail;
+    const st = AppAuth.data().wordState;
+    let newN = 0, dueN = 0, quizN = 0;
+    const seenC = new Set();
+    for(const e of r.kept){
+      const key = Morph.norm(e.w);
+      if(seenC.has(key)) continue;
+      seenC.add(key);
+      const c = st[SRS.key(r.targetId, e.w)];
+      if(!c){ newN++; continue; }
+      if((c.reps || 0) > 0) quizN++;
+      if(!SRS.isDone(c) && c.due <= now()) dueN++;
+    }
     const s = AppAuth.data().settings;
-    const modeLabel = s.studyMode === 'fixed' ? '每次 '+ (s.studyFixed || 30) +' 词'
+    const mode = (['new','review','quiz'].indexOf(s.studyModeChoice || 'new') >= 0) ? (s.studyModeChoice || 'new') : 'new';
+    this.mode = mode;
+    const modeLabel = s.studyMode === 'fixed' ? '每次 '+(s.studyFixed||30)+' 词'
       : s.studyMode === 'all' ? '全部剩余'
-      : '每日 '+ (s.daily || 20) +' 词';
+      : '每日 '+(s.daily||20)+' 词';
+    const totalDone = r.kept.length - newN - (() => { let n=0; for(const e of r.kept){ const c=st[SRS.key(r.targetId,e.w)]; if(c && SRS.isDone(c)) n++; } return n; })();
     box.innerHTML =
-      '<div class="card" style="text-align:center;padding:30px">' +
-      '<div style="margin-bottom:10px">'+icon('bookOpen', 40)+'</div>' +
-      '<h3 style="font-size:19px;margin-bottom:6px">背诵「'+r.targetName+'」个人词表</h3>' +
-      '<div class="muted" style="margin-bottom:18px">词表共 '+r.kept.length+' 词，已掌握 '+known+' 词，待学习 '+Math.max(0,r.kept.length-known)+' 词</div>' +
-      '<div style="display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap;margin-bottom:20px">' +
-      '<span class="muted" style="font-size:13px">本次学习：</span>' +
-      '<select id="study-limit" style="width:200px">' +
-      '<option value="settings">按我的设置（'+modeLabel+'）</option>' +
-      '<option value="all">全部剩余（'+avail+'）</option>' +
+      '<div class="study-setup">' +
+      '<div class="muted" style="margin-bottom:14px">词表「'+r.targetName+'」共 '+r.kept.length+' 词 · 全新 '+newN+' · 到期复习 '+dueN+' · 已学可抽测 '+quizN+'</div>' +
+      '<div class="study-kind" role="radiogroup" aria-label="学习类型">' +
+      '<button class="kind-opt'+(mode==='new'?' sel':'')+'" data-kind="new" onclick="AppStudy.setMode(\'new\')"><b>全新词汇</b><span>只学从未背过的词</span></button>' +
+      '<button class="kind-opt'+(mode==='review'?' sel':'')+'" data-kind="review" onclick="AppStudy.setMode(\'review\')"><b>复习计划</b><span>今天到期的词，按遗忘曲线安排</span></button>' +
+      '<button class="kind-opt'+(mode==='quiz'?' sel':'')+'" data-kind="quiz" onclick="AppStudy.setMode(\'quiz\')"><b>学习情况抽测</b><span>从已学词汇中随机抽词考察</span></button>' +
+      '</div>' +
+      '<div id="study-options" style="margin:18px 0 16px;min-height:86px"></div>' +
+      '<button class="btn btn-primary btn-lg" onclick="AppStudy.start()">'+icon('play')+' <span id="study-start-label">开始学习</span></button>' +
+      '<div class="fc-hint">先回忆词义，再显示答案，最后按记忆情况评分；进度会自动同步云端。</div>' +
+      '</div>';
+    this.paintOptions({ newN, dueN, quizN, modeLabel, s });
+  },
+  paintOptions(cfg){
+    const mode = this.mode;
+    const wrap = $('#study-options');
+    const label = $('#study-start-label');
+    if(!wrap) return;
+    if(mode === 'review'){
+      wrap.innerHTML =
+        '<div class="muted">今日到期 <b style="color:var(--warn)">'+cfg.dueN+'</b> 个待复习单词，按到期时间先后复习。</div>' +
+        (cfg.dueN ? '' : '<div class="muted small">当前没有到期的复习计划，可先学新词或稍后再来。</div>');
+      if(label) label.textContent = cfg.dueN ? ('开始复习 · '+cfg.dueN+' 词') : '暂无到期复习';
+      return;
+    }
+    if(mode === 'quiz'){
+      wrap.innerHTML =
+        '<div class="muted" style="margin-bottom:10px">将从已学 <b>'+cfg.quizN+'</b> 词中随机抽取</div>' +
+        '<div class="search-row" style="margin:0">' +
+        '<input type="number" id="study-quiz" min="1" max="500" style="width:130px;text-align:center" value="10">' +
+        '<button class="btn" onclick="AppStudy.quickQuiz('+(cfg.quizN>10?10:cfg.quizN)+')">抽 10</button>' +
+        '<button class="btn" onclick="AppStudy.quickQuiz('+Math.min(20,cfg.quizN)+')">抽 20</button>' +
+        '<button class="btn" onclick="AppStudy.quickQuiz('+cfg.quizN+')">全部已学</button></div>' +
+        (cfg.quizN ? '' : '<div class="muted small">还没有已学词汇，先学新词或完成复习后再抽测。</div>');
+      if(label) label.textContent = cfg.quizN ? '开始抽测' : '暂无可抽测词汇';
+      return;
+    }
+    const s = cfg.s;
+    const selOpt = s.studyMode === 'fixed' ? '每次 '+(s.studyFixed||30)+' 词' : s.studyMode === 'all' ? '全部全新' : '每日 '+(s.daily||20)+' 词';
+    wrap.innerHTML =
+      '<div class="search-row" style="margin:0">' +
+      '<span class="muted" style="font-size:13px;align-self:center">本次学习：</span>' +
+      '<select id="study-limit" style="width:190px">' +
+      '<option value="settings">'+selOpt+'</option>' +
+      '<option value="all">全部全新（'+cfg.newN+'）</option>' +
       '<option value="custom">自定义数量…</option></select>' +
       '<input type="number" id="study-custom" min="1" max="500" style="width:96px;text-align:center;display:none" placeholder="数量">' +
       '<button class="btn btn-sm" onclick="AppUI.go(\'settings\')">调整设置</button></div>' +
-      '<div class="muted" id="study-now" style="margin-bottom:14px"></div>' +
-      '<button class="btn btn-primary btn-lg" onclick="AppStudy.start()">'+icon('play')+' 开始学习</button>' +
-      '<div class="fc-hint">先回忆词义，再显示答案，最后按记忆情况评分。</div></div>';
-    // 自定义数量输入框联动
-    const lim = $('#study-limit');
-    const cust = $('#study-custom');
-    const nowEl = $('#study-now');
+      '<div class="muted" id="study-now" style="margin-top:10px"></div>';
+    const lim = $('#study-limit'), cust = $('#study-custom'), nowEl = $('#study-now');
     const calcNow = () => {
       const m = lim.value;
       let req;
-      if(m === 'all') req = avail;
-      else if(m === 'custom'){ const c = parseInt(cust.value || '', 10); req = c > 0 ? c : avail; }
+      if(m === 'all') req = cfg.newN;
+      else if(m === 'custom'){ const c = parseInt(cust.value || '', 10); req = c > 0 ? c : cfg.newN; }
       else if(s.studyMode === 'fixed') req = s.studyFixed || 30;
-      else if(s.studyMode === 'all') req = avail;
+      else if(s.studyMode === 'all') req = cfg.newN;
       else req = s.daily || 20;
-      const n = Math.max(0, Math.min(avail, req));
-      nowEl.textContent = req > avail
-        ? '本次将学习 '+n+' 个单词（词表待学习仅 '+avail+' 词，少于所选的 '+req+' 词）'
-        : '本次将学习 '+n+' 个单词';
+      const n = Math.max(0, Math.min(cfg.newN, req));
+      nowEl.textContent = req > cfg.newN
+        ? '本次学习 '+n+' 个全新单词（全新词仅 '+cfg.newN+' 个）'
+        : '本次学习 '+n+' 个全新单词';
       AppStudy.limitChoice = { mode: m, count: req };
+      if(label) label.textContent = '开始学习';
     };
     const syncCust = () => {
       cust.style.display = lim.value === 'custom' ? '' : 'none';
@@ -3294,6 +3372,21 @@ const AppStudy = {
     lim.addEventListener('change', syncCust);
     cust.addEventListener('input', calcNow);
     syncCust();
+  },
+  setMode(m){
+    const d = AppAuth.data();
+    d.settings.studyModeChoice = m;
+    AppAuth.save(d);
+    this.mode = m;
+    this.clearSession();
+    this.renderSetup();
+  },
+  quickQuiz(n){
+    const el = $('#study-quiz');
+    if(el) el.value = n;
+    const l = $('#study-start-label');
+    if(l) l.textContent = n > 0 ? '开始抽测' : '暂无可抽测词汇';
+    this.start();
   },
   start(){
     const deck = this.buildDeck();
