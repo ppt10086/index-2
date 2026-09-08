@@ -12,7 +12,7 @@
 <style>
 :root{
   --bg:#f6f4fb; --panel:#ffffff; --panel2:#f0edf8; --panel3:#faf9fd;
-  --text:#221b38; --muted:#6b6482; --line:#e8e3f2; --line2:#d9d2ea;
+  --text:#221b38; --muted:#6b6482; --line:#e8e3f2; --line2:#cfc5e8;
   --primary:#6c3bf5; --primary2:#5130c8; --primary-soft:#ece4fe;
   --accent:#0a7a50; --accent-soft:#e1f4ec;
   --warn:#9a5500; --warn-soft:#faf0dd;
@@ -25,7 +25,7 @@
 }
 [data-theme="dark"]{
   --bg:#131020; --panel:#1c1829; --panel2:#241f36; --panel3:#191526;
-  --text:#f1edfa; --muted:#a49db9; --line:#2e2743; --line2:#3d3557;
+  --text:#f1edfa; --muted:#a49db9; --line:#2e2743; --line2:#4a4170;
   --primary:#9678ff; --primary2:#6f49e0; --primary-soft:#2b2249;
   --accent:#34c48e; --accent-soft:#103528;
   --warn:#e8ab45; --warn-soft:#3b2d12;
@@ -63,14 +63,14 @@ p,li,td,th{text-wrap:pretty}
 .btn{display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:9px 17px; border-radius:12px; font-size:14px; font-weight:600; background:var(--panel); color:var(--text); border:1px solid var(--line2); transition-property:background-color,color,border-color,box-shadow,scale; transition-duration:150ms; transition-timing-function:ease-out; user-select:none; white-space:nowrap; box-shadow:0 1px 2px rgba(34,27,56,.03)}
 .btn:hover{border-color:var(--primary); color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft)}
 .btn:active{scale:.96}
-.btn-primary{background:linear-gradient(180deg,var(--primary),var(--primary2)); color:#fff; border:1px solid transparent; box-shadow:0 8px 18px -8px rgba(108,59,245,.55)}
+.btn-primary{background:linear-gradient(180deg,var(--primary),var(--primary2)); color:#fff; border:1px solid transparent; text-shadow:0 1px 2px rgba(20,10,40,.28); box-shadow:0 8px 18px -8px rgba(108,59,245,.55)}
 .btn-primary:hover{color:#fff; filter:brightness(1.05); box-shadow:0 10px 22px -8px rgba(108,59,245,.6)}
 .btn-primary:active{filter:brightness(.97)}
 .btn-accent{background:linear-gradient(180deg,var(--accent),#086b47); color:#fff; border:1px solid transparent; box-shadow:0 8px 18px -8px rgba(10,122,80,.5)}
 .btn-accent:hover{color:#fff; filter:brightness(1.05)}
 .btn-danger{background:var(--danger-soft); color:var(--danger); border:1px solid rgba(214,69,69,.3)}
 .btn-danger:hover{border-color:var(--danger); box-shadow:0 0 0 3px var(--danger-soft)}
-.btn-ghost{background:transparent; border-color:transparent; color:var(--muted); box-shadow:none}
+.btn-ghost{background:transparent; border-color:transparent; color:#574f6e; box-shadow:none}
 .btn-ghost:hover{color:var(--primary); background:var(--primary-soft)}
 .btn-sm{padding:6px 13px; font-size:13px; border-radius:10px}
 .btn-lg{padding:12px 24px; font-size:15px; border-radius:14px}
@@ -92,7 +92,7 @@ p,li,td,th{text-wrap:pretty}
 
 /* page header */
 .topbar{display:flex; align-items:flex-end; justify-content:space-between; gap:14px; margin-bottom:22px; flex-wrap:wrap}
-.topbar h1{font-size:25px; font-weight:780; letter-spacing:-.02em}
+.topbar h1{font-size:25px; font-weight:780; letter-spacing:-.02em; overflow-wrap:anywhere}
 .topbar .sub{color:var(--muted); font-size:13px; margin-top:3px}
 .grid{display:grid; gap:18px}
 .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -809,6 +809,14 @@ li,td,th{text-wrap:normal}
 .ob-goal:hover{background:var(--panel2)}
 .ob-goal.sel{background:var(--primary-soft)}
 .ob-sum{border:0; background:transparent; border-radius:0; padding:2px 0}
+
+/* 术语说明按钮 / 背词提示 / 文本断行（v1.9.1 体验优化） */
+.tip{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--primary-soft);color:var(--primary);font-size:10.5px;font-weight:800;line-height:1;margin-left:4px;vertical-align:1px;cursor:pointer;user-select:none}
+.tip:hover{background:var(--primary);color:#fff}
+.fc-preview{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
+.fc-preview-hint{font-size:13px;color:var(--muted);text-align:center}
+.un,.side-user .un,#dash-name{overflow-wrap:anywhere;word-break:break-word}
+#toast-wrap{max-width:min(92vw,430px)}
 </style>
 </head>
 <body>
@@ -825,7 +833,7 @@ li,td,th{text-wrap:normal}
     <div id="auth-login">
       <div class="field"><label for="login-user">用户名</label><input id="login-user" name="username" placeholder="输入用户名" autocomplete="username"></div>
       <div class="field"><label for="login-pass">密码</label><input id="login-pass" name="password" type="password" placeholder="输入密码" autocomplete="current-password"></div>
-      <button class="btn btn-primary btn-lg" style="width:100%" onclick="AppAuth.login()">登 录</button>
+      <button class="btn btn-primary btn-lg" style="width:100%" onclick="AppAuth.login()">登录</button>
     </div>
     <div id="auth-reg" hidden>
       <div class="field"><label for="reg-user">用户名（2-20 个字符）</label><input id="reg-user" name="username" placeholder="例如：xiaoming" autocomplete="username"></div>
@@ -836,7 +844,7 @@ li,td,th{text-wrap:normal}
     <div class="auth-switch"><span id="auth-switch-tip">还没有账号？</span> <button id="auth-switch-btn" onclick="AppAuth.toggleMode()">注册新账号</button></div>
     <div class="guest-row"><button class="btn btn-sm" onclick="AppAuth.guest()">以试用模式进入</button></div>
     <div id="cloud-badge" class="muted small" style="margin-top:10px;text-align:center"></div>
-    <div class="feature-hint">数据优先保存在本机浏览器，可在「设置」中导出/自动备份；云端账号密码仅保存加盐哈希，读写受访问令牌保护。试用模式功能相同。</div>
+    <div class="feature-hint" style="text-align:left;line-height:1.9"><div>· 学习数据优先保存在本机，可在「设置」中导出或自动备份；</div><div>· 云端账号密码仅存加盐哈希，读写受访问令牌保护；</div><div>· 试用模式：全部学习功能可用，数据仅存本机、不参与云同步。</div></div>
     <noscript><div style="margin-top:14px;padding:12px;background:var(--warn-soft);border-radius:12px;font-size:13px;color:var(--warn)">当前浏览器禁用了 JavaScript，无法使用本应用。请在浏览器设置中开启 JavaScript 后刷新。</div></noscript>
   </div>
 </div>
@@ -854,7 +862,7 @@ li,td,th{text-wrap:normal}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.9.0 · 安全更新<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.9.1 · 体验优化<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -906,16 +914,7 @@ li,td,th{text-wrap:normal}
       <div class="topbar"><div><h1>数学</h1><div class="sub">功能规划与设计说明</div></div></div>
       <div class="banner info"><b>模块说明：</b>数学模块以错题本、公式手册、每日一题、知识图谱为主线，具体功能将分阶段上线，不涉及对现有英语功能的改动。</div>
       <div id="math-grid"></div>
-      <div class="card" style="margin-top:16px">
-        <div class="card-title"><span class="dot"></span>功能规划</div>
-        <div class="roadmap">
-          <div class="rm-item done"><div class="rm-dot"></div><div><b>错题本</b><span>按知识点归集错题，支持定期重做与错误率统计</span></div><span class="tag tag-green">v1.7 排期中</span></div>
-          <div class="rm-item doing"><div class="rm-dot"></div><div><b>公式手册</b><span>高等数学、线性代数、概率论常用公式检索与收藏</span></div><span class="tag tag-orange">v1.8 开发中</span></div>
-          <div class="rm-item todo"><div class="rm-dot"></div><div><b>每日一题</b><span>依据学习进度推送习题，自动记录正确率</span></div><span class="tag">评估中</span></div>
-          <div class="rm-item todo"><div class="rm-dot"></div><div><b>知识图谱</b><span>呈现章节知识点关联，便于定位薄弱环节</span></div><span class="tag">评估中</span></div>
-        </div>
-        <div class="small muted" style="margin-top:14px">按上述顺序逐步开发并随版本更新发布；现有英语功能不受影响。</div>
-      </div>
+      <div class="muted small" style="margin-top:14px;line-height:1.8">以上功能均处于规划/评估阶段，暂无已上线内容；后续如开放，会在此更新并点亮导航入口，不影响现有英语功能。欢迎先用好英语模块。</div>
     </section>
 
     <!-- 词库中心 -->
@@ -964,7 +963,7 @@ li,td,th{text-wrap:normal}
             <div class="kv"><span class="kk">发音口音</span><span class="vv"><select id="set-voice" style="width:150px"><option value="en-US">美音</option><option value="en-GB">英音</option></select></span></div>
             <div class="kv"><span class="kk">翻卡自动朗读</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autospeak"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">联网自动用在线词库</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoonline"><span class="sl"></span></label></span></div>
-            <div class="kv"><span class="kk">默认剔除衍生词</span><span class="vv"><label class="switch"><input type="checkbox" id="set-deriv"><span class="sl"></span></label></span></div>
+            <div class="kv"><span class="kk">默认剔除衍生词 <button class="tip" onclick="termTip(&quot;deriv&quot;)" aria-label="什么是衍生词" title="什么是衍生词">?</button></span><span class="vv"><label class="switch"><input type="checkbox" id="set-deriv"><span class="sl"></span></label></span></div>
             <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap">
               <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存偏好</button>
             </div>
@@ -978,7 +977,7 @@ li,td,th{text-wrap:normal}
               <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存外观</button>
             </div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.9.0</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.9.1</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用单文件离线优先设计：内置精简词表离线可用，联网后在「设置 → 词库中心」更新完整词表；账号数据走云端存储，同时支持本地自动备份。</div>
@@ -1329,6 +1328,20 @@ function openModal(html){
   root.innerHTML = '<div class="modal-mask" onclick="if(event.target===this)AppUI.closeModal()"><div class="modal" role="dialog" aria-modal="true">'+html+'</div></div>';
 }
 
+/* 术语说明（体验优化 v1.9.1） */
+const TERMS = {
+  curve: '遗忘曲线（间隔重复）：一个词从第一次点「认识」起，会按 1/3/7/14/30/60 天的间隔再次出现，帮助长期记忆。每完成一级间隔加深一次记忆，走完全部级别才会计入「已掌握」。',
+  deriv: '衍生词：由同一词根变化出的词，例如 happy → happily / happiness / unhappy。开启后，次词库或已学词的同根词也会一并自动剔除。',
+  target: '主词库：你真正要学的词库（例如四级）；系统只从这个词库中为你挑词。',
+  base: '次词库：用来“剔除”的词库。主词库中与次词库重复的词（含衍生词）会被自动去掉，避免重复学习已掌握内容。',
+  quiz: '学习情况抽测：从你已经学过的词里随机抽一批，快速检验还记得多少。'
+};
+function termTip(name){
+  const t = TERMS[name] || '';
+  openModal('<div style="padding:6px 2px 0"><h3 style="margin-bottom:10px">术语说明</h3><p class="muted" style="line-height:1.8">' + (t || '暂无说明') + '</p><div style="margin-top:20px;text-align:right"><button class="btn btn-primary" onclick="AppUI.closeModal()">知道了</button></div></div>');
+}
+
+
 /* ================= 账号系统 ================= */
 const AppAuth = {
   mode: 'login',
@@ -1493,7 +1506,7 @@ const AppAuth = {
     const badge = $('#cloud-badge');
     if(badge){
       if(Supa.active()){
-        badge.textContent = '已连接云端数据库 · 账号以云端为准';
+        badge.textContent = '已连接云端数据库 · 账号与学习进度自动同步';
         badge.style.color = 'var(--accent)';
       } else {
         badge.textContent = '未连接云端（本地模式）· 请确认网址为 https://ppt10086.github.io/index-2/';
@@ -1810,8 +1823,8 @@ const WL = {
     { id:'mfltr',   name:'外研社初中', group:'middle', desc:'外研版初中课本词汇', defs:true, online:['外研社初中.txt'] },
     { id:'middle2', name:'通用初中词表', group:'middle', desc:'KyleBing 初中词汇（含释义词组）', defs:true, online:['初中.txt'] },
     { id:'ppep_m',  name:'人教版初中词汇', group:'middle', desc:'人教版初中课本词汇（7-9 年级，含释义词组）', embed:true, defs:true, online:['人教初中七年级.txt','人教初中八年级.txt','人教初中九年级.txt'] },
-    { id:'hs',      name:'高中英语大纲', group:'hs', desc:'高中大纲词汇 3469', embed:true },
-    { id:'hs2',     name:'通用高中词表', group:'hs', desc:'KyleBing 高中词汇 6008（含释义词组）', defs:true, online:['高中.txt'] },
+    { id:'hs',      name:'高中英语大纲', group:'hs', desc:'高中大纲词汇', embed:true },
+    { id:'hs2',     name:'通用高中词表', group:'hs', desc:'KyleBing 高中词汇（含释义词组）', defs:true, online:['高中.txt'] },
     { id:'hspep',   name:'人教版高中词汇', group:'hs', desc:'人教版高中课本词汇（含释义词组）', embed:true, defs:true, online:['人教高中.txt'] },
     { id:'hsbn',    name:'北师大版高中', group:'hs', desc:'北师大版高中课本词汇', defs:true, online:['北师高中.txt'] },
     { id:'cet4',    name:'四级词汇', group:'target', desc:'大学英语四级（内置精简版含音标，在线完整版含词组）', embed:true, defs:true, online:['四级.txt'] },
@@ -1865,6 +1878,16 @@ const WL = {
     if(!entries && def.embed){
       entries = this.embedEntries(id);
       source = 'embed';
+    }
+    if(entries && source === 'online' && def.embed && typeof EMBEDDED !== 'undefined'){
+      const eb = EMBEDDED[id];
+      if(eb && eb.kind === 'entries' && eb.words && eb.words.length){
+        const phMap = {};
+        for(const a of eb.words){ if(a && a[1]) phMap[Morph.norm(a[0])] = a[1]; }
+        if(Object.keys(phMap).length){
+          for(const it of entries){ if(!it.ph){ const p = phMap[Morph.norm(it.w)]; if(p) it.ph = p; } }
+        }
+      }
     }
     this.cache.set(id, { entries, source });
     this.status.set(id, entries && entries.length ? 'ready' : 'error');
@@ -2432,7 +2455,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.9.0', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.9.1', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -2461,7 +2484,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'1.9.0', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'1.9.1', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -2568,7 +2591,7 @@ const EMBEDDED = (function(){
 
 
 /* ================= 词库估算词数（未加载时显示） ================= */
-const EST = { primary:441, ppep:815, middle:1925, mfltr:2162, middle2:3223, ppep_m:2276, hs:3469, hs2:6008, hspep:3530, hsbn:3293, cet4:4615, cet6:2273 };
+const EST = { primary:440, ppep:815, middle:1896, mfltr:2162, middle2:3223, ppep_m:2276, hs:3446, hs2:6008, hspep:3530, hsbn:3293, cet4:4540, cet6:2220 };
 WL.count = function(id){
   const c = this.cache.get(id);
   if(c && c.entries && c.entries.length) return c.entries.length;
@@ -2717,7 +2740,7 @@ const AppUI = {
     for(const k in d.wordState){ const v = d.wordState[k]; if(v.last > lastTs) lastTs = v.last; }
     const todayMarks = (d.stats.dayLog && d.stats.dayLog[todayStr()]) || 0;
     $('#dash-stats').innerHTML = [
-      ['checkCircle','已掌握词汇', known, '完成整条遗忘曲线后计入掌握', 'stat-green'],
+      ['checkCircle','已掌握词汇', known, '完成整条遗忘曲线后计入掌握 <button class="tip" onclick="termTip(&quot;curve&quot;)" aria-label="什么是遗忘曲线" title="什么是遗忘曲线">?</button>', 'stat-green'],
       ['clock','待复习', due, due ? '今日到期单词数' : '今日无到期单词', 'stat-orange'],
       ['flame','累计学习天数', d.stats.studyDays + (d.stats.lastStudyDay===todayStr()?1:0), '坚持每日复习', 'stat-red']
     ].map(x => '<div class="stat"><span class="stat-ico '+x[4]+'">'+icon(x[0])+'</span><div class="stat-body"><span class="k">'+x[1]+'</span><span class="v">'+x[2]+'</span><span class="d">'+x[3]+'</span></div></div>').join('');
@@ -2756,7 +2779,7 @@ const AppUI = {
       ['target','每日一题','依据学习进度推送习题，记录正确率'],
       ['share','知识图谱','呈现章节知识点关联，便于定位薄弱环节']
     ];
-    const phases = ['v1.7 · 排期中','v1.8 · 开发中','评估中','评估中'];
+    const phases = ['规划中','规划中','评估中','评估中'];
     $('#math-grid').innerHTML = '<div class="placeholder-grid">' + items.map((x,i) =>
       '<div class="ph-card"><div class="pico">'+icon(x[0], 30)+'</div><h4>'+x[1]+'</h4><p>'+x[2]+'</p><span class="soon">'+phases[i]+'</span></div>'
     ).join('') + '</div>';
@@ -2919,7 +2942,7 @@ const AppUI = {
       '<div class="card-title"><span class="dot"></span>筛选结果 <span class="tag '+src.cls+'" style="margin-left:8px">'+src.txt+'</span></div>' +
       '<div class="filter-summary">' +
       '<div class="stat"><span class="stat-ico stat-blue">'+icon('book')+'</span><div class="stat-body"><span class="k">主词库总数</span><span class="v">'+r.total+'</span><span class="d">'+tDef.name+'</span></div></div>' +
-      '<div class="stat"><span class="stat-ico stat-orange">'+icon('minusCircle')+'</span><div class="stat-body"><span class="k">已剔除（已学词汇）</span><span class="v" style="color:var(--warn)">'+r.removedExact+'</span><span class="d">直接重合 '+r.removedExact+' 个'+(r.deriv?' · 衍生词 '+r.removedDerived+' 个':'')+'</span></div></div>' +
+      '<div class="stat"><span class="stat-ico stat-orange">'+icon('minusCircle')+'</span><div class="stat-body"><span class="k">已剔除（已学词汇）</span><span class="v" style="color:var(--warn)">'+(r.removedExact + (r.deriv?r.removedDerived:0))+'</span><span class="d">直接重合 '+r.removedExact+' 个'+(r.deriv?' · 另剔除衍生词 '+r.removedDerived+' 个':'')+'</span></div></div>' +
       '<div class="stat"><span class="stat-ico stat-green">'+icon('target')+'</span><div class="stat-body"><span class="k" style="color:var(--accent)">剩余生词</span><span class="v" style="color:var(--accent)">'+r.kept.length+'</span><span class="d">占主词库 '+keptPct+'%</span></div></div>' +
       '</div>' +
       '<div class="bar" style="margin:6px 0 14px"><i style="width:'+keptPct+'%;background:linear-gradient(90deg,var(--warn),var(--accent))"></i></div>' +
@@ -2960,6 +2983,12 @@ const Onboarding = {
   },
   skip(){
     this.close();
+    try{
+      const d = AppAuth.data();
+      d.settings.onboarded = true;
+      AppAuth.save(d);
+      Store.set('welcomeSeen', true);
+    }catch(e){}
     toast('已跳过引导，可在「词表筛选」中自行配置');
   },
   setGoal(n){ this.goal = n; this.render(); },
@@ -2979,7 +3008,7 @@ const Onboarding = {
       ];
       body =
         '<h2>先从哪个词库开始？</h2>' +
-        '<p class="ob-sub">系统会自动剔除你已经掌握的阶段词汇（含衍生词），只留下需要背的。</p>' +
+        '<p class="ob-sub">系统会自动剔除你已经掌握的阶段词汇（含衍生词 <button class="tip" onclick="termTip(&quot;deriv&quot;)" aria-label="什么是衍生词">?</button>），只留下需要背的。</p>' +
         '<div class="ob-opts">' + opts.map(o =>
           '<button class="ob-opt '+(this.ident===o[0]?'sel':'')+'" onclick="Onboarding.pick(\''+o[0]+'\')"><b>'+o[1]+'</b><span>'+o[2]+'</span></button>'
         ).join('') + '</div>' +
@@ -3020,6 +3049,7 @@ const Onboarding = {
     d.settings.studyMode = 'daily';
     d.settings.onboarded = true;
     AppAuth.save(d);
+    try{ Store.set('welcomeSeen', true); }catch(e){}
     try{ await AppFilter.apply(true); }catch(e){}
     this.close();
     AppUI.go('dashboard');
@@ -3332,7 +3362,7 @@ const AppStudy = {
       '</div>' +
       '<div id="study-options" style="margin:18px 0 16px;min-height:86px"></div>' +
       '<button class="btn btn-primary btn-lg" onclick="AppStudy.start()">'+icon('play')+' <span id="study-start-label">开始学习</span></button>' +
-      '<div class="fc-hint">先回忆词义，再显示答案，最后按记忆情况评分；进度会自动同步云端。</div>' +
+      '<div class="fc-hint">先回忆词义，再点「显示释义」核对，最后按记忆情况评分；进度会自动同步云端。</div>' +
       '</div>';
     this.paintOptions({ newN, dueN, quizN, modeLabel, s });
   },
@@ -3521,11 +3551,11 @@ const AppStudy = {
       '<div class="bar" style="margin-bottom:16px" role="progressbar" aria-valuemin="0" aria-valuemax="'+total+'" aria-valuenow="'+(s.idx+1)+'" aria-label="学习进度"><i style="width:'+Math.round(s.idx/total*100)+'%"></i></div>' +
       '<div class="flashcard"><div class="fc-word-wrap"><span class="fc-word" style="font-size:'+fcFontSize(e.w)+'px;white-space:nowrap">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppStudy.speak()" aria-label="朗读 '+esc(e.w)+'">'+icon('volume2', 20)+'</button></div>' +
       '<div class="fc-ph" id="fc-ph"></div>' +
-      '<div id="fc-body" style="width:100%">'+(s.revealed ? '<div class="reveal-in">'+cardBody(e)+'</div>' : '<button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示答案</button>')+'</div></div>' +
+      '<div id="fc-body" style="width:100%">'+(s.revealed ? '<div class="reveal-in">'+cardBody(e)+'</div>' : (s.idx < 3 ? '<div class="fc-preview"><div class="fc-preview-hint">先回忆它的意思与发音，再点下方按钮核对</div><button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示释义</button></div>' : '<button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示释义</button>'))+'</div></div>' +
       '<div class="fc-btns">' +
       '<button class="btn again" onclick="AppStudy.mark(\'again\')">不认识</button>' +
       '<button class="btn good" onclick="AppStudy.mark(\'good\')">认识</button></div>' +
-      '<div class="fc-hint"><span class="kbd">空格</span> 显示答案 · <span class="kbd">1</span> 不认识 · <span class="kbd">2</span> 认识 · <span class="kbd">Esc</span> 退出</div>' +
+      '<div class="fc-hint"><span class="kbd">空格</span> 显示释义 · <span class="kbd">1</span> 不认识 · <span class="kbd">2</span> 认识 · <span class="kbd">Esc</span> 退出</div>' +
       '</div>';
     fillPh(e);
     const fdEl = document.getElementById('fc-def');
@@ -3673,11 +3703,11 @@ const AppReview = {
       '<div class="bar" style="margin-bottom:16px" role="progressbar" aria-valuemin="0" aria-valuemax="'+total+'" aria-valuenow="'+(s.idx+1)+'" aria-label="复习进度"><i style="width:'+Math.round(s.idx/total*100)+'%"></i></div>' +
       '<div class="flashcard"><div class="fc-word-wrap"><span class="fc-word" style="font-size:'+fcFontSize(e.w)+'px;white-space:nowrap">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppReview.speak()" aria-label="朗读 '+esc(e.w)+'">'+icon('volume2', 20)+'</button></div>' +
       '<div class="fc-ph" id="fc-ph"></div>' +
-      '<div id="fc-body" style="width:100%">'+(s.revealed ? cardBody(e) : '<button class="btn btn-primary btn-lg" onclick="AppReview.reveal()">显示答案</button>')+'</div></div>' +
+      '<div id="fc-body" style="width:100%">'+(s.revealed ? cardBody(e) : '<button class="btn btn-primary btn-lg" onclick="AppReview.reveal()">显示释义</button>')+'</div></div>' +
       '<div class="fc-btns">' +
       '<button class="btn again" onclick="AppReview.mark(\'again\')">忘了</button>' +
       '<button class="btn good" onclick="AppReview.mark(\'good\')">记得</button></div>' +
-      '<div class="fc-hint"><span class="kbd">空格</span> 显示答案 · <span class="kbd">1</span> 忘了 · <span class="kbd">2</span> 记得 · <span class="kbd">Esc</span> 结束</div></div>';
+      '<div class="fc-hint"><span class="kbd">空格</span> 显示释义 · <span class="kbd">1</span> 忘了 · <span class="kbd">2</span> 记得 · <span class="kbd">Esc</span> 结束</div></div>';
     fillPh(e);
     const fdEl = document.getElementById('fc-def');
     if(fdEl) Dict.fillDef(e, fdEl);
@@ -3737,6 +3767,8 @@ const AppRecord = {
     const unknown = recs.filter(r => !SRS.isDone({ s:r.s, i:r.i||0 }) && (r.i||0) === 0).length;
     const active = recs.filter(r => !SRS.isDone({ s:r.s, i:r.i||0 }) && (r.i||0) >= 1);
     const dueN = active.filter(r => r.due <= now()).length;
+    const waitN = recs.filter(r => !SRS.isDone({ s:r.s, i:r.i||0 }) && (r.i||0) === 1).length;
+    const learningN = recs.filter(r => !SRS.isDone({ s:r.s, i:r.i||0 }) && (r.i||0) >= 2).length;
     let list = recs;
     if(this.filter === 'known') list = list.filter(r => SRS.isDone({ s:r.s, i:r.i||0 }));
     if(this.filter === 'unknown') list = list.filter(r => !SRS.isDone({ s:r.s, i:r.i||0 }) && (r.i||0) === 0);
@@ -3771,7 +3803,7 @@ const AppRecord = {
       '<div class="filter-summary">' +
       '<div class="stat"><span class="stat-ico stat-blue">'+icon('file')+'</span><div class="stat-body"><span class="k">已学习词汇</span><span class="v">'+recs.length+'</span><span class="d">参与过评分的单词总数</span></div></div>' +
       '<div class="stat"><span class="stat-ico stat-green">'+icon('checkCircle')+'</span><div class="stat-body"><span class="k" style="color:var(--accent)">已掌握</span><span class="v" style="color:var(--accent)">'+done+'</span><span class="d">完成整条遗忘曲线</span></div></div>' +
-      '<div class="stat"><span class="stat-ico stat-orange">'+icon('clock')+'</span><div class="stat-body"><span class="k">进行中</span><span class="v">'+active.length+'</span><span class="d">其中 '+dueN+' 个待复习 · '+unknown+' 个不认识</span></div></div>' +
+      '<div class="stat"><span class="stat-ico stat-orange">'+icon('clock')+'</span><div class="stat-body"><span class="k">未掌握</span><span class="v">'+(recs.length-done)+'</span><span class="d">'+((recs.length-done) ? ('待复习 '+waitN+' · 学习中 '+learningN+' · 不认识 '+unknown+'（点「认识」开始记忆）') : '全部已掌握')+'</span></div></div>' +
       '</div></div>' +
       '<div class="card"><div class="card-title"><span class="dot" style="background:var(--accent)"></span>单词状态明细</div>' +
       '<div class="search-row">' +
@@ -3859,7 +3891,7 @@ const AppBrowse = {
       const stTag = stage ? '<span class="tag '+stage.cls+'">'+stage.txt+'</span>' : '';
       const enc = encodeURIComponent(e.w);
       const def = defText(e, 80);
-      return '<tr><td class="w">'+esc(e.w)+'</td><td class="ph">'+esc(e.ph||'')+'</td><td class="df"'+(def?'':' data-dw="'+esc(e.w)+'"')+'>'+(def?esc(def):'…')+'</td><td class="op"><button onclick="AppBrowse.detail(\''+enc+'\')">详情</button>'+(stTag?' '+stTag:'')+'</td></tr>';
+      return '<tr><td class="w">'+esc(e.w)+'</td><td class="ph">'+(e.ph ? esc(e.ph) : '<span class="muted" data-pw="'+esc(e.w)+'" title="正在补齐音标…">…</span>')+'</td><td class="df"'+(def?'':' data-dw="'+esc(e.w)+'"')+'>'+(def?esc(def):'…')+'</td><td class="op"><button onclick="AppBrowse.detail(\''+enc+'\')">详情</button>'+(stTag?' '+stTag:'')+'</td></tr>';
     }).join('');
     const pager = '<div class="pager"><button class="btn btn-sm" onclick="AppBrowse.page--;AppBrowse.render()" '+(this.page<=1?'disabled':'')+'>‹ 上一页</button><span>第 '+this.page+' / '+pages+' 页 · 共 '+total+' 词</span><button class="btn btn-sm" onclick="AppBrowse.page++;AppBrowse.render()" '+(this.page>=pages?'disabled':'')+'>下一页 ›</button></div>';
     box.innerHTML =
@@ -3871,6 +3903,22 @@ const AppBrowse = {
       (total ? '<div class="table-scroll"><table class="wlist"><thead><tr><th>单词</th><th>音标</th><th>释义</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'+pager : '<div class="empty"><div class="big">'+icon('search', 40)+'</div><p>未找到匹配的单词。</p></div>') +
       '</div>';
     fillDictCells(box);
+    this.fillBrowsePh(box);
+  },
+  async fillBrowsePh(box){
+    if(!box) return;
+    const cells = Array.from(box.querySelectorAll('[data-pw]'));
+    if(!cells.length) return;
+    const todo = cells.slice(0, 15), rest = cells.slice(15);
+    for(const td of rest){ if(td.isConnected){ td.textContent = '—'; td.removeAttribute('data-pw'); } }
+    let chain = Promise.resolve();
+    for(const td of todo){
+      const w = td.getAttribute('data-pw');
+      chain = chain.then(() => Dict.get(w)).then(ph => {
+        if(td.isConnected){ td.textContent = ph || '—'; td.removeAttribute('data-pw'); }
+      }).catch(() => { if(td.isConnected){ td.textContent = '—'; td.removeAttribute('data-pw'); } });
+    }
+    await chain;
   },
   detail(w){
     w = decodeURIComponent(w);
