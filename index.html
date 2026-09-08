@@ -836,7 +836,7 @@ li,td,th{text-wrap:normal}
     <div class="auth-switch"><span id="auth-switch-tip">还没有账号？</span> <button id="auth-switch-btn" onclick="AppAuth.toggleMode()">注册新账号</button></div>
     <div class="guest-row"><button class="btn btn-sm" onclick="AppAuth.guest()">以试用模式进入</button></div>
     <div id="cloud-badge" class="muted small" style="margin-top:10px;text-align:center"></div>
-    <div class="feature-hint">账号数据保存在本机浏览器中，可在「设置」中导出备份；试用模式同样可用全部功能。</div>
+    <div class="feature-hint">数据优先保存在本机浏览器，可在「设置」中导出/自动备份；云端账号密码仅保存加盐哈希，读写受访问令牌保护。试用模式功能相同。</div>
     <noscript><div style="margin-top:14px;padding:12px;background:var(--warn-soft);border-radius:12px;font-size:13px;color:var(--warn)">当前浏览器禁用了 JavaScript，无法使用本应用。请在浏览器设置中开启 JavaScript 后刷新。</div></noscript>
   </div>
 </div>
@@ -854,7 +854,7 @@ li,td,th{text-wrap:normal}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.8.0<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.9.0 · 安全更新<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -978,7 +978,7 @@ li,td,th{text-wrap:normal}
               <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存外观</button>
             </div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.8.0</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.9.0</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用单文件离线优先设计：内置精简词表离线可用，联网后在「设置 → 词库中心」更新完整词表；账号数据走云端存储，同时支持本地自动备份。</div>
@@ -1115,6 +1115,13 @@ const Store = {
 const Supa = {
   cfg: null,
   tried: false,
+  _busy: false,
+  _dirty: false,
+  _retryTimer: null,
+  _watchTimer: null,
+  lastOk: null,
+  lastErr: null,
+  _hadRemote: false,
   init(){
     try{
       if(window.SiteDB && window.SiteDB.config && window.SiteDB.config.url && window.SiteDB.config.key){
@@ -1129,65 +1136,72 @@ const Supa = {
     if(!this.cfg && !this.tried){ this.tried = true; this.init(); }
     return !!this.cfg;
   },
-  async rest(path, opts){
+  /* 调用 SECURITY DEFINER 函数（数据库已锁表，读写只走函数+访问令牌） */
+  async rpc(name, args){
     if(!this.active()) throw new Error('云端数据库未接入');
-    const o = opts || {};
-    const headers = {
-      'apikey': this.cfg.key,
-      'Authorization': 'Bearer ' + this.cfg.key,
-      'Content-Type': 'application/json'
-    };
-    if(o.headers) Object.assign(headers, o.headers);
-    const r = await fetch(this.cfg.url + path, {
-      method: o.method || 'GET',
-      headers: headers,
-      body: o.body !== undefined ? JSON.stringify(o.body) : undefined
+    const r = await fetch(this.cfg.url + '/rest/v1/rpc/' + name, {
+      method: 'POST',
+      headers: {
+        'apikey': this.cfg.key,
+        'Authorization': 'Bearer ' + this.cfg.key,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(args || {})
     });
     if(!r.ok){
       let msg = '云端请求失败 ' + r.status;
       try{ const j = await r.json(); if(j && (j.message || j.msg)) msg = j.message || j.msg; }catch(e){}
       throw new Error(msg);
     }
-    if(o.raw) return r;
     return r.json().catch(() => null);
   },
-  async findAccount(username){
-    const rows = await this.rest('/rest/v1/sl_accounts?username=eq.' + encodeURIComponent(username) + '&select=*');
-    return (Array.isArray(rows) && rows[0]) ? rows[0] : null;
+  /* 当前会话令牌；缺失时用本机保存的哈希静默换新令牌（不保存明文密码） */
+  async sessionToken(){
+    const s = AppAuth.current();
+    if(!s || s.user === '__guest__') return '';
+    if(s.token) return s.token;
+    const users = Store.get('users', {});
+    const rec = users[s.user] || null;
+    if(!rec || !rec.hash) return '';
+    try{
+      const r = await this.rpc('sl_login_hash', { p_username: s.user, p_hash: rec.hash });
+      if(r && r.ok && r.token){
+        s.token = r.token;
+        Store.set('session', s);
+        return r.token;
+      }
+    }catch(e){}
+    return '';
   },
-  async insertAccount(acc){
-    await this.rest('/rest/v1/sl_accounts', { method: 'POST', body: acc });
-  },
-  async loadData(username){
-    const rows = await this.rest('/rest/v1/sl_data?username=eq.' + encodeURIComponent(username) + '&select=data');
-    if(Array.isArray(rows) && rows[0] && rows[0].data){
-      this._hadRemote = true;
-      return rows[0].data;
-    }
+  async loginRemote(u, p){ return this.rpc('sl_login', { p_username: u, p_password: p }); },
+  async registerRemote(u, p){ return this.rpc('sl_register', { p_username: u, p_password: p }); },
+  async _load(token){
+    const r = await this.rpc('sl_load', { p_token: token });
+    if(r && r.ok && r.data !== undefined && r.data !== null) return r.data;
     return null;
   },
-  async saveData(username, data){
-    await this.rest('/rest/v1/sl_data?on_conflict=username', {
-      method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates' },
-      body: { username: username, data: data, updated_at: new Date().toISOString() }
-    });
+  async _save(token, data){
+    const r = await this.rpc('sl_save', { p_token: token, p_data: data });
+    if(!r || r.ok !== true) throw new Error('云端保存失败');
     this._hadRemote = true;
   },
-  async deleteRemote(username){
-    if(!this.active()) return;
-    let ok = true;
-    try{ await this.rest('/rest/v1/sl_accounts?username=eq.' + encodeURIComponent(username), { method:'DELETE' }); }catch(e){ ok = false; }
-    try{ await this.rest('/rest/v1/sl_data?username=eq.' + encodeURIComponent(username), { method:'DELETE' }); }catch(e){ ok = false; }
-    if(ok) this._hadRemote = false;
+  async loadData(){
+    const t = await this.sessionToken();
+    return t ? this._load(t) : null;
   },
-  _busy: false,
-  _dirty: false,
-  _retryTimer: null,
-  _watchTimer: null,
-  lastOk: null,
-  lastErr: null,
-  _hadRemote: false,
+  async saveData(data){
+    const t = await this.sessionToken();
+    if(!t) throw new Error('云端未登录');
+    await this._save(t, data);
+  },
+  async deleteRemote(token, username){
+    if(!token) return;
+    try{
+      const r = await this.rpc('sl_delete_account', { p_token: token, p_username: username });
+      if(r && r.ok) this._hadRemote = false;
+    }catch(e){}
+  },
+  /* ---- 自动同步泵：每个必要动作后串行上传；失败 4s 自动重试 ---- */
   async _pump(){
     if(this._busy) return;
     this._busy = true;
@@ -1197,7 +1211,7 @@ const Supa = {
         const s = AppAuth.current();
         if(!s || s.user === '__guest__') break;
         try{
-          await this.saveData(s.user, AppAuth.data());
+          await this.saveData(AppAuth.data());
           this.lastOk = Date.now();
           this._syncUI();
           if(this._retryTimer){ clearTimeout(this._retryTimer); this._retryTimer = null; }
@@ -1221,7 +1235,6 @@ const Supa = {
     if(!this.active()) return;
     const s = AppAuth.current();
     if(!s || s.user === '__guest__') return;
-    // 每个必要动作完成后立即上传；上传中产生的新变化合并进下一轮，保证最终一致
     this._dirty = true;
     this._pump();
   },
@@ -1243,18 +1256,20 @@ const Supa = {
     if(!this.active()) return;
     const s = AppAuth.current();
     if(!s || s.user === '__guest__') return;
+    const t = s.token || await this.sessionToken();
+    if(!t) return;
     try{
-      await fetch(this.cfg.url + '/rest/v1/sl_data?on_conflict=username', {
+      await fetch(this.cfg.url + '/rest/v1/rpc/sl_save', {
         method: 'POST',
         headers: {
           'apikey': this.cfg.key,
           'Authorization': 'Bearer ' + this.cfg.key,
-          'Content-Type': 'application/json',
-          'Prefer': 'resolution=merge-duplicates'
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ username: s.user, data: AppAuth.data(), updated_at: new Date().toISOString() }),
+        body: JSON.stringify({ p_token: t, p_data: AppAuth.data() }),
         keepalive: true
       });
+      this._hadRemote = true;
     }catch(e){}
   },
   async pullMerge(){
@@ -1263,13 +1278,8 @@ const Supa = {
     const s = AppAuth.current();
     if(!s || s.user === '__guest__') return;
     try{
-      const cloud = await this.loadData(s.user);
-      if(!cloud){
-        // 之前云端确实有过数据、现在拉不到 → 说明账号被删除/清空：另一台设备的操作实时生效
-        if(this._hadRemote){
-          this._hadRemote = false;
-          AppAuth.staleLocal();
-        }
+      const cloud = await this.loadData();
+      if(!cloud || typeof cloud !== 'object' || !Object.keys(cloud).length){
         return;
       }
       const local = AppAuth.data();
@@ -1380,17 +1390,32 @@ const AppAuth = {
     if(users[u]) return this.err('该用户名已存在，请直接登录');
     if(Supa.active()){
       try{
-        const ex = await Supa.findAccount(u);
-        if(ex) return this.err('该用户名已存在，请直接登录');
-      }catch(e){}
+        const cl = await Supa.registerRemote(u, p);
+        if(cl && cl.ok){
+          users[u] = { salt: cl.salt, hash: cl.hash, created: now() };
+          Store.set('users', users);
+          const sess = { user: u, loginAt: now(), token: cl.token };
+          Store.set('session', sess);
+          try{ await Supa._save(cl.token, this.defaultData()); }catch(e){}
+          toast('账号已创建');
+          this.enter(sess);
+          return;
+        }
+        if(cl && cl.reason === 'exists') return this.err('该用户名已存在，请直接登录');
+        return this.err('注册失败（' + ((cl && cl.reason) || '未知原因') + '），请稍后重试');
+      }catch(e){
+        // 云端暂不可达：仅在本机创建账号；恢复网络后再次登录即可自动补传
+        const salt = genSalt();
+        users[u] = { salt, hash: hashPW(p, salt), created: now() };
+        Store.set('users', users);
+        toast('云端暂不可用，账号已仅在本机创建', 'warn');
+        this.enter({ user: u, loginAt: now() });
+        return;
+      }
     }
     const salt = genSalt();
     users[u] = { salt, hash: hashPW(p, salt), created: now() };
     Store.set('users', users);
-    if(Supa.active()){
-      Supa.insertAccount({ username: u, salt, hash: users[u].hash }).catch(() => {});
-      Supa.saveData(u, this.defaultData()).catch(() => {});
-    }
     toast('账号已创建');
     this.enter({ user: u, loginAt: now() });
   },
@@ -1398,53 +1423,52 @@ const AppAuth = {
     const u = $('#login-user').value.trim(), p = $('#login-pass').value;
     if(!u || !p) return this.err('请输入用户名和密码');
     const users = Store.get('users', {});
-    let rec = null;
     const cloudMode = Supa.active();
     let cloudDown = false;
     if(cloudMode){
       try{
-        const cloud = await Supa.findAccount(u);
-        if(cloud) rec = { salt: cloud.salt, hash: cloud.hash, created: cloud.created_at ? Date.parse(cloud.created_at) : now() };
-        else rec = null;
+        const cl = await Supa.loginRemote(u, p);
+        if(cl && cl.ok){
+          if(!users[u]){ users[u] = { salt: cl.salt, hash: cl.hash, created: now() }; }
+          else { users[u].salt = cl.salt; users[u].hash = cl.hash; }
+          Store.set('users', users);
+          const sess = { user: u, loginAt: now(), token: cl.token };
+          Store.set('session', sess);
+          try{
+            const cloudData = await Supa._load(cl.token);
+            const localData = Store.get('u.'+u, this.defaultData());
+            if(cloudData && typeof cloudData === 'object' && Object.keys(cloudData).length){
+              // 记录级合并：两台设备的数据都保留，冲突以最近操作为准，然后回传统一
+              const merged = mergeUserData(localData, cloudData);
+              Store.set('u.'+u, merged);
+              await Supa._save(cl.token, merged).catch(() => {});
+            } else {
+              await Supa._save(cl.token, localData).catch(() => {});
+            }
+          }catch(e){}
+          toast('登录成功');
+          this.enter(sess);
+          return;
+        }
+        if(cl && cl.reason === 'nouser'){
+          return this.err('云端没有账号「'+u+'」（数据库已清空或该账号不在此站点）。本机旧记录不会自动上传；如需重新开始，请清除本站数据后注册新账号。');
+        }
+        return this.err('用户名或密码不正确');
       }catch(e){
         // 云端暂时不可达：允许用本机记录离线登录，但明确提示
         cloudDown = true;
-        rec = users[u] || null;
       }
-    } else {
-      rec = users[u] || null;
     }
+    const rec = users[u] || null;
     if(!rec){
       return this.err(cloudMode && !cloudDown
-        ? '云端没有账号「'+u+'」（数据库已清空或该账号不在此站点）。本机旧记录不会自动上传；如需重新开始，请清除本站数据后注册新账号。'
+        ? '云端暂时不可用，本机也没有「'+u+'」的记录。请检查网络，或注册新账号。'
         : '用户名或密码不正确');
     }
-    if(!rec || rec.hash !== hashPW(p, rec.salt)) return this.err('用户名或密码不正确');
+    if(rec.hash !== hashPW(p, rec.salt)) return this.err('用户名或密码不正确');
     if(cloudMode && cloudDown) toast('云端暂时不可用，已使用本机记录登录', 'warn');
-    if(cloudMode && !cloudDown){
-      if(!users[u]){ users[u] = rec; Store.set('users', users); }
-      try{
-        const cloudData = await Supa.loadData(u);
-        const localData = Store.get('u.'+u, this.defaultData());
-        if(cloudData){
-          // 记录级合并：两台设备的数据都保留，冲突以最近操作为准，然后回传统一
-          const merged = mergeUserData(localData, cloudData);
-          Store.set('u.'+u, merged);
-          await Supa.saveData(u, merged).catch(() => {});
-        } else {
-          await Supa.saveData(u, localData).catch(() => {});
-        }
-      }catch(e){}
-    }
     toast('登录成功');
     this.enter({ user: u, loginAt: now() });
-  },
-  staleLocal(){
-    // 云端账号已不存在（例如数据库被清空）：作废本机旧会话，回到登录页并说明
-    Store.remove('session');
-    Store.remove('users');
-    this.showAuth();
-    this.err('云端已无此账号（数据库可能已被清空）。本机旧登录已失效；请清除本站数据后重新注册，或导入备份恢复。');
   },
   guest(){
     toast('已进入试用模式，数据保存在本机浏览器');
@@ -2408,7 +2432,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.8.0', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.9.0', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -2437,7 +2461,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'1.8.0', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'1.9.0', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -3980,7 +4004,7 @@ const AppSettings = {
       delete users[s.user];
       Store.set('users', users);
     }
-    if(Supa.active()) Supa.deleteRemote(s.user);
+    if(Supa.active() && s.token) Supa.deleteRemote(s.token, s.user);
     Store.remove('u.'+s.user);
     Store.remove('session');
     AppAuth.showAuth();
@@ -4014,7 +4038,7 @@ const AppSettings = {
     if(!document.getElementById('cloud-status')) return;
     if(Supa.active()){
       const st = $('#cloud-status');
-      st.innerHTML = '当前网站已接入部署器云端数据库（Supabase）。账号与学习数据会自动保存在云端，无需额外设置；本机离线时仍可正常使用。';
+      st.innerHTML = '当前网站已启用安全云同步：账号密码仅保存加盐哈希，云端读写受「访问令牌」保护（2026-09-08 起，表级直连已关闭）。学习数据云端明文存放，仅供账号本人读写；本机离线仍可正常使用。建议定期导出备份。';
       $('#cloud-enable').hidden = true;
       $('#cloud-disable').hidden = true;
       $('#cloud-push').hidden = true;
@@ -4169,18 +4193,8 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
         }).catch(()=>{});
       };
       if(Supa.active() && bootUser.user !== '__guest__'){
-        try{
-          const acc = await Supa.findAccount(bootUser.user);
-          if(!acc){
-            // 云端账号已不存在（如数据库被清空）：作废本机旧会话，避免本地数据冒充云端
-            AppAuth.staleLocal();
-          } else {
-            initApp();
-          }
-        }catch(e){
-          // 云端暂时不可达：保留本机会话离线可用
-          initApp();
-        }
+        // 令牌有效性由同步泵/拉取自行处理；云端不可达时保留本机会话离线可用
+        initApp();
       } else {
         initApp();
       }
