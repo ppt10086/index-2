@@ -5,15 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="StudyLens — personal English vocabulary learning system">
 <title>StudyLens · Personal Learning System</title>
-<meta name="theme-color" content="#f6f4fb">
+<meta name="theme-color" content="#f6f4ff">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/plus-jakarta-sans@5/index.css" media="print" onload="this.media='all'">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%236c3bf5'/%3E%3Cpath d='M15 19a5 5 0 0 1 5-5h5a8 8 0 0 1 8 8v24a6 6 0 0 0-6-6H15z' fill='%23fff'/%3E%3Cpath d='M49 19a5 5 0 0 0-5-5h-5a8 8 0 0 0-8 8v24a6 6 0 0 1 6-6h12z' fill='%23fff' opacity='.82'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2096%2096%22%20width%3D%2296%22%20height%3D%2296%22%20role%3D%22img%22%20aria-label%3D%22StudyLens%20minimal%20book%22%3E%0A%20%20%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%2288%22%20height%3D%2288%22%20rx%3D%2224%22%20fill%3D%22%23f6f4ff%22%2F%3E%0A%20%20%3Crect%20x%3D%224.75%22%20y%3D%224.75%22%20width%3D%2286.5%22%20height%3D%2286.5%22%20rx%3D%2223.25%22%20fill%3D%22none%22%20stroke%3D%22%23e7e0f8%22%20stroke-width%3D%221.5%22%2F%3E%0A%20%20%3C%21--%20%E8%B4%9F%E7%A9%BA%E9%97%B4%E5%AD%97%E6%AF%8D%20e%20%E4%B8%8E%E4%B9%A6%E9%A1%B5%20--%3E%0A%20%20%3Cpath%20d%3D%22M17%2042%20Q31%2031%2047%2040%20V72%20Q31%2063%2017%2074%20Z%22%20fill%3D%22none%22%20stroke%3D%22%231e1b4b%22%20stroke-width%3D%225.6%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M79%2042%20Q65%2031%2049%2040%20V72%20Q65%2063%2079%2074%20Z%22%20fill%3D%22none%22%20stroke%3D%22%231e1b4b%22%20stroke-width%3D%225.6%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2247%22%20cy%3D%2238%22%20r%3D%224%22%20fill%3D%22%231e1b4b%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M58%2056%20H68%20M58%2062%20H66%22%20stroke%3D%22%231e1b4b%22%20stroke-width%3D%224%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Ctext%20x%3D%2264%22%20y%3D%2255%22%20font-family%3D%22ui-rounded%2C%27Segoe%20UI%27%2Csystem-ui%2CArial%2Csans-serif%22%20font-size%3D%2214%22%20font-weight%3D%22800%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22central%22%20fill%3D%22%231e1b4b%22%3Ee%3C%2Ftext%3E%0A%20%20%3Ccircle%20cx%3D%2275%22%20cy%3D%2222%22%20r%3D%225.5%22%20fill%3D%22%237c3aed%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2220%22%20cy%3D%2280%22%20r%3D%224%22%20fill%3D%22%237c3aed%22%20fill-opacity%3D%22.55%22%2F%3E%0A%3C%2Fsvg%3E%0A">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="StudyLens">
 <style>
 :root{
-  --bg:#f6f4fb; --panel:#ffffff; --panel2:#f0edf8; --panel3:#faf9fd;
-  --text:#221b38; --muted:#6b6482; --line:#e8e3f2; --line2:#cfc5e8;
-  --primary:#6c3bf5; --primary2:#5130c8; --primary-soft:#ece4fe;
+  --bg:#f6f4ff; --panel:#ffffff; --panel2:#f0edf8; --panel3:#faf9fd;
+  --text:#1e1b4b; --muted:#6b6482; --line:#e8e3f2; --line2:#cfc5e8;
+  --primary:#7c3aed; --primary2:#6d28d9; --primary-soft:#f0e9ff;
   --accent:#0a7a50; --accent-soft:#e1f4ec;
   --warn:#9a5500; --warn-soft:#faf0dd;
   --danger:#c23636; --danger-soft:#fbe9e9;
@@ -26,7 +31,7 @@
 [data-theme="dark"]{
   --bg:#131020; --panel:#1c1829; --panel2:#241f36; --panel3:#191526;
   --text:#f1edfa; --muted:#a49db9; --line:#2e2743; --line2:#4a4170;
-  --primary:#9678ff; --primary2:#6f49e0; --primary-soft:#2b2249;
+  --primary:#a78bfa; --primary2:#8b5cf6; --primary-soft:#332a55;
   --accent:#34c48e; --accent-soft:#103528;
   --warn:#e8ab45; --warn-soft:#3b2d12;
   --danger:#ef6f6f; --danger-soft:#3d2028;
@@ -63,8 +68,8 @@ p,li,td,th{text-wrap:pretty}
 .btn{display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:9px 17px; border-radius:12px; font-size:14px; font-weight:600; background:var(--panel); color:var(--text); border:1px solid var(--line2); transition-property:background-color,color,border-color,box-shadow,scale; transition-duration:150ms; transition-timing-function:ease-out; user-select:none; white-space:nowrap; box-shadow:0 1px 2px rgba(34,27,56,.03)}
 .btn:hover{border-color:var(--primary); color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft)}
 .btn:active{scale:.96}
-.btn-primary{background:linear-gradient(180deg,var(--primary),var(--primary2)); color:#fff; border:1px solid transparent; text-shadow:0 1px 2px rgba(20,10,40,.28); box-shadow:0 8px 18px -8px rgba(108,59,245,.55)}
-.btn-primary:hover{color:#fff; filter:brightness(1.05); box-shadow:0 10px 22px -8px rgba(108,59,245,.6)}
+.btn-primary{background:linear-gradient(180deg,var(--primary),var(--primary2)); color:#fff; border:1px solid transparent; text-shadow:0 1px 2px rgba(20,10,40,.28); box-shadow:0 8px 18px -8px rgba(124,58,237,.55)}
+.btn-primary:hover{color:#fff; filter:brightness(1.05); box-shadow:0 10px 22px -8px rgba(124,58,237,.6)}
 .btn-primary:active{filter:brightness(.97)}
 .btn-accent{background:linear-gradient(180deg,var(--accent),#086b47); color:#fff; border:1px solid transparent; box-shadow:0 8px 18px -8px rgba(10,122,80,.5)}
 .btn-accent:hover{color:#fff; filter:brightness(1.05)}
@@ -134,11 +139,11 @@ p,li,td,th{text-wrap:pretty}
 .tabs button.active{background:var(--panel); color:var(--primary); box-shadow:0 0 0 1px var(--line2), 0 4px 12px -6px rgba(34,27,56,.25)}
 
 /* auth */
-.auth-wrap{min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:24px; background:radial-gradient(1100px 560px at 12% -12%, rgba(108,59,245,.13), transparent 62%), radial-gradient(900px 520px at 108% 112%, rgba(14,159,110,.12), transparent 60%), var(--bg)}
+.auth-wrap{min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:24px; background:radial-gradient(1100px 560px at 12% -12%, rgba(124,58,237,.13), transparent 62%), radial-gradient(900px 520px at 108% 112%, rgba(14,159,110,.12), transparent 60%), var(--bg)}
 .auth-card{width:100%; max-width:430px; background:var(--panel); border:1px solid var(--line); border-radius:26px; box-shadow:var(--shadow); padding:38px 34px 30px; position:relative; overflow:hidden}
 .auth-card::before{content:""; position:absolute; top:0; left:0; right:0; height:5px; background:linear-gradient(90deg,var(--primary),var(--accent))}
 .auth-brand{display:flex; align-items:center; justify-content:center; gap:10px; font-size:24px; font-weight:800; letter-spacing:.24em; color:var(--text); margin-left:.24em}
-.auth-brand::before{content:""; width:26px; height:26px; border-radius:9px; background:linear-gradient(160deg,var(--primary),var(--primary2)); box-shadow:0 6px 14px -6px rgba(108,59,245,.7); margin-right:4px; margin-left:.24em}
+.auth-brand::before{content:""; width:26px; height:26px; border-radius:9px; background:linear-gradient(160deg,var(--primary),var(--primary2)); box-shadow:0 6px 14px -6px rgba(124,58,237,.7); margin-right:4px; margin-left:.24em}
 .auth-tagline{text-align:center; color:var(--muted); font-size:11.5px; letter-spacing:.22em; margin-top:6px; margin-bottom:20px}
 .auth-card .lead{color:var(--muted); font-size:13.5px; margin-bottom:24px; text-align:center; line-height:1.75; text-wrap:pretty}
 .field{margin-bottom:15px}
@@ -154,7 +159,7 @@ p,li,td,th{text-wrap:pretty}
 .shell{display:flex; min-height:100dvh}
 .sidebar{width:var(--sidebar-w); flex-shrink:0; background:var(--panel); border-right:1px solid var(--line); padding:20px 14px 16px; display:flex; flex-direction:column; gap:4px; position:sticky; top:0; height:100dvh; overflow-y:auto}
 .side-brand{display:flex; align-items:center; gap:10px; font-size:17px; font-weight:800; letter-spacing:.18em; padding:4px 12px 18px; color:var(--text); margin-left:.18em}
-.side-brand::before{content:""; width:22px; height:22px; border-radius:8px; background:linear-gradient(160deg,var(--primary),var(--primary2)); box-shadow:0 5px 12px -5px rgba(108,59,245,.7); margin-right:2px; margin-left:.18em}
+.side-brand::before{content:""; width:22px; height:22px; border-radius:8px; background:linear-gradient(160deg,var(--primary),var(--primary2)); box-shadow:0 5px 12px -5px rgba(124,58,237,.7); margin-right:2px; margin-left:.18em}
 .nav-btn{display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:12px; font-size:14px; font-weight:650; color:var(--muted); transition-property:background-color,color; transition-duration:140ms; transition-timing-function:ease-out; text-align:left; width:100%}
 .nav-btn .ico{font-size:17px; width:21px; text-align:center}
 .nav-btn:hover{background:var(--panel2); color:var(--text)}
@@ -162,7 +167,7 @@ p,li,td,th{text-wrap:pretty}
 .nav-sep{height:1px; background:var(--line); margin:12px 8px}
 .side-foot{margin-top:auto; padding:10px 8px 4px; font-size:12px; color:var(--muted); line-height:1.6; font-variant-numeric:tabular-nums}
 .side-user{display:flex; align-items:center; gap:10px; padding:10px; border-radius:13px; background:var(--panel2); margin-top:10px; border:1px solid var(--line)}
-.side-user .avatar{width:34px; height:34px; border-radius:50%; background:linear-gradient(160deg,var(--primary),var(--primary2)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:750; font-size:14px; flex-shrink:0; box-shadow:0 4px 10px -4px rgba(108,59,245,.6)}
+.side-user .avatar{width:34px; height:34px; border-radius:50%; background:linear-gradient(160deg,var(--primary),var(--primary2)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:750; font-size:14px; flex-shrink:0; box-shadow:0 4px 10px -4px rgba(124,58,237,.6)}
 .side-user .un{font-size:13px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .side-user .ut{font-size:11px; color:var(--muted)}
 .main{flex:1; padding:28px 34px 70px; max-width:1180px; margin:0 auto; width:100%}
@@ -219,7 +224,7 @@ p,li,td,th{text-wrap:pretty}
 
 /* 学习专注卡片（本应用的标志性场景） */
 .study-wrap{max-width:660px; margin:0 auto; position:relative}
-.study-wrap::before{content:""; position:absolute; left:50%; top:46%; transform:translate(-50%,-50%); width:88%; height:70%; background:radial-gradient(closest-side, rgba(108,59,245,.10), transparent 72%); pointer-events:none}
+.study-wrap::before{content:""; position:absolute; left:50%; top:46%; transform:translate(-50%,-50%); width:88%; height:70%; background:radial-gradient(closest-side, rgba(124,58,237,.10), transparent 72%); pointer-events:none}
 .study-meta{display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--muted); margin-bottom:12px; font-variant-numeric:tabular-nums}
 .flashcard{background:var(--panel); border:1px solid var(--line); border-radius:26px; box-shadow:var(--shadow); padding:44px 38px; text-align:center; min-height:330px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:15px; position:relative; overflow:hidden; transition-property:box-shadow,border-color; transition-duration:200ms; transition-timing-function:ease-out}
 .flashcard::before{content:""; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,var(--primary),var(--accent))}
@@ -340,7 +345,7 @@ p,li,td,th{text-wrap:pretty}
 .preset-row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
 .preset-row select{max-width:250px}
 .banner{display:flex; align-items:center; gap:12px; padding:14px 17px; border-radius:15px; font-size:13.5px; margin-bottom:18px; flex-wrap:wrap}
-.banner.info{background:var(--primary-soft); color:var(--text); border:1px solid rgba(108,59,245,.18)}
+.banner.info{background:var(--primary-soft); color:var(--text); border:1px solid rgba(124,58,237,.18)}
 .banner.warn{background:var(--warn-soft); color:var(--text); border:1px solid rgba(189,114,9,.22)}
 .banner.ok{background:var(--accent-soft); color:var(--text); border:1px solid rgba(14,159,110,.22)}
 .banner .btn{margin-left:auto}
@@ -464,7 +469,7 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
 .vlist > .book-opt{border:0; border-radius:0; background:transparent; padding:13px 10px; margin:0; box-shadow:none; width:100%}
 .vlist > .book-opt + .book-opt{border-top:1px solid var(--line)}
 .vlist > .book-opt:hover{background:var(--panel2)}
-.vlist > .book-opt.sel{background:var(--primary-soft); border-radius:14px; border:0; box-shadow:inset 0 0 0 1px rgba(108,59,245,.16)}
+.vlist > .book-opt.sel{background:var(--primary-soft); border-radius:14px; border:0; box-shadow:inset 0 0 0 1px rgba(124,58,237,.16)}
 .vlist > .book-opt.sel + .book-opt{border-top:0; margin-top:2px}
 .book-opt .bname{font-size:14.5px}
 .book-opt input{margin-top:5px}
@@ -810,7 +815,7 @@ li,td,th{text-wrap:normal}
 .ob-goal.sel{background:var(--primary-soft)}
 .ob-sum{border:0; background:transparent; border-radius:0; padding:2px 0}
 
-/* 术语说明按钮 / 背词提示 / 文本断行（v1.9.1 体验优化） */
+/* 术语说明按钮 / 背词提示 / 文本断行（v1.9.3 体验优化） */
 .tip{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--primary-soft);color:var(--primary);font-size:10.5px;font-weight:800;line-height:1;margin-left:4px;vertical-align:1px;cursor:pointer;user-select:none}
 .tip:hover{background:var(--primary);color:#fff}
 .fc-preview{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
@@ -862,7 +867,7 @@ li,td,th{text-wrap:normal}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.9.1 · 体验优化<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.9.3 · 新图标配色<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -977,7 +982,7 @@ li,td,th{text-wrap:normal}
               <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存外观</button>
             </div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.9.1</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.9.3</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用单文件离线优先设计：内置精简词表离线可用，联网后在「设置 → 词库中心」更新完整词表；账号数据走云端存储，同时支持本地自动备份。</div>
@@ -1328,7 +1333,7 @@ function openModal(html){
   root.innerHTML = '<div class="modal-mask" onclick="if(event.target===this)AppUI.closeModal()"><div class="modal" role="dialog" aria-modal="true">'+html+'</div></div>';
 }
 
-/* 术语说明（体验优化 v1.9.1） */
+/* 术语说明（体验优化 v1.9.3） */
 const TERMS = {
   curve: '遗忘曲线（间隔重复）：一个词从第一次点「认识」起，会按 1/3/7/14/30/60 天的间隔再次出现，帮助长期记忆。每完成一级间隔加深一次记忆，走完全部级别才会计入「已掌握」。',
   deriv: '衍生词：由同一词根变化出的词，例如 happy → happily / happiness / unhappy。开启后，次词库或已学词的同根词也会一并自动剔除。',
@@ -2455,7 +2460,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.9.1', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.9.3', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -2484,7 +2489,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'1.9.1', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'1.9.3', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -3062,7 +3067,7 @@ function applyTheme(){
   const dark = s === 'dark' || (s === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
   const meta = document.querySelector('meta[name="theme-color"]');
-  if(meta) meta.setAttribute('content', dark ? '#131020' : '#f6f4fb');
+  if(meta) meta.setAttribute('content', dark ? '#131020' : '#f6f4ff');
 }
 function autoScaleValue(){
   const w = window.innerWidth || document.documentElement.clientWidth || 1280;
