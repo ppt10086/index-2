@@ -815,13 +815,23 @@ li,td,th{text-wrap:normal}
 .ob-goal.sel{background:var(--primary-soft)}
 .ob-sum{border:0; background:transparent; border-radius:0; padding:2px 0}
 
-/* 术语说明按钮 / 背词提示 / 文本断行（v1.9.3 体验优化） */
+/* 术语说明按钮 / 背词提示 / 文本断行（v1.9.4 体验优化） */
 .tip{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--primary-soft);color:var(--primary);font-size:10.5px;font-weight:800;line-height:1;margin-left:4px;vertical-align:1px;cursor:pointer;user-select:none}
 .tip:hover{background:var(--primary);color:#fff}
 .fc-preview{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
 .fc-preview-hint{font-size:13px;color:var(--muted);text-align:center}
 .un,.side-user .un,#dash-name{overflow-wrap:anywhere;word-break:break-word}
 #toast-wrap{max-width:min(92vw,430px)}
+
+/* 新用户引导 v1.9.4 */
+.auth-tagline{color:var(--text); font-weight:800; font-size:18px; text-align:center; margin:6px 0 4px; line-height:1.5}
+.auth-card label{white-space:nowrap}
+.auth-hero{width:100%; min-height:50px; margin:4px 0 10px}
+.auth-alt{display:flex; gap:10px; justify-content:center; flex-wrap:wrap}
+.auth-alt .btn{min-height:44px; padding:9px 18px}
+.auth-back{margin-top:8px}
+.auth-card input{min-height:44px}
+#auth-forms .field{margin-bottom:12px}
 </style>
 </head>
 <body>
@@ -830,26 +840,35 @@ li,td,th{text-wrap:normal}
 
 <!-- ============ 登录页 ============ -->
 <div id="view-auth" class="auth-wrap">
-  <div class="auth-card">
+    <div class="auth-card">
     <div class="auth-brand" translate="no">STUDYLENS</div>
-    <div class="auth-tagline">Personal English Vocabulary System</div>
-    <p class="lead">面向大学生的英语词汇学习工具。以个人已学词汇为基础，自动生成专属生词表，支持四级、六级及高中等词库自由组合筛选。</p>
-    <div id="auth-err" class="auth-err"></div>
-    <div id="auth-login">
-      <div class="field"><label for="login-user">用户名</label><input id="login-user" name="username" placeholder="输入用户名" autocomplete="username"></div>
-      <div class="field"><label for="login-pass">密码</label><input id="login-pass" name="password" type="password" placeholder="输入密码" autocomplete="current-password"></div>
-      <button class="btn btn-primary btn-lg" style="width:100%" onclick="AppAuth.login()">登录</button>
+    <div class="auth-tagline">把已经会的词剔掉，只背你不会的</div>
+    <p class="lead">面向大学生的英语词汇学习工具。选一个考试词库，系统会自动剔除你已经掌握的单词（含派生词），几分钟生成属于你的专属生词表。</p>
+    <div id="auth-start">
+      <button class="btn btn-primary btn-lg auth-hero" onclick="AppAuth.guest()">直接开始学习 · 不用注册</button>
+      <div class="auth-alt">
+        <button class="btn" onclick="AppAuth.showForm('login')">已有账号？登录</button>
+        <button class="btn" onclick="AppAuth.showForm('reg')">新用户？创建账号</button>
+      </div>
     </div>
-    <div id="auth-reg" hidden>
-      <div class="field"><label for="reg-user">用户名（2-20 个字符）</label><input id="reg-user" name="username" placeholder="例如：xiaoming" autocomplete="username"></div>
-      <div class="field"><label for="reg-pass">密码（至少 4 位）</label><input id="reg-pass" name="new-password" type="password" placeholder="设置密码" autocomplete="new-password"></div>
-      <div class="field"><label for="reg-pass2">确认密码</label><input id="reg-pass2" name="new-password" type="password" placeholder="再次输入密码" autocomplete="new-password"></div>
-      <button class="btn btn-primary btn-lg" style="width:100%" onclick="AppAuth.register()">创建账号</button>
+    <div id="auth-forms" hidden>
+      <div id="auth-err" class="auth-err"></div>
+      <div id="auth-login">
+        <div class="field"><label for="login-user">用户名</label><input id="login-user" name="username" placeholder="输入用户名" autocomplete="username"></div>
+        <div class="field"><label for="login-pass">密码</label><input id="login-pass" name="password" type="password" placeholder="输入密码" autocomplete="current-password"></div>
+        <button class="btn btn-primary btn-lg" style="width:100%" onclick="AppAuth.login()">登录</button>
+      </div>
+      <div id="auth-reg" hidden>
+        <div class="field"><label for="reg-user">用户名（2-20 个字符）</label><input id="reg-user" name="username" placeholder="例如：xiaoming" autocomplete="username"></div>
+        <div class="field"><label for="reg-pass">密码（至少 4 位）</label><input id="reg-pass" name="new-password" type="password" placeholder="设置密码" autocomplete="new-password"></div>
+        <div class="field"><label for="reg-pass2">确认密码</label><input id="reg-pass2" name="new-password" type="password" placeholder="再次输入密码" autocomplete="new-password"></div>
+        <button class="btn btn-primary btn-lg" style="width:100%" onclick="AppAuth.register()">创建账号</button>
+      </div>
+      <div class="auth-switch"><span id="auth-switch-tip">还没有账号？</span> <button id="auth-switch-btn" onclick="AppAuth.toggleMode()">注册新账号</button></div>
+      <button class="btn btn-sm btn-ghost auth-back" onclick="AppAuth.backToStart()">← 返回</button>
     </div>
-    <div class="auth-switch"><span id="auth-switch-tip">还没有账号？</span> <button id="auth-switch-btn" onclick="AppAuth.toggleMode()">注册新账号</button></div>
-    <div class="guest-row"><button class="btn btn-sm" onclick="AppAuth.guest()">以试用模式进入</button></div>
     <div id="cloud-badge" class="muted small" style="margin-top:10px;text-align:center"></div>
-    <div class="feature-hint" style="text-align:left;line-height:1.9"><div>· 学习数据优先保存在本机，可在「设置」中导出或自动备份；</div><div>· 云端账号密码仅存加盐哈希，读写受访问令牌保护；</div><div>· 试用模式：全部学习功能可用，数据仅存本机、不参与云同步。</div></div>
+    <div class="feature-hint">不用注册也能学：数据保存在这台设备上，随时可在「设置」里导出备份，或登录账号开启云同步。</div>
     <noscript><div style="margin-top:14px;padding:12px;background:var(--warn-soft);border-radius:12px;font-size:13px;color:var(--warn)">当前浏览器禁用了 JavaScript，无法使用本应用。请在浏览器设置中开启 JavaScript 后刷新。</div></noscript>
   </div>
 </div>
@@ -867,7 +886,7 @@ li,td,th{text-wrap:normal}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 1.9.3 · 新图标配色<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 1.9.4 · 新用户引导<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -881,25 +900,20 @@ li,td,th{text-wrap:normal}
         <div class="card-title"><span class="dot"></span>今日学习进度</div>
         <div id="dash-progress"></div>
       </div>
-      <div class="grid grid-2" style="margin-top:16px">
-        <div class="card"><div class="card-title"><span class="dot" style="background:var(--accent)"></span>英语 · 下一步建议</div>
-          <div id="dash-english-tip" class="muted" style="font-size:13.5px"></div>
-          <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap">
-            <button class="btn btn-sm btn-primary" data-icon="sliders" onclick="AppUI.go('english');AppUI.englishTab('filter')">调整词表</button>
-            <button class="btn btn-sm" data-icon="refresh" onclick="AppUI.go('english');AppUI.englishTab('review')">开始复习</button>
-            <button class="btn btn-sm" data-icon="cloud" onclick="AppUI.go('library')">更新词库</button>
-          </div>
-        </div>
-        <div class="card"><div class="card-title"><span class="dot" style="background:var(--warn)"></span>数学 · 功能规划</div>
-          <div class="muted" style="font-size:13.5px">数学模块正在规划，拟提供错题本、公式手册、每日一题等功能。系统框架已预留扩展接口，后续可在此接入。</div>
-          <div style="margin-top:14px"><button class="btn btn-sm" data-icon="chevRight" onclick="AppUI.go('math')">查看规划</button></div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-title"><span class="dot" style="background:var(--accent)"></span>英语 · 下一步建议</div>
+        <div id="dash-english-tip" class="muted" style="font-size:13.5px"></div>
+        <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap">
+          <button class="btn btn-sm btn-primary" data-icon="sliders" onclick="AppUI.go('english');AppUI.englishTab('filter')">调整词表</button>
+          <button class="btn btn-sm" data-icon="refresh" onclick="AppUI.go('english');AppUI.englishTab('review')">开始复习</button>
+          <button class="btn btn-sm" data-icon="cloud" onclick="AppUI.go('library')">更新词库</button>
         </div>
       </div>
     </section>
 
     <!-- 英语 -->
     <section id="page-english" hidden>
-      <div class="topbar"><div><h1>英语词汇</h1><div class="sub">任选主词库，剔除次词库中已学过的词（含衍生词），生成个人词表</div></div></div>
+      <div class="topbar"><div><h1>英语词汇</h1><div class="sub">选一个要背的词库，自动剔除你已经掌握的单词及其派生词，生成你的专属生词表</div></div></div>
       <div class="tabs" id="english-tabs">
         <button data-tab="filter" onclick="AppUI.englishTab('filter')">词表筛选</button>
         <button data-tab="study" onclick="AppUI.englishTab('study')">背单词</button>
@@ -982,7 +996,7 @@ li,td,th{text-wrap:normal}
               <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存外观</button>
             </div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.9.3</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">1.9.4</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用单文件离线优先设计：内置精简词表离线可用，联网后在「设置 → 词库中心」更新完整词表；账号数据走云端存储，同时支持本地自动备份。</div>
@@ -1111,7 +1125,7 @@ function icon(name, size){
 /* ================= 本地存储 ================= */
 const Store = {
   get(k, def){ try{ const v = localStorage.getItem('sl.'+k); return v==null ? def : JSON.parse(v); }catch(e){ return def; } },
-  set(k, v){ try{ localStorage.setItem('sl.'+k, JSON.stringify(v)); }catch(e){ console.warn('本地存储失败', e); } },
+  set(k, v){ try{ localStorage.setItem('sl.'+k, JSON.stringify(v)); }catch(e){ console.warn('本地存储失败', e); if(!Store._warned){ Store._warned = true; setTimeout(()=>{ try{ toast('无法保存进度：当前可能为无痕模式或存储空间已满。请退出无痕窗口或导出备份。','err'); }catch(_){} }, 60); } } },
   remove(k){ try{ localStorage.removeItem('sl.'+k); }catch(e){} }
 };
 
@@ -1333,7 +1347,7 @@ function openModal(html){
   root.innerHTML = '<div class="modal-mask" onclick="if(event.target===this)AppUI.closeModal()"><div class="modal" role="dialog" aria-modal="true">'+html+'</div></div>';
 }
 
-/* 术语说明（体验优化 v1.9.3） */
+/* 术语说明（体验优化 v1.9.4） */
 const TERMS = {
   curve: '遗忘曲线（间隔重复）：一个词从第一次点「认识」起，会按 1/3/7/14/30/60 天的间隔再次出现，帮助长期记忆。每完成一级间隔加深一次记忆，走完全部级别才会计入「已掌握」。',
   deriv: '衍生词：由同一词根变化出的词，例如 happy → happily / happiness / unhappy。开启后，次词库或已学词的同根词也会一并自动剔除。',
@@ -1385,7 +1399,23 @@ const AppAuth = {
     $('#view-auth').hidden = false;
     $('#view-main').hidden = true;
     this.mode = 'login';
+    this.backToStart();
     this.renderAuthMode();
+  },
+  showForm(mode){
+    this.mode = mode === 'reg' ? 'reg' : 'login';
+    const start = $('#auth-start'); if(start) start.hidden = true;
+    const forms = $('#auth-forms'); if(forms) forms.hidden = false;
+    this.renderAuthMode();
+    try{
+      if(this.mode === 'reg'){ const el = $('#reg-user'); if(el) el.focus(); }
+      else { const el = $('#login-user'); if(el) el.focus(); }
+    }catch(e){}
+  },
+  backToStart(){
+    const start = $('#auth-start'); if(start) start.hidden = false;
+    const forms = $('#auth-forms'); if(forms) forms.hidden = true;
+    try{ const e = $('#auth-err'); if(e) e.style.display = 'none'; }catch(e){}
   },
   enter(session){
     Store.set('session', session);
@@ -1489,7 +1519,7 @@ const AppAuth = {
     this.enter({ user: u, loginAt: now() });
   },
   guest(){
-    toast('已进入试用模式，数据保存在本机浏览器');
+    toast('已进入学习，数据保存在本机；可随时导出备份或登录开启云同步');
     this.enter({ user: '__guest__', loginAt: now() });
   },
   logout(){
@@ -2460,7 +2490,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'1.9.3', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'1.9.4', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: s.user === '__guest__' ? null : Store.get('users', {})
     };
@@ -2489,7 +2519,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'1.9.3', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'1.9.4', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -2712,7 +2742,7 @@ const AppUI = {
   },
   renderDashboard(){
     const d = AppAuth.data();
-    $('#dash-name').textContent = AppAuth.displayName();
+    $('#dash-name').textContent = (AppAuth.current() && AppAuth.current().user === '__guest__') ? '开始吧' : AppAuth.displayName();
     const streak = calcStreak(d.stats);
     $('#dash-date').textContent = todayStr().replace(/-/g,' / ') + ' · ' + fmtDate(now()) + (streak ? ' · 连续 ' + streak + ' 天' : '');
     if(!Store.get('welcomeSeen', false)){
@@ -2951,7 +2981,7 @@ const AppUI = {
       '<div class="stat"><span class="stat-ico stat-green">'+icon('target')+'</span><div class="stat-body"><span class="k" style="color:var(--accent)">剩余生词</span><span class="v" style="color:var(--accent)">'+r.kept.length+'</span><span class="d">占主词库 '+keptPct+'%</span></div></div>' +
       '</div>' +
       '<div class="bar" style="margin:6px 0 14px"><i style="width:'+keptPct+'%;background:linear-gradient(90deg,var(--warn),var(--accent))"></i></div>' +
-      '<div class="muted small" style="margin-bottom:14px">主词库 <b>'+tDef.name+'</b> 共 '+r.total+' 词，剔除 <b>'+baseNames+'</b> 中已出现的 '+r.removedExact+' 个单词'+(r.deriv?'及衍生形式 '+r.removedDerived+' 个':'')+'，'+(r.kept.length===0?'主词库中已无需要新学的单词。':'剩余生词 '+r.kept.length+' 个。')+'</div>' +
+      '<div class="muted small" style="margin-bottom:14px">主词库 <b>'+tDef.name+'</b> 共 '+r.total+' 词，剔除 <b>'+baseNames+'</b> 中已出现的 '+r.removedExact+' 个单词'+(r.deriv?'及衍生形式 '+r.removedDerived+' 个':'')+'，'+(r.kept.length===0?'主词库中已无需要新学的单词。':'剩余生词 '+r.kept.length+' 个。')+'</div>' + (r.kept.length ? '<div class="muted small" style="margin-bottom:14px">按每天 '+(AppAuth.data().settings.daily||20)+' 个新词，约 <b>'+Math.max(1, Math.ceil(r.kept.length/(AppAuth.data().settings.daily||20)))+'</b> 天可完成一轮（可在设置中调整）。</div>' : '') + 
       ((r.removedExactS && r.removedExactS.length) || (r.removedDerivedS && r.removedDerivedS.length)
         ? '<details class="rm-details"><summary>查看剔除示例（各取前 12 个）</summary>' +
           (r.removedExactS && r.removedExactS.length ? '<div class="rm-line"><b>直接重合：</b>'+r.removedExactS.map(esc).join('、')+'</div>' : '') +
@@ -3540,6 +3570,8 @@ const AppStudy = {
     if(s.idx >= s.deck.length){
       this.clearSession();
       AppData.autoBackup();
+      if(!Store.get('backupTipShown', false)){ Store.set('backupTipShown', true);
+        setTimeout(()=>{ try{ toast('本轮完成，进度已自动备份。建议到「设置 → 数据与备份」导出文件，换设备也不丢。','ok'); }catch(e){} }, 900); }
       box.innerHTML = '<div class="study-done"><div class="big">'+icon('checkCircle', 44)+'</div><h3>本轮学习完成</h3>' +
       '<p class="muted" role="status">本轮共学习 '+s.deck.length+' 个单词'+(s.requested && s.requested > s.deck.length ? '（申请 '+s.requested+' 个，词表仅剩 '+s.deck.length+' 个）' : '')+'：认识 '+s.marks.good+' 词，模糊 '+(s.marks.hard||0)+' 词，不认识 '+s.marks.again+' 词。评分已记录到学习记录。</p>' +
       '<div style="display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap"><button class="btn btn-primary" onclick="AppStudy.start()">再来一轮</button><button class="btn" onclick="AppUI.englishTab(\'record\')">查看学习记录</button><button class="btn" onclick="AppUI.englishTab(\'review\')">开始复习</button></div></div>';
@@ -4049,7 +4081,7 @@ const AppSettings = {
     const s = AppAuth.current();
     if(!s) return;
     const expect = AppAuth.displayName();
-    const typed = prompt('危险操作：删除账号「'+expect+'」及其所有数据，此操作不可恢复。\n请输入账号名「'+expect+'」确认删除：');
+    const typed = prompt('危险操作：删除账号「'+expect+'」及其全部数据（共 '+(Object.keys((AppAuth.data()||{}).wordState||{}).length||0)+' 条学习记录），此操作不可恢复。\n请输入账号名「'+expect+'」确认删除：');
     if(typed === null) return;
     if(String(typed || '').trim() !== expect){ toast('已取消：输入不一致', 'warn'); return; }
     if(s.user !== '__guest__'){
@@ -4064,7 +4096,9 @@ const AppSettings = {
     toast('账号已删除');
   },
   resetProgress(){
-    if(prompt('危险操作：清空所有学习记录（已掌握、复习进度、连续天数）。\n输入「重置」确认：') !== '重置'){ toast('已取消', 'warn'); return; }
+    const _d0 = AppAuth.data();
+    const _cnt0 = Object.keys(_d0.wordState || {}).length;
+    if(prompt('危险操作：将清除本账号 '+(_cnt0||0)+' 条学习记录（已掌握、复习进度、连续天数）。此操作不可撤销。\n输入「重置」确认：') !== '重置'){ toast('已取消', 'warn'); return; }
     const d = AppAuth.data();
     d.wordState = {};
     d.wordResetAt = Date.now();
@@ -4074,7 +4108,7 @@ const AppSettings = {
     AppUI.init();
   },
   resetAll(){
-    if(prompt('危险操作：恢复出厂设置，将清除本账号的全部数据（词单、进度、方案、偏好）。\n输入「恢复出厂」确认：') !== '恢复出厂'){ toast('已取消', 'warn'); return; }
+    if(prompt('危险操作：恢复出厂设置将清除本账号全部数据与设置（词单、学习进度、方案、偏好），且不可撤销。建议先「导出数据备份」。\n输入「恢复出厂」确认：') !== '恢复出厂'){ toast('已取消', 'warn'); return; }
     const s = AppAuth.current();
     if(s){
       const fresh = AppAuth.defaultData();
