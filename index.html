@@ -1153,6 +1153,7 @@ const Supa = {
   lastOk: null,
   lastErr: null,
   _hadRemote: false,
+  _syncedAt: 0,        // 已同步到的服务端 updated_at（判断云端是否真有更新）
   init(){
     try{
       if(window.SiteDB && window.SiteDB.config && window.SiteDB.config.url && window.SiteDB.config.key){
@@ -1211,10 +1212,39 @@ const Supa = {
     if(r && r.ok && r.data !== undefined && r.data !== null) return r.data;
     return null;
   },
+  /* 读取云端数据 + 服务端时间戳（用于判断云端是否真的有更新） */
+  async _loadMeta(token){
+    const r = await this.rpc('sl_load', { p_token: token });
+    if(!r || r.ok !== true) return null;
+    return { data: (r.data === undefined ? null : r.data), updatedAt: Number(r.updated_at) || 0 };
+  },
   async _save(token, data){
     const r = await this.rpc('sl_save', { p_token: token, p_data: data });
     if(!r || r.ok !== true) throw new Error('云端保存失败');
     this._hadRemote = true;
+    if(r.updated_at) this._syncedAt = Number(r.updated_at) || this._syncedAt;
+  },
+  /* ---- 跨标签页「有未上传改动」标记 ----
+     多个标签页共享 localStorage：若某一页还有没传上去的改动，
+     其他页的 pullMerge 绝不能拿云端旧数据覆盖本机，否则改动会被静默吞掉。 */
+  _pendingKey(){ const s = AppAuth.current(); return s ? ('sl.pending.' + s.user) : null; },
+  _markPending(){
+    try{ const k = this._pendingKey(); if(k) localStorage.setItem(k, String(Date.now())); }catch(e){}
+  },
+  _clearPending(){
+    try{ const k = this._pendingKey(); if(k) localStorage.removeItem(k); }catch(e){}
+  },
+  hasPending(){
+    if(this._dirty) return true;
+    try{
+      const k = this._pendingKey();
+      if(!k) return false;
+      const ts = parseInt(localStorage.getItem(k) || '0', 10) || 0;
+      if(!ts) return false;
+      // 超过 2 分钟的标记视为陈旧（持有它的标签页多半已关闭）
+      if(Date.now() - ts > 120000){ localStorage.removeItem(k); return false; }
+      return true;
+    }catch(e){ return this._dirty; }
   },
   async loadData(){
     const t = await this.sessionToken();
@@ -1243,6 +1273,8 @@ const Supa = {
         if(!s) break;
         try{
           await this.saveData(AppAuth.data());
+          this._dirty = false;
+          this._clearPending();
           this.lastOk = Date.now();
           this._syncUI();
           Net.markOk();
@@ -1250,9 +1282,10 @@ const Supa = {
         }catch(e){
           this.lastErr = Date.now();
           this._syncUI();
-          // 在线优先：上传失败保留待同步标记并自动重试；
+          // 在线优先：上传失败保留待同步标记（并跨标签页可见）并自动重试；
           // 是否弹全屏由 Net 按「持续时长 + 探测确认」决定（弱网抖动不拦）
           this._dirty = true;
+          this._markPending();
           Net.onCloudFailure(e);
           if(!this._retryTimer) this._retryTimer = setTimeout(() => { this._retryTimer = null; this._pump(); }, 5000);
           break;
@@ -1267,6 +1300,7 @@ const Supa = {
     const s = AppAuth.current();
     if(!s) return;
     this._dirty = true;
+    this._markPending();
     this._pump();
   },
   _syncUI(){
@@ -1304,18 +1338,31 @@ const Supa = {
     }catch(e){}
   },
   async pullMerge(){
-    // 在线优先 v2.0.0：云端是唯一权威。有未上传的本地改动时先让它上传，避免被云端覆盖。
+    // 在线优先 v2.0.0：云端是唯一权威。
+    // 但本页——或同一浏览器其它标签页——还有未上传的改动时，绝不能拿云端旧数据覆盖本机，
+    // 否则网络抖动期间产生的改动会被静默吞掉（多标签页共享 localStorage，必现）。
     if(!this.active()) return;
     const s = AppAuth.current();
     if(!s) return;
-    if(this._dirty || this._busy) return;
+    if(this._busy) return;
+    if(this.hasPending()) return;
     try{
-      const cloud = await this.loadData();
+      const t = await this.sessionToken();
+      if(!t) return;
+      const meta = await this._loadMeta(t);
+      if(!meta) return;
+      const cloud = meta.data;
       if(!cloud || typeof cloud !== 'object' || !Object.keys(cloud).length) return;
+      // 云端没有比我们已知的更新 → 不覆盖本机
+      if(meta.updatedAt && this._syncedAt && meta.updatedAt <= this._syncedAt) return;
       const local = AppAuth.data();
-      if(JSON.stringify(cloud) === JSON.stringify(local)) return;
-      // 云端权威：直接以云端覆盖本机缓存
+      if(JSON.stringify(cloud) === JSON.stringify(local)){
+        this._syncedAt = meta.updatedAt || this._syncedAt;
+        return;
+      }
+      // 云端确实更新了：以云端覆盖本机缓存
       Store.set('u.'+s.user, cloud);
+      if(meta.updatedAt) this._syncedAt = meta.updatedAt;
       const resetChange = (local.allResetAt || 0) !== (cloud.allResetAt || 0) ||
         (local.wordResetAt || 0) !== (cloud.wordResetAt || 0);
       const busy = (typeof AppStudy !== 'undefined' && AppStudy.state) || (typeof AppReview !== 'undefined' && AppReview.state);
@@ -1592,7 +1639,13 @@ const AppAuth = {
       try{ Store.remove('u.'+u); }catch(e){}
       try{ localStorage.removeItem('sl.backup.auto'); }catch(e){}
       let cloudData = null;
-      try{ cloudData = await Supa._load(cl.token); }catch(e){ cloudData = null; }
+      try{
+        const meta = await Supa._loadMeta(cl.token);
+        if(meta){
+          cloudData = meta.data;
+          Supa._syncedAt = meta.updatedAt || 0;   // 记住已同步到的服务端版本
+        }
+      }catch(e){ cloudData = null; }
       const data = (cloudData && typeof cloudData === 'object' && Object.keys(cloudData).length)
         ? cloudData : this.defaultData();
       if(!cloudData || !Object.keys(cloudData).length){
@@ -1600,6 +1653,7 @@ const AppAuth = {
         try{ await Supa._save(cl.token, data); }catch(e){}
       }
       Store.set('u.'+u, data);
+      Supa._clearPending();   // 刚以云端为准重置本机，清除遗留的待同步标记
       WL.cache.clear();
       AppFilter.result = null;
       Net.markOk();
