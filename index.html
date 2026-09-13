@@ -1392,6 +1392,9 @@ const Net = {
 window.addEventListener('offline', () => Net.showGate('浏览器报告网络已断开，请连上网络后重试。', '重试连接'));
 window.addEventListener('online', () => { Net.probe(true).then(ok => { if(ok) Net.hideGate(); }); });
 
+/* v2.0.0 在线优先：注册/校验全部由服务端完成（SQL sl_djb2_hex），
+   前端不再本地生成盐或校验口令。以下两个函数仅保留用于兼容旧备份中的
+   users 记录结构（不再参与登录判断）。 */
 function hashPW(pw, salt){
   let h = 5381; const s = salt + '::' + pw;
   for(let i=0;i<s.length;i++) h = ((h<<5)+h+s.charCodeAt(i))>>>0;
@@ -4157,6 +4160,19 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
       return;
     }
     const bootUser = AppAuth.current();
+    // v2.0.0 迁移：旧版本可能在本机残留「游客」会话，会导致绕过登录直接进入。
+    // 游客模式已彻底移除，这里一律清除并要求登录。
+    if(bootUser && bootUser.user === '__guest__'){
+      try{
+        Store.remove('session');
+        Store.remove('u.__guest__');
+        Store.remove('backup.auto');
+        localStorage.removeItem('sl.backup.auto');
+      }catch(e){}
+      AppAuth.showAuth();
+      AppAuth.err('游客模式已取消：现在需要账号才能使用（学习进度保存在云端）。请登录或创建账号。');
+      return;
+    }
     if(bootUser){
       const reachable = await Net.probe(true);
       if(!reachable){
