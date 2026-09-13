@@ -1232,7 +1232,7 @@ const Supa = {
       if(r && r.ok) this._hadRemote = false;
     }catch(e){}
   },
-  /* ---- 自动同步泵：每个必要动作后串行上传；失败即判定为断网并硬拦 ---- */
+  /* ---- 自动同步泵：每个必要动作后串行上传；失败静默重试，持续失败才交给 Net 判定 ---- */
   async _pump(){
     if(this._busy) return;
     this._busy = true;
@@ -1250,9 +1250,11 @@ const Supa = {
         }catch(e){
           this.lastErr = Date.now();
           this._syncUI();
-          // 在线优先：上传失败视为断网/令牌失效，立即硬拦（不再静默离线重试）
+          // 在线优先：上传失败保留待同步标记并自动重试；
+          // 是否弹全屏由 Net 按「持续时长 + 探测确认」决定（弱网抖动不拦）
           this._dirty = true;
           Net.onCloudFailure(e);
+          if(!this._retryTimer) this._retryTimer = setTimeout(() => { this._retryTimer = null; this._pump(); }, 5000);
           break;
         }
       }while(this._dirty);
@@ -1336,12 +1338,21 @@ function netErrText(e){
   return raw || '网络异常，请稍后重试';
 }
 
-/* ================= 在线优先 v2.0.0：联网状态与断网硬拦 ================= */
+/* ================= 在线优先 v2.0.0：联网状态与断网拦截 =================
+   拦截门槛刻意做高，避免网络一抖就弹全屏：
+   - 单次请求失败只算「疑似断网」：静默重试，不打扰用户；
+   - 连续失败持续超过 GRACE_MS，且 sl_ping 探测确认确实连不上服务器，才拦截；
+   - 期间只要有一次成功，立刻恢复并隐藏拦截层；
+   - 令牌/会话失效不属于网络问题，单独提示重新登录。 */
 const Net = {
   ok: true,
-  _probing: false,
+  GRACE_MS: 15000,      // 连续失败容忍期：短于此不拦
+  BOOT_TRIES: 3,        // 启动时最多探测次数
+  _failingSince: 0,     // 首次失败时间（0 = 当前正常）
+  _gateTimer: null,
   _lastProbe: 0,
   gateShown: false,
+
   async probe(force){
     const now = Date.now();
     if(!force && (now - this._lastProbe) < 3000) return this.ok;
@@ -1351,19 +1362,42 @@ const Net = {
       const r = await Supa.rpc('sl_ping', {});
       this.ok = !!(r && r.ok === true);
     }catch(e){ this.ok = false; }
+    if(this.ok) this.markOk();
     return this.ok;
   },
-  markOk(){ this.ok = true; this.hideGate(); },
+
+  markOk(){
+    this.ok = true;
+    this._failingSince = 0;
+    if(this._gateTimer){ clearTimeout(this._gateTimer); this._gateTimer = null; }
+    this.hideGate();
+  },
+
+  /* 记录一次云端失败：是否升级为拦截由「持续时长 + 探测确认」决定 */
   onCloudFailure(err){
     const msg = (err && err.message) ? String(err.message) : '';
-    // 令牌/会话失效不属于断网：直接要求重新登录
     if(/未登录|bad_token|token/i.test(msg)){
       this.showGate('登录状态已失效，请重新登录。', '退出并重新登录');
       return;
     }
+    if(!this._failingSince) this._failingSince = Date.now();
     this.ok = false;
-    this.showGate(netErrText(err), '重试连接');
+    this._scheduleConfirm();
   },
+
+  _scheduleConfirm(){
+    if(this._gateTimer) return;
+    const waited = Date.now() - this._failingSince;
+    this._gateTimer = setTimeout(async () => {
+      this._gateTimer = null;
+      if(!this._failingSince) return;                       // 期间已恢复
+      if(Date.now() - this._failingSince < this.GRACE_MS) return this._scheduleConfirm();
+      await this.probe(true);
+      if(!this._failingSince || this.ok) return;            // 探测通了 → 已恢复
+      this.showGate('已经连不上云端服务器，学习数据暂时无法读写。请检查网络，恢复后点「重试连接」。', '重试连接');
+    }, Math.max(0, this.GRACE_MS - waited));
+  },
+
   showGate(detail, label){
     const g = document.getElementById('net-gate');
     if(!g) return;
@@ -1386,10 +1420,10 @@ const Net = {
     const ok = await this.probe(true);
     if(btn) btn.disabled = false;
     if(!ok){
-      this.showGate('仍然无法连接到云端数据库，请检查网络后重试。', '重试连接');
+      this.showGate('仍然连不上云端服务器，请检查网络后重试。', '重试连接');
       return;
     }
-    this.hideGate();
+    this.markOk();
     if(AppAuth.current()){
       try{ await Supa.pullMerge(); AppUI.init(); }catch(e){}
       toast('已恢复连接');
@@ -1398,8 +1432,9 @@ const Net = {
     }
   }
 };
-window.addEventListener('offline', () => Net.showGate('浏览器报告网络已断开，请连上网络后重试。', '重试连接'));
-window.addEventListener('online', () => { Net.probe(true).then(ok => { if(ok) Net.hideGate(); }); });
+// 浏览器报告离线只是线索（可能误报），仍走「持续失败 + 探测确认」判定，不立刻拦截
+window.addEventListener('offline', () => Net.onCloudFailure(new Error('Failed to fetch')));
+window.addEventListener('online', () => { Net.probe(true); });
 
 /* v2.0.0 在线优先：注册/校验全部由服务端完成（SQL sl_djb2_hex），
    前端不再本地生成盐或校验口令。以下两个函数仅保留用于兼容旧备份中的
@@ -4183,11 +4218,16 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
       return;
     }
     if(bootUser){
-      const reachable = await Net.probe(true);
+      // 启动先尝试连通云端：网络抖动时重试几次，确实连不上才拦截
+      let reachable = await Net.probe(true);
+      for(let i = 1; !reachable && i < Net.BOOT_TRIES; i++){
+        await new Promise(r => setTimeout(r, 2500));
+        reachable = await Net.probe(true);
+      }
       if(!reachable){
         $('#view-auth').hidden = true;
         $('#view-main').hidden = true;
-        Net.showGate('无法连接云端数据库，本应用为在线优先，断网时无法读写你的学习数据。', '重试连接');
+        Net.showGate('连不上云端服务器，暂时无法读写你的学习数据。请检查网络，恢复后点「重试连接」。', '重试连接');
         return;
       }
       AppUI.init();
