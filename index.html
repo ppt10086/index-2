@@ -1327,6 +1327,15 @@ const Supa = {
   }
 };
 
+/* 把底层网络错误转成用户能看懂的话（避免把 "Failed to fetch" 直接甩给用户） */
+function netErrText(e){
+  const raw = (e && e.message) ? String(e.message) : String(e || '');
+  if(/bad_token|未登录|无效令牌/i.test(raw)) return '登录状态已失效，请重新登录';
+  if(/Failed to fetch|NetworkError|Load failed|net::|ERR_/i.test(raw)) return '无法连接云端服务器，请检查网络后重试';
+  if(/timeout|timed out|超时/i.test(raw)) return '连接云端服务器超时，请检查网络后重试';
+  return raw || '网络异常，请稍后重试';
+}
+
 /* ================= 在线优先 v2.0.0：联网状态与断网硬拦 ================= */
 const Net = {
   ok: true,
@@ -1353,7 +1362,7 @@ const Net = {
       return;
     }
     this.ok = false;
-    this.showGate(msg, '重试连接');
+    this.showGate(netErrText(err), '重试连接');
   },
   showGate(detail, label){
     const g = document.getElementById('net-gate');
@@ -1522,7 +1531,7 @@ const AppAuth = {
       if(cl && cl.reason === 'bad_password') return this.err('密码至少 4 位');
       return this.err('注册失败（' + ((cl && cl.reason) || '未知原因') + '），请稍后重试');
     }catch(e){
-      this.err('无法连接云端：' + ((e && e.message) || '网络错误') + '。本应用为在线优先，请连上网络后重试。');
+      this.err('无法连接云端：' + netErrText(e) + '（本应用为在线优先，请连上网络后重试）');
     }finally{
       this.busy(false, 'reg');
     }
@@ -1563,8 +1572,8 @@ const AppAuth = {
       this.enter(sess);
       return;
     }catch(e){
-      this.err('无法连接云端：' + ((e && e.message) || '网络错误') + '。本应用为在线优先，请连上网络后重试。');
-      Net.showGate((e && e.message) || '网络错误');
+      this.err('无法连接云端：' + netErrText(e) + '（本应用为在线优先，请连上网络后重试）');
+      Net.onCloudFailure(e);
     }finally{
       this.busy(false, 'login');
     }
