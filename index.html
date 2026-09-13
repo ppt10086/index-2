@@ -843,9 +843,27 @@ li,td,th{text-wrap:normal}
 .net-card h2{margin:0 0 10px; font-size:19px}
 .net-card p{line-height:1.7; font-size:13.5px; margin:0 0 18px}
 .net-card .btn{min-height:48px}
+
+/* 已登录用户直接进应用：在脚本执行前就藏掉登录页，避免「先闪登录界面再弹进去」 */
+html.sl-has-session #view-auth{display:none}
 </style>
 </head>
 <body>
+
+<!-- 极早预判登录状态：本机已有登录会话时立刻标记，配合 CSS 隐藏登录页，
+     避免已登录用户先看到登录界面、等云端探测完才被切进应用。 -->
+<script>
+(function(){
+  try{
+    var raw = localStorage.getItem('sl.session');
+    if(!raw) return;
+    var s = JSON.parse(raw);
+    if(s && s.user && s.user !== '__guest__'){
+      document.documentElement.className += ' sl-has-session';
+    }
+  }catch(e){}
+})();
+</script>
 
 <a class="skip-link" href="#main-area">跳到主内容</a>
 
@@ -1394,7 +1412,6 @@ function netErrText(e){
 const Net = {
   ok: true,
   GRACE_MS: 15000,      // 连续失败容忍期：短于此不拦
-  BOOT_TRIES: 3,        // 启动时最多探测次数
   _failingSince: 0,     // 首次失败时间（0 = 当前正常）
   _gateTimer: null,
   _lastProbe: 0,
@@ -1561,6 +1578,7 @@ const AppAuth = {
     b.textContent = on ? '请稍候…' : (which === 'reg' ? '创建账号' : '登录');
   },
   showAuth(){
+    try{ document.documentElement.classList.remove('sl-has-session'); }catch(e){}
     $('#view-auth').hidden = false;
     $('#view-main').hidden = true;
     this.mode = 'login';
@@ -1576,6 +1594,7 @@ const AppAuth = {
   },
   enter(session){
     Store.set('session', session);
+    try{ document.documentElement.classList.add('sl-has-session'); }catch(e){}
     $('#view-auth').hidden = true;
     $('#view-main').hidden = false;
     Net.hideGate();
@@ -4272,20 +4291,18 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
       return;
     }
     if(bootUser){
-      // 启动先尝试连通云端：网络抖动时重试几次，确实连不上才拦截
-      let reachable = await Net.probe(true);
-      for(let i = 1; !reachable && i < Net.BOOT_TRIES; i++){
-        await new Promise(r => setTimeout(r, 2500));
-        reachable = await Net.probe(true);
-      }
-      if(!reachable){
-        $('#view-auth').hidden = true;
-        $('#view-main').hidden = true;
-        Net.showGate('连不上云端服务器，暂时无法读写你的学习数据。请检查网络，恢复后点「重试连接」。', '重试连接');
-        return;
-      }
+      // 已有登录状态：立即进入应用，不再等云端探测。
+      // （旧实现会先 await 探测最多 3 次 ≈5 秒，期间用户看到的是登录界面，
+      //   表现为「先弹登录页、几秒后才被切进应用」）
       AppUI.init();
-      Supa.pullMerge();
+      // 连通性确认与云端数据拉取放到后台；确实连不上时交给容忍期逻辑弹拦截层
+      (async () => {
+        try{
+          const reachable = await Net.probe(true);
+          if(reachable) Supa.pullMerge();
+          else Net.onCloudFailure(new Error('Failed to fetch'));
+        }catch(e){ Net.onCloudFailure(e); }
+      })();
       // 后台预载词库（在线优先：优先加载站点托管的基础词库，再升级在线完整版）
       WL.ensure('primary').then(() => WL.ensure('middle')).then(() => WL.ensure('hs')).then(() => WL.ensure('cet4')).then(() => {
         const upgrade = () => AppFilterUI.autoUpgradeOnline();
