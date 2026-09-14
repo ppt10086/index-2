@@ -89,7 +89,8 @@ p,li,td,th{text-wrap:pretty}
 .card-title .dot{width:8px; height:8px; border-radius:3px; background:var(--primary); display:inline-block}
 .muted{color:var(--muted); font-size:13px}
 .small{font-size:12.5px}
-.tag{display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; background:var(--panel2); color:var(--muted); border:1px solid var(--line2)}
+.tag{display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; background:var(--panel2); color:var(--muted); border:1px solid var(--line2);
+  white-space:nowrap; word-break:keep-all}   /* 状态/词库等标签永不逐字竖排 */
 .tag-blue{background:var(--primary-soft); color:var(--primary); border-color:transparent}
 .tag-green{background:var(--accent-soft); color:var(--accent); border-color:transparent}
 .tag-orange{background:var(--warn-soft); color:var(--warn); border-color:transparent}
@@ -437,28 +438,19 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
 .filter-summary .stat + .stat{border-left:1px solid var(--line)}
 @media (max-width:860px){.filter-summary{grid-template-columns:1fr}.filter-summary .stat + .stat{border-left:none; border-top:1px solid var(--line)}}
 
-/* ---- 英语模块分类：桌面竖向列表/通栏色块，窄屏横向分区 ---- */
+/* ---- 英语模块：以「背单词」为屏幕主体，其余功能弱化到边角（v2.3） ---- */
 #page-english{min-width:0}
-@media (min-width:1080px){
-  #page-english{display:grid; grid-template-columns:228px minmax(0,1fr); align-items:start}
-  #page-english > .topbar{grid-column:1 / -1}
-  #english-tabs{grid-column:1; grid-row:2; margin:0; padding:10px 8px; flex-direction:column; gap:6px;
-    position:sticky; top:24px; align-self:start; border:1px solid var(--glass-line); border-radius:20px;
-    background:transparent !important}
-  #english-tabs button{justify-content:flex-start; width:100%; padding:12px 15px; border-radius:13px; position:relative}
-  #english-tabs button + button::before{content:""; position:absolute; top:0; left:14px; right:14px; height:1px; background:var(--line)}
-  #english-tabs button.active{background:linear-gradient(180deg,var(--primary-soft),transparent 120%); color:var(--primary); box-shadow:none}
-  #tab-filter,#tab-study,#tab-review,#tab-browse,#tab-record{grid-column:2; grid-row:2; min-width:0; border-left:1px solid var(--line); padding-left:34px}
-}
-@media (max-width:1079px){
-  #english-tabs{background:var(--glass-strong); border:1px solid var(--glass-line); border-radius:16px; padding:6px; gap:4px; margin-bottom:22px}
-  #english-tabs button{border-radius:11px}
-}
-@media (max-width:720px){
-  #english-tabs{flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none}
-  #english-tabs::-webkit-scrollbar{display:none}
-  #english-tabs button{flex:0 0 auto; white-space:nowrap}
-}
+/* 次级入口：小、灰、靠右，不抢主视觉 */
+#english-minor{display:flex; align-items:center; gap:7px; flex-wrap:wrap; justify-content:flex-end; margin-top:22px}
+#english-minor .en-minor-label{font-size:11px; color:var(--muted); letter-spacing:.08em; opacity:.8}
+#english-minor button{font-size:12px; padding:6px 12px; border-radius:9px; background:transparent;
+  border:1px solid var(--line2); color:var(--muted); font-weight:600; min-height:34px; cursor:pointer}
+#english-minor button:hover{color:var(--primary); border-color:var(--primary); background:var(--primary-soft)}
+@media (max-width:860px){ #english-minor{justify-content:center} }
+/* 进入次级页面时的返回条 */
+#english-back{display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap}
+#english-back .btn{min-height:38px}
+#english-back .crumb{font-size:13px; color:var(--muted)}
 
 /* ---- 分类列表：竖向分割线 + 列表行 ---- */
 .zone{margin-bottom:var(--space-xl)}
@@ -756,10 +748,12 @@ li,td,th{text-wrap:normal}
   #tab-record .wlist thead{display:none}
   #tab-record .wlist tr{display:block; padding:4px 2px 10px; border-top:1px solid var(--line)}
   #tab-record .wlist td{display:flex; justify-content:space-between; align-items:flex-start; gap:14px;
-    padding:5px 2px; border:0; font-size:13px; text-align:left}
+    padding:5px 2px; border:0; font-size:13px; text-align:left; flex-wrap:wrap}
   #tab-record .wlist td::before{content:attr(data-l); flex-shrink:0; width:84px;
     color:var(--muted); font-size:11.5px; font-weight:700; padding-top:2px}
   #tab-record .wlist td .tag{white-space:nowrap}
+  #tab-record .wlist td > *{min-width:0}
+  #tab-record .wlist .w{word-break:keep-all; overflow-wrap:anywhere}
   #tab-record .wlist .op{justify-content:flex-start; flex-wrap:wrap}
   #tab-record .wlist .op::before{width:84px}
   #tab-record .wlist .df{max-width:none}
@@ -874,6 +868,34 @@ html.sl-has-session #view-auth{display:none}
 [data-fit-nowrap]{white-space:nowrap}
 [data-fit]{max-width:100%}
 
+/* 英语学习：背单词主导区（v2.3）——让「背单词」占据屏幕主体，其余入口弱化到边角 */
+.en-hero{background:var(--panel); border:1px solid var(--line); border-radius:22px; box-shadow:var(--shadow);
+  padding:26px 26px 22px; display:flex; flex-direction:column; gap:16px}
+.en-hero-head{display:flex; flex-direction:column; gap:3px}
+.en-hero-k{font-size:12px; font-weight:800; letter-spacing:.14em; color:var(--primary)}
+.en-hero-sub{font-size:13.5px; color:var(--muted)}
+.en-hero-nums{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
+.en-num{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+  background:var(--panel2); border:1px solid var(--line); border-radius:14px; padding:14px 8px; min-width:0}
+.en-num b{font-size:26px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums; white-space:nowrap}
+.en-num span{font-size:12px; color:var(--muted); white-space:nowrap; word-break:keep-all}
+.en-cta{width:100%; min-height:58px; font-size:17px; font-weight:800; border-radius:16px}
+.en-cta2{width:100%; min-height:50px; font-size:15px; border-radius:14px}
+.en-batches{margin-top:2px}
+.en-done-hint{display:flex; align-items:center; justify-content:center; gap:8px; min-height:58px;
+  border:1px dashed var(--line2); border-radius:16px; color:var(--muted); font-size:14px; font-weight:600}
+.en-minor-wrap{margin-top:20px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end}
+.en-minor-label{font-size:11px; color:var(--muted); letter-spacing:.08em; margin-right:2px}
+/* 次级页面顶部的返回条 */
+.en-back{display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap}
+.en-back .btn{min-height:38px}
+@media (max-width:720px){
+  .en-hero{padding:20px 16px 18px; border-radius:18px}
+  .en-hero-nums{gap:8px}
+  .en-num b{font-size:22px}
+  .en-cta{min-height:54px; font-size:16px}
+}
+
 /* 单词配图（v2.2）：小图卡片 + 加载动画。刻意收小尺寸，避免配图喧宾夺主 */
 .fc-img{display:flex;align-items:center;justify-content:center;margin:2px 0 10px;width:100%}
 .fc-img img{max-width:min(250px, 68vw); max-height:145px; width:auto; height:auto;
@@ -964,7 +986,7 @@ html.sl-has-session #view-auth{display:none}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 2.2.0 · 配图与自适应<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 2.3.0 · 背单词主导<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -991,17 +1013,28 @@ html.sl-has-session #view-auth{display:none}
 
     <!-- 英语 -->
     <section id="page-english" hidden>
-      <div class="topbar"><div><h1>英语词汇</h1><div class="sub">选一个要背的词库，自动剔除你已经掌握的单词及其派生词，生成你的专属生词表</div></div></div>
-      <div class="tabs" id="english-tabs">
+      <div class="topbar"><div><h1 id="en-title">背单词</h1><div class="sub" id="en-sub">今天要背的内容已经排好，直接开始即可</div></div></div>
+
+      <!-- 次级页面返回条（仅在进入「其他功能」时出现） -->
+      <div id="english-back" hidden>
+        <button class="btn btn-sm btn-primary" onclick="AppUI.englishTab('study')">← 返回背单词</button>
+        <span class="crumb" id="en-crumb"></span>
+      </div>
+
+      <!-- 主导区：背单词 / 复习（占据屏幕主体） -->
+      <div id="tab-study"></div>
+      <div id="tab-review" hidden></div>
+
+      <!-- 次级入口：弱化到边角，起引导而非并列的作用 -->
+      <div id="english-minor">
+        <span class="en-minor-label">其他功能</span>
         <button data-tab="filter" onclick="AppUI.englishTab('filter')">词表筛选</button>
-        <button data-tab="study" onclick="AppUI.englishTab('study')">背单词</button>
-        <button data-tab="review" onclick="AppUI.englishTab('review')">复习</button>
         <button data-tab="browse" onclick="AppUI.englishTab('browse')">词表浏览</button>
         <button data-tab="record" onclick="AppUI.englishTab('record')">学习记录</button>
       </div>
-      <div id="tab-filter"></div>
-      <div id="tab-study" hidden></div>
-      <div id="tab-review" hidden></div>
+
+      <!-- 次级页面内容 -->
+      <div id="tab-filter" hidden></div>
       <div id="tab-browse" hidden></div>
       <div id="tab-record" hidden></div>
     </section>
@@ -1074,7 +1107,7 @@ html.sl-has-session #view-auth{display:none}
               <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存外观</button>
             </div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.2.0</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.3.0</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用在线优先设计（v2.0.0）：账号与学习进度保存在云端数据库，需要联网使用；词库数据同样在线加载并缓存在本机，不再内嵌于页面。仍建议定期「导出数据备份」。</div>
@@ -3015,7 +3048,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.2.0', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.3.0', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -3044,7 +3077,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.2.0', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.3.0', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -3141,11 +3174,11 @@ const AppUI = {
     $$('[data-icon]').forEach(b => {
       if(!b.querySelector('.ico-svg')) b.insertAdjacentHTML('afterbegin', icon(b.dataset.icon, 15));
     });
-    // 英语页标签图标
-    const TAB_ICONS = { filter:'sliders', study:'penLine', review:'refresh', browse:'list', record:'file' };
-    $$('#english-tabs button').forEach(b => {
+    // 英语页次级入口图标（背单词已升为主视图，不再有页签）
+    const TAB_ICONS = { filter:'sliders', browse:'list', record:'file' };
+    $$('#english-minor button[data-tab]').forEach(b => {
       const ic = TAB_ICONS[b.dataset.tab];
-      if(ic && !b.querySelector('.ico-svg')) b.insertAdjacentHTML('afterbegin', icon(ic, 15));
+      if(ic && !b.querySelector('.ico-svg')) b.insertAdjacentHTML('afterbegin', icon(ic, 14));
     });
   },
   dismissWelcome(){
@@ -3188,14 +3221,34 @@ const AppUI = {
   },
   englishTab(tab){
     this.etab = tab;
-    if(tab !== 'study' && tab !== 'review') document.onkeydown = null;
-    $$('#english-tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-    ['filter','study','review','browse','record'].forEach(t => $('#tab-'+t).hidden = t !== tab);
+    const MAJOR = ['study','review'];           // 背单词是主视图；复习是其一部分
+    const isMajor = MAJOR.indexOf(tab) >= 0;
+    if(!isMajor) document.onkeydown = null;
+    const st = $('#tab-study'), rv = $('#tab-review');
+    if(st) st.hidden = (tab !== 'study');
+    if(rv) rv.hidden = (tab !== 'review');
+    ['filter','browse','record'].forEach(t => { const el = $('#tab-'+t); if(el) el.hidden = (t !== tab); });
+    // 边角入口只在主视图显示；进入次级页面时换成返回条
+    const minor = $('#english-minor'); if(minor) minor.hidden = !isMajor;
+    const back = $('#english-back'); if(back) back.hidden = isMajor;
+    $$('#english-minor button[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    const META = {
+      study:  ['背单词', '今天要背的内容已经排好，直接开始即可'],
+      review: ['背单词', '今日复习清单'],
+      filter: ['词表筛选', '设置主词库与次词库，生成专属词表'],
+      browse: ['词表浏览', '查看词库全部词条'],
+      record: ['学习记录', '每个词的状态与复习进度']
+    };
+    const meta = META[tab] || META.study;
+    if($('#en-title')) $('#en-title').textContent = meta[0];
+    if($('#en-sub')) $('#en-sub').textContent = meta[1];
+    if($('#en-crumb')) $('#en-crumb').textContent = meta[1];
     if(tab === 'filter') this.renderFilterTab();
     if(tab === 'study') AppStudy.renderSetup();
     if(tab === 'review') AppReview.render();
     if(tab === 'browse') AppBrowse.render();
     if(tab === 'record') AppRecord.render();
+    fitNow($('#page-english'));
   },
   renderEnglish(){
     this.englishTab(this.etab);
@@ -3861,20 +3914,62 @@ const AppStudy = {
     const modeLabel = s.studyMode === 'fixed' ? '每次 '+(s.studyFixed||30)+' 词'
       : s.studyMode === 'all' ? '全部剩余'
       : '每日 '+(s.daily||20)+' 词';
-    const totalDone = r.kept.length - newN - (() => { let n=0; for(const e of r.kept){ const c=st[SRS.key(r.targetId,e.w)]; if(c && SRS.isDone(c)) n++; } return n; })();
+    // ---- 背单词主导区（v2.3）----
+    const today = SRS.today();
+    const batches = SRS.batches(r.targetId, r.kept, today);
+    const realB = batches.filter(x => !x.gap);
+    const totalDue = realB.reduce((n, x) => n + (x.words ? x.words.length : 0), 0);
+    const masteredN = r.kept.filter(e => SRS.isMastered(st[SRS.key(r.targetId, e.w)])).length;
+
+    const batchRows = batches.map(x => {
+      const wc = x.words ? x.words.length : 0;
+      if(x.gap){
+        return '<div class="rv-row rv-gap"><span class="rv-day">'+SRS.mind(x.day)+'</span>'
+          + '<span class="rv-desc">空缺 · 当天没有复习内容</span><span class="rv-n">—</span>'
+          + '<span class="rv-tag muted">未复习</span></div>';
+      }
+      const c0 = st[SRS.key(r.targetId, x.words[0].w)] || {};
+      const round = Math.min((c0.n || 0) + 1, SRS.ROUNDS);
+      const late = x.day < today;
+      const dRel = SRS.dayDiff(x.day, today);
+      const rel = dRel === 0 ? '今天' : (dRel === 1 ? '昨天' : dRel + ' 天前');
+      return '<div class="rv-row"><span class="rv-day">'+SRS.mind(x.day)+'<i>'+rel+'</i></span>'
+        + '<span class="rv-desc">第 '+round+' 遍复习'+(late ? ' · 逾期顺延，并入今天' : '')+'</span>'
+        + '<span class="rv-n">'+wc+' 词</span>'
+        + '<span class="rv-tag '+(late ? 'tag-orange' : 'tag-green')+'">'+(late ? '顺延' : '今日到期')+'</span></div>';
+    }).join('');
+
     box.innerHTML =
-      '<div class="study-setup">' +
-      '<div class="muted" style="margin-bottom:14px">词表「'+r.targetName+'」共 '+r.kept.length+' 词 · 全新 '+newN+' · 到期复习 '+dueN+' · 已学可抽测 '+quizN+'</div>' +
-      '<div class="study-kind" role="radiogroup" aria-label="学习类型">' +
-      '<button class="kind-opt'+(mode==='new'?' sel':'')+'" data-kind="new" onclick="AppStudy.setMode(\'new\')"><b>全新词汇</b><span>只学从未背过的词</span></button>' +
-      '<button class="kind-opt'+(mode==='review'?' sel':'')+'" data-kind="review" onclick="AppStudy.setMode(\'review\')"><b>复习计划</b><span>今天到期的词，按遗忘曲线安排</span></button>' +
-      '<button class="kind-opt'+(mode==='quiz'?' sel':'')+'" data-kind="quiz" onclick="AppStudy.setMode(\'quiz\')"><b>学习情况抽测</b><span>从已学词汇中随机抽词考察</span></button>' +
-      '</div>' +
-      '<div id="study-options" style="margin:18px 0 16px;min-height:86px"></div>' +
-      '<button class="btn btn-primary btn-lg" onclick="AppStudy.start()">'+icon('play')+' <span id="study-start-label">开始学习</span></button>' +
-      '<div class="fc-hint">先回忆词义，再点「显示释义」核对，最后按记忆情况评分；进度会自动同步云端。</div>' +
+      '<div class="en-hero">' +
+        '<div class="en-hero-head">' +
+          '<span class="en-hero-k">今天要背的</span>' +
+          '<span class="en-hero-sub">'+SRS.mind(today)+' · 词表「'+esc(r.targetName)+'」共 '+r.kept.length+' 词 · 每轮 '+modeLabel+'</span>' +
+        '</div>' +
+        '<div class="en-hero-nums">' +
+          '<div class="en-num"><b>'+totalDue+'</b><span>今日需复习</span></div>' +
+          '<div class="en-num"><b>'+newN+'</b><span>新单词</span></div>' +
+          '<div class="en-num"><b>'+masteredN+'</b><span>已掌握</span></div>' +
+        '</div>' +
+        (totalDue
+          ? '<button class="btn btn-primary en-cta" onclick="AppUI.englishTab(\'review\')">'+icon('refresh')+' 开始复习 · '+totalDue+' 词</button>'
+          : '<div class="en-done-hint">'+icon('checkCircle')+' 今天没有到期的复习</div>') +
+        (newN
+          ? '<button class="btn btn-lg en-cta2" onclick="AppStudy.quickStart(\'new\')">'+icon('play')+' 学新词 · 还剩 '+newN+' 词</button>'
+          : '<button class="btn btn-lg en-cta2" disabled>词表里的新词已学完</button>') +
+        (realB.length ? '<div class="rv-list en-batches">'+batchRows+'</div>' : '') +
+        '<div class="fc-hint">复习按艾宾浩斯日期自动安排：学完当天起 +1/+2/+4/+7/+15/+21 天共 6 遍，走完即「已掌握」。点上面的按钮先看清单、再开始复习。</div>' +
+        (quizN ? '<div style="text-align:center"><button class="btn btn-sm btn-ghost" onclick="AppStudy.quickStart(\'quiz\')">'+icon('search', 14)+' 学习情况抽测（已学 '+quizN+' 词）</button></div>' : '') +
       '</div>';
-    this.paintOptions({ newN, dueN, quizN, modeLabel, s });
+  },
+  /* 从主导区一键开始（跳过中间的模式选择） */
+  quickStart(mode){
+    this.mode = (['new','review','quiz'].indexOf(mode) >= 0) ? mode : 'new';
+    try{
+      const d = AppAuth.data();
+      d.settings.studyModeChoice = this.mode;
+      AppAuth.save(d);
+    }catch(e){}
+    this.start();
   },
   paintOptions(cfg){
     const mode = this.mode;
@@ -4095,7 +4190,11 @@ const AppStudy = {
     if(!s) return;
     const e = s.deck[s.idx];
     const targetId = AppFilter.result.targetId;
-    SRS.learn(targetId, e.w);   // 新单词首次接触：不论认识与否，一律进入「学习中」
+    // 已接触过的词（复习/抽测）走「完成一遍复习」；全新词走「首次学习」。
+    // 这样「复习」并入背单词后仍按艾宾浩斯日期推进，不会被当成新词重置进度。
+    const cur = AppAuth.data().wordState[SRS.key(targetId, e.w)];
+    if(cur && !SRS.isMastered(cur)) SRS.completeRound(targetId, e.w);
+    else SRS.learn(targetId, e.w);
     if(s.marks){ s.marks[level] = (s.marks[level] || 0) + 1; }
     if(level === 'again'){
       // 10 个词之后再出现一次
@@ -4365,15 +4464,17 @@ const AppRecord = {
       const mastered = SRS.isMastered(r.c);
       const dd = SRS.dueDay(r.c);
       const late = !mastered && dd && dd < today;
-      const dueTxt = mastered ? '—' : (late ? '<span style="color:var(--warn)">已逾期</span>（'+SRS.mind(dd)+'）' : (dd === today ? '今天' : SRS.mind(dd)));
-      const prog = mastered ? '6 / 6 遍' : ((r.c.n || 0) + ' / ' + SRS.ROUNDS + ' 遍');
+      const dueTxt = mastered ? '<span class="tag">已掌握</span>'
+        : (late ? '<span class="tag tag-red">已逾期 '+SRS.mind(dd)+'</span>'
+                : (dd === today ? '<span class="tag tag-orange">今天</span>' : '<span class="tag tag-blue">'+SRS.mind(dd)+'</span>'));
+      const prog = '<span class="tag '+(mastered ? 'tag-green' : 'tag-blue')+'">'+(mastered ? SRS.ROUNDS : (r.c.n || 0))+' / '+SRS.ROUNDS+' 遍</span>';
       const enc = encodeURIComponent(r.word);
       const act = mastered
         ? '<button class="btn btn-sm" onclick="AppRecord.mark(\''+r.listId+'\',\''+enc+'\',\'reset\')">标记遗忘</button>'
         : '<button class="btn btn-sm" onclick="AppRecord.mark(\''+r.listId+'\',\''+enc+'\',\'round\')">复习一遍</button>'
           + '<button class="btn btn-sm" onclick="AppRecord.mark(\''+r.listId+'\',\''+enc+'\',\'reset\')">重新开始</button>';
       const del = '<button class="btn btn-sm btn-danger" onclick="AppRecord.remove(\''+r.listId+'\',\''+enc+'\')">移出记录</button>';
-      return '<tr><td class="w" data-l="单词">'+esc(r.word)+passNote(r.c)+'</td><td class="df"'+(def?'':' data-dw="'+esc(r.word)+'"')+' data-l="释义">'+(def?esc(def):'…')+'</td><td data-l="词库 / 状态">'+listTag+' '+status+'</td><td data-l="复习进度" class="num" style="text-align:center">'+prog+'</td><td class="muted" style="font-size:12px" data-l="上次学习">'+(r.last?fmtDate(r.last):'—')+'</td><td class="muted" style="font-size:12px" data-l="下次复习">'+dueTxt+'</td><td class="op" data-l="操作">'+act+' '+del+'</td></tr>';
+      return '<tr><td class="w" data-l="单词">'+esc(r.word)+passNote(r.c)+'</td><td class="df"'+(def?'':' data-dw="'+esc(r.word)+'"')+' data-l="释义">'+(def?esc(def):'…')+'</td><td data-l="词库 / 状态">'+listTag+' '+status+'</td><td data-l="复习进度" class="num">'+prog+'</td><td class="muted" style="font-size:12px" data-l="上次学习">'+(r.last?fmtDate(r.last):'—')+'</td><td data-l="下次复习">'+dueTxt+'</td><td class="op" data-l="操作">'+act+' '+del+'</td></tr>';
     }).join('');
     const pager = '<div class="pager"><button class="btn btn-sm" onclick="AppRecord.page--;AppRecord.render()" '+(this.page<=1?'disabled':'')+'>上一页</button><span>第 '+this.page+' / '+pages+' 页 · 共 '+total+' 条</span><button class="btn btn-sm" onclick="AppRecord.page++;AppRecord.render()" '+(this.page>=pages?'disabled':'')+'>下一页</button></div>';
     box.innerHTML =
