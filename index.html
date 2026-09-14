@@ -659,8 +659,9 @@ li,td,th{text-wrap:normal}
 #view-main .main > section{animation:pageIn .2s var(--ease)}
 
 /* 发音按钮与单词区 */
-.fc-word-wrap{display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap}
-.fc-word-wrap .fc-word{flex:0 1 auto}
+.fc-word-wrap{display:flex; align-items:center; justify-content:center; gap:10px 16px; flex-wrap:wrap; width:100%}
+.fc-word-wrap .fc-word{flex:0 1 auto; min-width:0}
+.fc-word-wrap .fc-speak{flex:0 0 auto}
 .fc-speak{width:46px; height:46px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
   color:var(--primary); background:var(--primary-soft); border:1px solid transparent;
   transition:background-color var(--dur) var(--ease), scale var(--dur) var(--ease)}
@@ -868,6 +869,29 @@ html.sl-has-session #view-auth{display:none}
   .rv-row{flex-wrap:wrap; gap:6px 10px}
   .rv-desc{flex-basis:100%; order:3}
 }
+
+/* 自适应排版标记：data-fit 元素由 Fit 引擎按可用宽度自动缩放字号 */
+[data-fit-nowrap]{white-space:nowrap}
+[data-fit]{max-width:100%}
+
+/* 单词配图（v2.2）：小图卡片 + 加载动画。刻意收小尺寸，避免配图喧宾夺主 */
+.fc-img{display:flex;align-items:center;justify-content:center;margin:2px 0 10px;width:100%}
+.fc-img img{max-width:min(250px, 68vw); max-height:145px; width:auto; height:auto;
+  border-radius:12px; object-fit:cover; background:var(--panel2);
+  border:1px solid var(--line);
+  box-shadow:0 3px 14px rgba(0,0,0,.08); opacity:0; transition:opacity .2s var(--ease)}
+.fc-img img.on{opacity:1}
+.img-skel{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;
+  padding:8px 14px;border:1px dashed var(--line2);border-radius:10px}
+.img-skel i{width:13px;height:13px;border:2px solid var(--line2);border-top-color:var(--primary);
+  border-radius:50%;display:inline-block;animation:imgspin .9s linear infinite}
+@keyframes imgspin{to{transform:rotate(360deg)}}
+.wd-img{display:flex;justify-content:center;margin:8px 0 4px}
+.wd-img img{max-width:min(260px,70vw);max-height:150px;border-radius:10px;object-fit:cover;opacity:0;transition:opacity .2s}
+.wd-img img.on{opacity:1}
+@media (max-width:560px){
+  .fc-img img{max-height:120px}
+}
 </style>
 </head>
 <body>
@@ -940,7 +964,7 @@ html.sl-has-session #view-auth{display:none}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 2.1.0 · 艾宾浩斯复习<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 2.2.0 · 配图与自适应<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -1035,6 +1059,7 @@ html.sl-has-session #view-auth{display:none}
             <div class="kv"><span class="kk">显示音标</span><span class="vv"><label class="switch"><input type="checkbox" id="set-phon"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">发音口音</span><span class="vv"><select id="set-voice" style="width:150px"><option value="en-US">美音</option><option value="en-GB">英音</option></select></span></div>
             <div class="kv"><span class="kk">翻卡自动朗读</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autospeak"><span class="sl"></span></label></span></div>
+            <div class="kv"><span class="kk">背词显示配图 <button class="tip" onclick="termTip(&quot;img&quot;)" aria-label="配图说明" title="配图说明">?</button></span><span class="vv"><label class="switch"><input type="checkbox" id="set-showimg"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">默认剔除衍生词 <button class="tip" onclick="termTip(&quot;deriv&quot;)" aria-label="什么是衍生词" title="什么是衍生词">?</button></span><span class="vv"><label class="switch"><input type="checkbox" id="set-deriv"><span class="sl"></span></label></span></div>
             <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap">
               <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存偏好</button>
@@ -1049,7 +1074,7 @@ html.sl-has-session #view-auth{display:none}
               <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存外观</button>
             </div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.1.0</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.2.0</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用在线优先设计（v2.0.0）：账号与学习进度保存在云端数据库，需要联网使用；词库数据同样在线加载并缓存在本机，不再内嵌于页面。仍建议定期「导出数据备份」。</div>
@@ -1559,7 +1584,8 @@ const TERMS = {
   deriv: '衍生词：由同一词根变化出的词，例如 happy → happily / happiness / unhappy。开启后，次词库或已学词的同根词也会一并自动剔除。',
   target: '主词库：你真正要学的词库（例如四级）；系统只从这个词库中为你挑词。',
   base: '次词库：用来“剔除”的词库。主词库中与次词库重复的词（含衍生词）会被自动去掉，避免重复学习已掌握内容。',
-  quiz: '学习情况抽测：从你已经学过的词里随机抽一批，快速检验还记得多少。'
+  quiz: '学习情况抽测：从你已经学过的词里随机抽一批，快速检验还记得多少。',
+  img: '背词配图：每次遇到新单词时，用该单词去百度图片搜一张最能描述的图片显示在卡片上，帮助建立形象记忆。图片取自公开网络搜索结果，仅供个人学习参考；不下载、不保存，仅在当前会话内临时显示。搜索超过数秒没有结果就不显示。'
 };
 function termTip(name){
   const t = TERMS[name] || '';
@@ -1573,7 +1599,7 @@ const AppAuth = {
   defaultData(){
     const deployed = typeof location !== 'undefined' && location.protocol === 'https:';
     return {
-      settings: { daily: 20, phon: true, deriv: true, theme: 'auto', useOnline: true, autoOnline: true, studyMode: 'daily', studyFixed: 30, studyOrder: 'random', uiScale: 100, autoScale: true, onboarded: false, voice: 'en-US', autoSpeak: false, studyModeChoice: 'new', cloud: { enabled: deployed, lastSync: 0, endpoint: '' } },
+      settings: { daily: 20, phon: true, deriv: true, theme: 'auto', useOnline: true, autoOnline: true, studyMode: 'daily', studyFixed: 30, studyOrder: 'random', uiScale: 100, autoScale: true, onboarded: false, voice: 'en-US', autoSpeak: false, studyModeChoice: 'new', showImg: true, cloud: { enabled: deployed, lastSync: 0, endpoint: '' } },
       filter: { target: 'cet4', bases: ['primary','middle','hs'], deriv: true, presetName: '' },
       presets: [],
       wordState: {},
@@ -2677,33 +2703,251 @@ function calcStreak(stats){
    旧的「记录级并集」合并逻辑已不适用，整块删除以免误用。 */
 
 
-/* 单词发音（speechSynthesis，失败静默降级） */
-function speakWord(w){
-  try{
-    if(!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)){
-      toast('当前浏览器不支持发音', 'warn');
-      return;
-    }
-    let lang = 'en-US';
-    try{ const st = AppAuth.data().settings; if(st && st.voice === 'en-GB') lang = 'en-GB'; }catch(e){}
-    const u = new SpeechSynthesisUtterance(String(w || ''));
-    u.lang = lang;
-    u.rate = 0.92;
-    const pick = () => {
-      const voices = window.speechSynthesis.getVoices();
-      const want = new RegExp(lang.replace('-', '[-_]'), 'i');
-      const v = voices.find(x => want.test(x.lang)) || voices.find(x => /^en/i.test(x.lang));
-      if(v) u.voice = v;
-    };
-    pick();
-    if(window.speechSynthesis.onvoiceschanged !== undefined){
-      window.speechSynthesis.onvoiceschanged = pick;
-    }
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(u);
-  }catch(e){}
+/* ================= 单词发音 =================
+   v2.2：消除「前摇」——预选并缓存音色、首次交互时预热语音引擎、提高语速，
+   且只在确有语音在播时才 cancel（避免 cancel+speak 同帧导致丢音或额外等待）。 */
+const Speech = {
+  voices: [],
+  voice: null,
+  warmed: false,
+  rate: 1.06,          // 原为 0.92，偏慢
+  init(){
+    try{
+      if(!('speechSynthesis' in window)) return;
+      const load = () => { this.voices = window.speechSynthesis.getVoices() || []; this.voice = null; };
+      load();
+      if(!this.voices.length){
+        try{ window.speechSynthesis.addEventListener('voiceschanged', load, { once: true }); }catch(e){}
+      }
+    }catch(e){}
+  },
+  lang(){
+    try{ const st = AppAuth.data().settings; if(st && st.voice === 'en-GB') return 'en-GB'; }catch(e){}
+    return 'en-US';
+  },
+  pick(lang){
+    if(!this.voices.length){ try{ this.voices = window.speechSynthesis.getVoices() || []; }catch(e){} }
+    const want = new RegExp(String(lang).replace('-', '[-_]'), 'i');
+    return this.voices.find(v => want.test(v.lang))
+        || this.voices.find(v => /^en[-_]US/i.test(v.lang))
+        || this.voices.find(v => /^en/i.test(v.lang))
+        || null;
+  },
+  /* 预热：在用户首次交互时静音念一个空格，把语音引擎唤醒，消除第一个词的长前摇 */
+  warm(){
+    if(this.warmed) return;
+    this.warmed = true;
+    try{
+      if(!('speechSynthesis' in window)) return;
+      this.init();
+      const u = new SpeechSynthesisUtterance(' ');
+      u.volume = 0; u.rate = 1.5; u.pitch = 1;
+      window.speechSynthesis.speak(u);
+    }catch(e){}
+  },
+  speak(w){
+    try{
+      if(!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)){ toast('当前浏览器不支持发音','warn'); return; }
+      const text = String(w == null ? '' : w).trim();
+      if(!text) return;
+      const ss = window.speechSynthesis;
+      const lang = this.lang();
+      const fire = () => {
+        try{
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = lang;
+          u.rate = this.rate;
+          u.pitch = 1;
+          u.volume = 1;
+          const cur = this.voice;
+          const v = (cur && String(cur.lang || '').replace('_','-').slice(0,2).toLowerCase() === lang.slice(0,2))
+            ? cur : this.pick(lang);
+          if(v){ u.voice = v; this.voice = v; }
+          ss.speak(u);
+        }catch(e){}
+      };
+      // 只在确有语音排队/播放时打断；否则直接朗读，省掉一帧延迟
+      if(ss.speaking || ss.pending){
+        ss.cancel();
+        setTimeout(fire, 0);
+      } else {
+        fire();
+      }
+    }catch(e){}
+  }
+};
+function speakWord(w){ Speech.speak(w); }
+/* 发音快捷键「·」：中文键盘上「·」一般由反引号键（Backquote）打出，
+   英文输入法下同一物理键产生 ` 或 ~，因此三种都接受，确保任何输入法状态下都能触发。 */
+function isSpeakKey(e){
+  if(!e || e.ctrlKey || e.metaKey || e.altKey) return false;
+  const k = e.key;
+  return k === '·' || k === '•' || k === '`' || k === '~' || e.code === 'Backquote';
 }
-/* 长单词不换行，按长度缩小字号（第 10 项） */
+// 首次交互预热语音引擎
+try{
+  ['pointerdown','touchstart','keydown'].forEach(ev =>
+    window.addEventListener(ev, () => Speech.warm(), { once: true, passive: true }));
+}catch(e){}
+
+/* ================= 自适应排版 =================
+   v2.2：渲染后扫描带 data-fit 的元素，如果文字横向溢出、或被挤成「竖排」
+   （每行只剩一两个字），就逐级缩小字号直到合适，从而在不同分辨率下都不破版。
+   用法：<span data-fit>文字</span>（可选 data-fit-max="42" 指定起始上限、
+        data-fit-nowrap 表示强制单行）。 */
+const Fit = {
+  MIN: 10,
+  run(scope){
+    const root = scope || document;
+    const doIt = () => {
+      let els;
+      try{ els = root.querySelectorAll('[data-fit]'); }catch(e){ return; }
+      for(const el of els){
+        try{ this.fitOne(el); }catch(e){}
+      }
+    };
+    doIt();
+    // 元素刚插入/页签刚切换时布局可能尚未结算（clientWidth 为 0），下一帧再校准一次
+    try{ requestAnimationFrame(doIt); }catch(e){}
+  },
+  fitOne(el){
+    const cap = parseFloat(el.getAttribute('data-fit-max')) || 0;
+    let base = parseFloat(el.dataset.fitBase || '');
+    if(!base){ base = parseFloat(getComputedStyle(el).fontSize) || 16; el.dataset.fitBase = String(base); }
+    let size = Math.min(base, cap > 0 ? cap : base);
+    el.style.fontSize = size + 'px';
+    const nowrap = el.hasAttribute('data-fit-nowrap');
+    for(let i = 0; i < 40 && size > this.MIN; i++){
+      if(this.ok(el, nowrap)) return;
+      size -= 1;
+      el.style.fontSize = size + 'px';
+    }
+  },
+  ok(el, nowrap){
+    // 用 Range 精确测量文字实际宽度（inline/flex 元素上 scrollWidth 不可靠）。
+    // 可用宽度取「父容器」宽度：父容器已设 width:100%，不会随子元素缩放而抖动，
+    // 否则会形成「越缩容器越窄」的反馈循环，一路缩到最小字号。
+    const avail = (el.parentElement ? el.parentElement.clientWidth : 0) || el.clientWidth || 0;
+    // 布局还没结算：不要据此缩小（等下一帧再校准）
+    if(avail <= 0) return true;
+    let textW = 0;
+    try{
+      const r = document.createRange();
+      r.selectNodeContents(el);
+      textW = r.getBoundingClientRect().width;
+    }catch(e){ textW = el.scrollWidth; }
+    if(nowrap){
+      if(textW > avail + 1) return false;
+      return el.scrollWidth <= avail + 2;
+    }
+    if(el.scrollWidth > avail + 2) return false;                // 横向溢出
+    const text = (el.textContent || '').replace(/\s+/g, '');
+    if(text.length < 4) return true;
+    const fs = parseFloat(getComputedStyle(el).fontSize) || 16;
+    const h = el.getBoundingClientRect().height;
+    const lines = Math.max(1, Math.round(h / (fs * 1.2)));
+    if(lines >= 2){
+      // 每行平均不足 3 个字 → 已被挤成竖排，判定为不美观
+      if(text.length / lines < 3) return false;
+      // 出现「单字成行」的极端断行也不接受
+      if(text.length / lines < 4 && lines >= 4) return false;
+    }
+    return true;
+  }
+};
+function fitNow(scope){ try{ Fit.run(scope); }catch(e){} }
+// 缩放/旋转屏幕后重新适配
+let _fitT = null;
+window.addEventListener('resize', () => { clearTimeout(_fitT); _fitT = setTimeout(() => fitNow(document), 180); });
+
+/* ================= 单词配图（百度图片，经后端代理） =================
+   浏览器直连百度图片搜索会被 CORS 拦截（实测直连与公共代理均不可用），
+   因此走 Supabase RPC `sl_image` 由数据库代发请求（RPC 本身允许跨域）。
+   要求：取第一张、数秒内没结果就不显示、不落盘存储（仅当前会话内存复用）。 */
+const WordImg = {
+  cache: new Map(),        // word -> {url,title} | null
+  pending: new Map(),
+  queue: [],
+  active: 0,
+  TIMEOUT: 5000,           // 单次搜索超时（超过则视为无图）
+  MAX_CONCURRENT: 2,       // 并发上限，避免打满数据库连接
+  enabled: true,
+
+  get(word){
+    const w = String(word || '').trim().toLowerCase();
+    if(!w || !this.enabled || !Supa.active()) return Promise.resolve(null);
+    if(this.cache.has(w)) return Promise.resolve(this.cache.get(w));
+    if(this.pending.has(w)) return this.pending.get(w);
+    const p = new Promise(resolve => { this.queue.push({ w, resolve }); this.drain(); });
+    this.pending.set(w, p);
+    return p;
+  },
+  drain(){
+    while(this.active < this.MAX_CONCURRENT && this.queue.length){
+      const job = this.queue.shift();
+      this.active++;
+      this.fetchOne(job.w)
+        .then(res => { this.cache.set(job.w, res); job.resolve(res); })
+        .catch(() => { this.cache.set(job.w, null); job.resolve(null); })
+        .then(() => { this.pending.delete(job.w); this.active--; this.drain(); });
+    }
+  },
+  withTimeout(p, ms){
+    return new Promise((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error('timeout')), ms);
+      p.then(v => { clearTimeout(t); resolve(v); }, e => { clearTimeout(t); reject(e); });
+    });
+  },
+  async fetchOne(w){
+    try{
+      const r = await this.withTimeout(Supa.rpc('sl_image', { p_word: w }), this.TIMEOUT);
+      if(r && r.ok && r.url) return { url: String(r.url), title: String(r.title || '') };
+    }catch(e){}
+    return null;
+  },
+  /* 预取：给接下来的若干单词提前取图，背到时无需等待 */
+  prefetch(words, ahead){
+    if(!this.enabled) return;
+    const list = (words || []).slice(0, ahead || 6);
+    for(const it of list){
+      const w = (it && it.w !== undefined) ? it.w : it;
+      this.get(w).catch(() => {});
+    }
+  },
+  /* 会话结束即丢弃（不存储） */
+  clear(){
+    this.cache.clear();
+    this.pending.clear();
+    this.queue.length = 0;
+  }
+};
+
+/* 把配图渲染到容器里（含加载动画；失败或超时则整块隐藏） */
+async function fillWordImage(box, word){
+  if(!box) return;
+  const show = (() => { try{ return AppAuth.data().settings.showImg !== false; }catch(e){ return true; } })();
+  if(!show || !WordImg.enabled){ box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false;
+  box.innerHTML = '<div class="img-skel"><i></i><span>配图中…</span></div>';
+  let res = null;
+  try{ res = await WordImg.get(word); }catch(e){ res = null; }
+  if(!box.isConnected) return;
+  if(!res || !res.url){ box.hidden = true; box.innerHTML = ''; return; }
+  const img = new Image();
+  img.alt = String(word || '');
+  img.referrerPolicy = 'no-referrer';
+  img.decoding = 'async';
+  img.onload = () => {
+    if(!box.isConnected) return;
+    box.innerHTML = '';
+    box.appendChild(img);
+    requestAnimationFrame(() => img.classList.add('on'));
+  };
+  img.onerror = () => { if(box.isConnected){ box.hidden = true; box.innerHTML = ''; } };
+  img.src = res.url;
+}
+
+/* 长单词不换行时按长度给一个初始上限，最终由 Fit 精修（保留旧函数名兼容） */
 function fcFontSize(w){
   const len = String(w || '').length;
   const base = (typeof window !== 'undefined' && window.innerWidth <= 720) ? 30 : 42;
@@ -2771,7 +3015,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.1.0', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.2.0', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -2800,7 +3044,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.1.0', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.2.0', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -2884,6 +3128,7 @@ const AppUI = {
     $('#set-modcount').textContent = Modules.registry.length;
     this.mountLibraryPane();
     try{ this.go(this.page); }catch(e){ showFatal(e && e.message ? e.message : String(e)); }
+    fitNow(document);       // 首屏排版自适应
     this.maybeOnboard();
   },
   mountLibraryPane(){
@@ -3075,6 +3320,7 @@ const AppUI = {
     $('#set-phon').checked = s.phon;
     if($('#set-voice')) $('#set-voice').value = (s.voice === 'en-GB') ? 'en-GB' : 'en-US';
     if($('#set-autospeak')) $('#set-autospeak').checked = !!s.autoSpeak;
+    if($('#set-showimg')) $('#set-showimg').checked = s.showImg !== false;
     if($('#set-autoonline')) $('#set-autoonline').checked = true;
     $('#set-deriv').checked = s.deriv;
     $('#set-theme').value = s.theme;
@@ -3747,6 +3993,7 @@ const AppStudy = {
       d.studySession = null;
       AppAuth.save(d);
     }
+    WordImg.clear();   // 会话结束丢弃配图缓存（不存储）
   },
   sessionMatches(ss){
     const r = AppFilter.result;
@@ -3815,19 +4062,23 @@ const AppStudy = {
       '<div class="study-wrap">' +
       '<div class="study-meta"><span>第 '+(s.idx+1)+' / '+total+' 个</span><span class="tag '+stage.cls+'">'+stage.txt+'</span></div>' +
       '<div class="bar" style="margin-bottom:16px" role="progressbar" aria-valuemin="0" aria-valuemax="'+total+'" aria-valuenow="'+(s.idx+1)+'" aria-label="学习进度"><i style="width:'+Math.round(s.idx/total*100)+'%"></i></div>' +
-      '<div class="flashcard"><div class="fc-word-wrap"><span class="fc-word" style="font-size:'+fcFontSize(e.w)+'px;white-space:nowrap">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppStudy.speak()" aria-label="朗读 '+esc(e.w)+'">'+icon('volume2', 20)+'</button></div>' +
+      '<div class="flashcard"><div class="fc-word-wrap"><span class="fc-word" data-fit data-fit-nowrap data-fit-max="'+fcFontSize(e.w)+'">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppStudy.speak()" aria-label="朗读 '+esc(e.w)+'（快捷键 ·）" title="朗读（快捷键 ·）">'+icon('volume2', 20)+'</button></div>' +
       '<div class="fc-ph" id="fc-ph"></div>' +
       passNote(curState) +
+      '<div class="fc-img" id="fc-img"></div>' +
       '<div id="fc-body" style="width:100%">'+(s.revealed ? '<div class="reveal-in">'+cardBody(e)+'</div>' : (s.idx < 3 ? '<div class="fc-preview"><div class="fc-preview-hint">先回忆它的意思与发音，再点下方按钮核对</div><button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示释义</button></div>' : '<button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示释义</button>'))+'</div></div>' +
       '<div class="fc-btns">' +
       '<button class="btn again" onclick="AppStudy.mark(\'again\')">不记得</button>' +
       '<button class="btn good" onclick="AppStudy.mark(\'good\')">记得</button></div>' +
-      '<div class="fc-hint"><span class="kbd">空格</span> 显示释义 · <span class="kbd">1</span> 不记得 · <span class="kbd">2</span> 记得 · <span class="kbd">Esc</span> 退出</div>' +
+      '<div class="fc-hint"><span class="kbd">空格</span> 显示释义 · <span class="kbd">·</span> 发音 · <span class="kbd">1</span> 不记得 · <span class="kbd">2</span> 记得 · <span class="kbd">Esc</span> 退出</div>' +
       '</div>';
     fillPh(e);
     const fdEl = document.getElementById('fc-def');
     if(fdEl) Dict.fillDef(e, fdEl);
     this.bindKeys();
+    fitNow(box);
+    fillWordImage(document.getElementById('fc-img'), e.w);
+    WordImg.prefetch(s.deck.slice(s.idx + 1, s.idx + 7), 6);   // 提前取图，避免背到时等待
     const vst = AppAuth.data().settings;
     if(vst && vst.autoSpeak && !s.revealed){
       const curIdx = s.idx;
@@ -3867,6 +4118,7 @@ const AppStudy = {
   bindKeys(){
     AppUI._keyHandler = e => {
       if(e.key === ' '){ e.preventDefault(); if(this.state && !this.state.revealed) this.reveal(); }
+      else if(isSpeakKey(e)){ e.preventDefault(); this.speak(); }
       else if(e.key === '1') this.mark('again');
       else if(e.key === '2') this.mark('good');
       else if(e.key === 'Escape'){ AppUI._keyHandler = null; AppUI.englishTab('filter'); }
@@ -4019,17 +4271,21 @@ const AppReview = {
       '<div class="study-wrap">' +
       '<div class="study-meta"><span>复习 '+(s.idx+1)+' / '+total+'</span><span class="tag '+stage.cls+'">第 '+Math.min((c && c.n || 0) + 1, SRS.ROUNDS)+' 遍</span><button class="btn btn-sm btn-ghost" onclick="AppReview.stop()">结束复习</button></div>' +
       '<div class="bar" style="margin-bottom:16px" role="progressbar" aria-valuemin="0" aria-valuemax="'+total+'" aria-valuenow="'+(s.idx+1)+'" aria-label="复习进度"><i style="width:'+Math.round(s.idx/total*100)+'%"></i></div>' +
-      '<div class="flashcard"><div class="fc-word-wrap"><span class="fc-word" style="font-size:'+fcFontSize(e.w)+'px;white-space:nowrap">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppReview.speak()" aria-label="朗读 '+esc(e.w)+'">'+icon('volume2', 20)+'</button></div>' +
+      '<div class="flashcard"><div class="fc-word-wrap"><span class="fc-word" data-fit data-fit-nowrap data-fit-max="'+fcFontSize(e.w)+'">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppReview.speak()" aria-label="朗读 '+esc(e.w)+'（快捷键 ·）" title="朗读（快捷键 ·）">'+icon('volume2', 20)+'</button></div>' +
       '<div class="fc-ph" id="fc-ph"></div>' +
       passNote(c) +
+      '<div class="fc-img" id="fc-img"></div>' +
       '<div id="fc-body" style="width:100%">'+(s.revealed ? cardBody(e) : '<button class="btn btn-primary btn-lg" onclick="AppReview.reveal()">显示释义</button>')+'</div></div>' +
       '<div class="fc-btns">' +
       '<button class="btn again" onclick="AppReview.mark(\'again\')">忘了</button>' +
       '<button class="btn good" onclick="AppReview.mark(\'good\')">记得</button></div>' +
-      '<div class="fc-hint"><span class="kbd">空格</span> 显示释义 · <span class="kbd">1</span> 忘了 · <span class="kbd">2</span> 记得 · <span class="kbd">Esc</span> 结束</div></div>';
+      '<div class="fc-hint"><span class="kbd">空格</span> 显示释义 · <span class="kbd">·</span> 发音 · <span class="kbd">1</span> 忘了 · <span class="kbd">2</span> 记得 · <span class="kbd">Esc</span> 结束</div></div>';
     fillPh(e);
     const fdEl = document.getElementById('fc-def');
     if(fdEl) Dict.fillDef(e, fdEl);
+    fitNow(box);
+    fillWordImage(document.getElementById('fc-img'), e.w);
+    WordImg.prefetch(s.deck.slice(s.idx + 1, s.idx + 7), 6);
     const vst = AppAuth.data().settings;
     if(vst && vst.autoSpeak && !s.revealed){
       const curIdx = s.idx;
@@ -4037,6 +4293,7 @@ const AppReview = {
     }
     document.onkeydown = e2 => {
       if(e2.key === ' '){ e2.preventDefault(); if(this.state && !this.state.revealed) this.reveal(); }
+      else if(isSpeakKey(e2)){ e2.preventDefault(); this.speak(); }
       else if(e2.key === '1') this.mark('again');
       else if(e2.key === '2') this.mark('good');
       else if(e2.key === 'Escape') this.stop();
@@ -4062,7 +4319,7 @@ const AppReview = {
     s.revealed = false;
     this.renderCard();
   },
-  stop(){ this.state = null; document.onkeydown = null; AppUI.englishTab('review'); }
+  stop(){ this.state = null; document.onkeydown = null; WordImg.clear(); AppUI.englishTab('review'); }
 };
 
 /* ================= 学习记录 ================= */
@@ -4145,6 +4402,7 @@ const AppRecord = {
         : '<div class="empty"><div class="big">'+icon('file', 40)+'</div><p>该范围内还没有学习记录，开始背单词后会自动记录每个词的状态与复习安排。</p><div style="margin-top:12px"><button class="btn btn-primary" onclick="AppUI.englishTab(\'study\')">去背单词</button></div></div>') +
       '</div>';
     fillDictCells(box);
+    fitNow(box);
   },
   defOf(listId, word){
     const c = WL.cache.get(listId);
@@ -4224,6 +4482,7 @@ const AppBrowse = {
       '</div>';
     fillDictCells(box);
     this.fillBrowsePh(box);
+    fitNow(box);
   },
   async fillBrowsePh(box){
     if(!box) return;
@@ -4252,8 +4511,9 @@ const AppBrowse = {
     const link = 'https://dict.youdao.com/result?word='+encodeURIComponent(e.w);
     openModal(
       '<button class="close" onclick="AppUI.closeModal()">×</button>' +
-      '<div class="word-detail"><div class="wd">'+esc(e.w)+'</div>' +
+      '<div class="word-detail"><div class="wd" data-fit data-fit-nowrap>'+esc(e.w)+'</div>' +
       passNote(st) +
+      '<div class="wd-img" id="wd-img"></div>' +
       '<div class="wmeta">'+(e.ph?'<span class="tag tag-blue">'+esc(e.ph)+'</span>':'<span class="tag tag-blue" id="wd-ph"></span>')+'<span class="tag '+stage.cls+'">'+stage.txt+'</span>' +
       (st && !SRS.isMastered(st) ? '<span class="tag tag-blue">第 '+Math.min((st.n||0)+1, SRS.ROUNDS)+' 遍复习待做</span>' : '') + '</div>' +
       (Array.isArray(e.def) && e.def.length ? '<div class="sec">释义</div><ul>'+e.def.map(([p,v]) => '<li>'+(p?'<b>'+esc(p)+'.</b> ':'')+esc(v)+'</li>').join('')+'</ul>' : (typeof e.def === 'string' && e.def ? '<div class="sec">释义</div><div class="muted">'+esc(e.def)+'</div>' : '<div class="sec">释义</div><div class="muted" id="wd-def">词库未收录释义，正在获取在线翻译…</div>')) +
@@ -4262,6 +4522,8 @@ const AppBrowse = {
       '<a class="btn btn-sm" href="'+link+'" target="_blank" rel="noopener">'+icon('external')+' 在有道词典查看</a>' +
       '<button class="btn btn-sm" onclick="AppUI.closeModal()">关闭</button></div></div>'
     );
+    fillWordImage(document.getElementById('wd-img'), e.w);
+    fitNow($('#modal-root'));
     if(!e.ph){
       Dict.attach(e.w, ph => {
         e.ph = ph;
@@ -4345,6 +4607,7 @@ const AppSettings = {
     d.settings.phon = $('#set-phon').checked;
     d.settings.voice = $('#set-voice').value === 'en-GB' ? 'en-GB' : 'en-US';
     d.settings.autoSpeak = $('#set-autospeak').checked;
+    if($('#set-showimg')) d.settings.showImg = $('#set-showimg').checked;
     d.settings.autoOnline = true;
     d.settings.useOnline = true;
     d.settings.deriv = $('#set-deriv').checked;
@@ -4461,6 +4724,7 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
       await new Promise(r => setTimeout(r, 0));
     }
     Supa.init();
+    Speech.init();          // 预加载音色列表，消除发音前摇
     // 多设备“实时”同步：前台每 5 秒拉一次云端；另一台设备的清除/重置/删号也会在几秒内生效
     setInterval(() => {
       if(document.hidden) return;
