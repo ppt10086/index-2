@@ -846,6 +846,28 @@ li,td,th{text-wrap:normal}
 
 /* 已登录用户直接进应用：在脚本执行前就藏掉登录页，避免「先闪登录界面再弹进去」 */
 html.sl-has-session #view-auth{display:none}
+
+/* 「此单词已经背过 N 次」：灰色小字，不抢视线 */
+.pass-note{font-size:11.5px; color:var(--muted); opacity:.72; text-align:center; margin-top:6px; letter-spacing:.2px}
+.wlist .pass-note, td .pass-note{text-align:left; margin-top:2px}
+
+/* 复习清单 */
+.rv-list{border:1px solid var(--line); border-radius:12px; overflow:hidden}
+.rv-row{display:flex; align-items:center; gap:12px; padding:11px 14px; border-bottom:1px solid var(--line); font-size:13.5px}
+.rv-row:last-child{border-bottom:0}
+.rv-row:nth-child(odd){background:var(--panel2)}
+.rv-day{min-width:88px; font-weight:700; display:flex; flex-direction:column; line-height:1.3}
+.rv-day i{font-style:normal; font-size:11px; font-weight:500; color:var(--muted)}
+.rv-desc{flex:1; min-width:120px; color:var(--text)}
+.rv-n{min-width:56px; text-align:right; font-weight:700; color:var(--primary)}
+.rv-tag{min-width:62px; text-align:right; font-size:11.5px; font-weight:700}
+.rv-gap{opacity:.6}
+.rv-gap .rv-day{color:var(--muted)}
+.rv-gap .rv-desc{color:var(--muted); font-style:italic}
+@media (max-width:560px){
+  .rv-row{flex-wrap:wrap; gap:6px 10px}
+  .rv-desc{flex-basis:100%; order:3}
+}
 </style>
 </head>
 <body>
@@ -918,7 +940,7 @@ html.sl-has-session #view-auth{display:none}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 2.0.0 · 在线优先<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 2.1.0 · 艾宾浩斯复习<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -1027,7 +1049,7 @@ html.sl-has-session #view-auth{display:none}
               <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存外观</button>
             </div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.0.0</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.1.0</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用在线优先设计（v2.0.0）：账号与学习进度保存在云端数据库，需要联网使用；词库数据同样在线加载并缓存在本机，不再内嵌于页面。仍建议定期「导出数据备份」。</div>
@@ -1510,6 +1532,12 @@ function hashPW(pw, salt){
 }
 function genSalt(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
 
+/* 灰色小字标注：此单词已经背过 N 次（新单词不显示） */
+function passNote(c){
+  const txt = (typeof SRS !== 'undefined' && SRS.passLabel) ? SRS.passLabel(c) : '';
+  return txt ? '<div class="pass-note">' + esc(txt) + '</div>' : '';
+}
+
 /* ================= 提示 / 弹窗 ================= */
 function toast(msg, type){
   const wrap = $('#toast-wrap');
@@ -1527,7 +1555,7 @@ function openModal(html){
 
 /* 术语说明（体验优化 v1.9.4） */
 const TERMS = {
-  curve: '遗忘曲线（间隔重复）：一个词从第一次点「认识」起，会按 1/3/7/14/30/60 天的间隔再次出现，帮助长期记忆。每完成一级间隔加深一次记忆，走完全部级别才会计入「已掌握」。',
+  curve: '艾宾浩斯复习计划：单词第一次学完之后，按「学完当天 +1、+2、+4、+7、+15、+21 天」安排 6 遍复习，全部走完才计入「已掌握」。计划只按日期算，不看点击次数，也不看你当时认不认得。某天没复习的词会顺延到下次实际复习的那天，并以那天为新的起点重新排后面的节点。',
   deriv: '衍生词：由同一词根变化出的词，例如 happy → happily / happiness / unhappy。开启后，次词库或已学词的同根词也会一并自动剔除。',
   target: '主词库：你真正要学的词库（例如四级）；系统只从这个词库中为你挑词。',
   base: '次词库：用来“剔除”的词库。主词库中与次词库重复的词（含衍生词）会被自动去掉，避免重复学习已掌握内容。',
@@ -1549,7 +1577,7 @@ const AppAuth = {
       filter: { target: 'cet4', bases: ['primary','middle','hs'], deriv: true, presetName: '' },
       presets: [],
       wordState: {},
-      stats: { created: now(), studyDays: 0, lastStudyDay: '', dayLog: {}, totalStudy: 0, totalKnown: 0, totalReview: 0 },
+      stats: { created: now(), studyDays: 0, lastStudyDay: '', dayLog: {}, totalStudy: 0, totalKnown: 0, totalReview: 0, reviewDays: {}, _srs: 2 },
       meta: { updated: 0 },
       studySession: null
     };
@@ -2394,72 +2422,230 @@ const Morph = {
   }
 };
 
-/* ================= 记忆算法（间隔重复） ================= */
+/* ================= 记忆算法：艾宾浩斯日级复习（v2.1） =================
+   状态只有三种：**新单词**（无记录）/ **学习中** / **已掌握**。
+   复习计划完全按「日期」算，不看点击次数、不看认得/不认得：
+     学完当天记为第 0 天，复习节点为 +1 / +2 / +4 / +7 / +15 / +21 天（共 6 遍），
+     走完全部 6 个节点即自动变为「已掌握」。
+     逾期未复习的词，在次日实际复习时以当天为新的锚定日重新起算（不补进已完成的批次）。
+
+   记录结构：{ s, born, d0, n, due, last }
+     s    : 'learning' | 'known'
+     born : 首次学习日 'YYYY-MM-DD'
+     d0   : 本轮锚定日（按时复习不变；逾期后顺延到实际复习当天）
+     n    : 已完成的复习遍数 0..6
+     due  : 下次应复习日 'YYYY-MM-DD'（n=6 时为空）
+     last : 最近操作时间戳 ms
+*/
 const SRS = {
-  intervals: [0, 1, 3, 7, 14, 30, 60],
+  NODES: [1, 2, 4, 7, 15, 21],
+  ROUNDS: 6,
   key(listId, w){ return listId + '|' + Morph.norm(w); },
-  get(listId, w){
-    const d = AppAuth.data();
-    return d.wordState[this.key(listId, w)] || null;
+  get(listId, w){ const d = AppAuth.data(); return d.wordState[this.key(listId, w)] || null; },
+
+  /* ---- 日期工具（一律按本地日历天，不看具体钟点） ---- */
+  dayOf(ts){
+    const d = (ts === undefined || ts === null || !ts) ? new Date() : new Date(ts);
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   },
-  mark(listId, w, level){
+  dayAdd(dayStr, n){
+    const p = String(dayStr).split('-');
+    const d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    d.setDate(d.getDate() + n);
+    return this.dayOf(d.getTime());
+  },
+  dayDiff(fromStr, toStr){
+    const f = String(fromStr).split('-'), t = String(toStr).split('-');
+    const a = Date.UTC(Number(f[0]), Number(f[1]) - 1, Number(f[2]));
+    const b = Date.UTC(Number(t[0]), Number(t[1]) - 1, Number(t[2]));
+    return Math.round((b - a) / 86400000);
+  },
+  today(){ return todayStr(); },
+  mind(s){ return Number(String(s).slice(5,7)) + '月' + Number(String(s).slice(8,10)) + '日'; },
+
+  /* ---- 状态判定 ---- */
+  isMastered(c){ return !!(c && c.s === 'known' && (c.n || 0) >= this.ROUNDS); },
+  isDone(c){ return this.isMastered(c); },   // 兼容旧调用名
+  dueDay(c){
+    if(!c || this.isMastered(c)) return '';
+    if(c.due) return c.due;
+    const n = Math.min(c.n || 0, this.ROUNDS - 1);
+    return this.dayAdd(c.d0 || this.today(), this.NODES[n]);
+  },
+  isDue(c, today){ return !!c && !this.isMastered(c) && this.dueDay(c) <= (today || this.today()); },
+  overdue(c, today){ const t = today || this.today(); return this.isDue(c, t) && this.dueDay(c) < t; },
+
+  /* 该词总共已经背过几次 = 首次学习 1 次 + 已完成的复习遍数 */
+  passCount(c){ return c ? 1 + (c.n || 0) : 0; },
+  /* 灰色小字标注用文案（新单词返回空串，不显示） */
+  passLabel(c){ return c ? ('此单词已经背过 ' + this.passCount(c) + ' 次') : ''; },
+
+  bumpStudyDay(d){
+    const t = todayStr();
+    if(d.stats.lastStudyDay !== t){
+      if(d.stats.lastStudyDay) d.stats.studyDays = (d.stats.studyDays || 0) + 1;
+      d.stats.lastStudyDay = t;
+    }
+  },
+
+  /* ---- 新单词首次接触：不管点认识还是不认识，一律进入「学习中」，次日开始第一遍复习 ---- */
+  learn(listId, w, when){
     const d = AppAuth.data();
     const k = this.key(listId, w);
-    const cur = d.wordState[k] || { s:'new', i:0, due:0, reps:0, last:0 };
-    if(level === 'again'){ cur.s = 'learning'; cur.i = 0; cur.due = now() + 10*60000; }
-    if(level === 'hard'){ cur.s = 'learning'; cur.i = Math.max(0, cur.i - 1); cur.due = now() + DAY; }
-    if(level === 'good'){
-      cur.i = Math.min(cur.i + 1, this.intervals.length - 1);
-      // 完成整条遗忘曲线（到达最后一级间隔）才计为已掌握，其余为学习中
-      cur.s = cur.i >= this.intervals.length - 1 ? 'known' : 'learning';
-      cur.due = now() + this.intervals[cur.i] * DAY;
-    }
-    cur.reps++; cur.last = now();
-    d.wordState[k] = cur;
-    d.stats.totalStudy++;
-    d.stats.totalKnown = this.countKnown(d);
-    const today = todayStr();
-    if(d.stats.lastStudyDay !== today){
-      if(d.stats.lastStudyDay) d.stats.studyDays++;
-      d.stats.lastStudyDay = today;
-    }
-    // 进度按“认识”计：不认识/模糊的重复点击不累计（第 9 项）
-    if(level === 'good'){
+    const t = when || now();
+    const today = this.dayOf(t);
+    let c = d.wordState[k];
+    if(c && (c.d0 || c.s)){
+      // 已接触过：只更新时间，不重置既有进度
+      c.last = t;
+      c.born = c.born || today;
+      c.d0 = c.d0 || today;
+      if(c.n === undefined) c.n = 0;
+      if(!c.due && !this.isMastered(c)) c.due = this.dayAdd(c.d0, this.NODES[Math.min(c.n, this.ROUNDS-1)]);
+    } else {
+      c = { s:'learning', born: today, d0: today, n: 0, due: this.dayAdd(today, this.NODES[0]), last: t };
+      d.wordState[k] = c;
+      d.stats.totalStudy = (d.stats.totalStudy || 0) + 1;
       d.stats.dayLog = d.stats.dayLog || {};
-      d.stats.dayLog[today] = (d.stats.dayLog[today] || 0) + 1;
+      d.stats.dayLog[today] = (d.stats.dayLog[today] || 0) + 1;   // 今日新学词数（每日目标进度）
+      this.bumpStudyDay(d);
     }
+    d.stats.totalKnown = this.countKnown(d);
     AppAuth.save(d);
-    return cur;
+    return c;
   },
-  isDone(c){
-    return !!(c && c.s === 'known' && (c.i || 0) >= this.intervals.length - 1);
+
+  /* ---- 完成一遍复习：按时间推进（认得/不认得都不改变计划） ---- */
+  completeRound(listId, w, when){
+    const d = AppAuth.data();
+    const k = this.key(listId, w);
+    const t = when || now();
+    const today = this.dayOf(t);
+    const c = d.wordState[k];
+    if(!c || this.isMastered(c)) return c || null;
+    const scheduled = this.dueDay(c);
+    const n = Math.min((c.n || 0) + 1, this.ROUNDS);
+    // 逾期完成 → 以实际复习当天重新锚定；按时完成 → 保持原锚定日，节点间隔不变
+    if(scheduled && scheduled < today) c.d0 = today;
+    c.n = n;
+    c.last = t;
+    if(n >= this.ROUNDS) c.s = 'known';
+    c.due = (n >= this.ROUNDS) ? '' : this.dayAdd(c.d0, this.NODES[n]);
+    d.stats.totalReview = (d.stats.totalReview || 0) + 1;
+    d.stats.reviewDays = d.stats.reviewDays || {};
+    d.stats.reviewDays[today] = (d.stats.reviewDays[today] || 0) + 1;
+    d.stats.totalKnown = this.countKnown(d);
+    this.bumpStudyDay(d);
+    AppAuth.save(d);
+    return c;
   },
+
+  /* ---- 旧数据迁移（v1「等级 i + 次数」→ v2「日级节点」） ----
+     规则（按用户要求）：
+       · 原「已掌握」保持不变；
+       · 原「不认识 / 待复习 / 学习中」全部并入「学习中」；
+       · 有时间的按当时的时间锚定，据此排新的复习节点；
+       · 没有时间数据的，视作「第一天的内容」（锚定到迁移当天，次日开始第一遍复习）。 */
+  migrate(d){
+    if(!d || !d.wordState) return false;
+    if(d.stats && d.stats._srs === 2) return false;
+    const t = now();
+    const today = this.dayOf(t);
+    let changed = false;
+    for(const k in d.wordState){
+      const c = d.wordState[k];
+      if(!c || typeof c !== 'object'){ continue; }
+      if(c.born && c.n !== undefined){ continue; }   // 已是新结构
+      const wasKnown = (c.s === 'known') && ((Number(c.i) || 0) >= 6);
+      const lastTs = Number(c.last) || 0;
+      const anchor = lastTs ? this.dayOf(lastTs) : today;
+      if(wasKnown){
+        d.wordState[k] = { s:'known', born: anchor, d0: anchor, n: this.ROUNDS, due:'', last: lastTs || t };
+      } else {
+        d.wordState[k] = {
+          s:'learning', born: anchor, d0: anchor, n: 0,
+          due: this.dayAdd(anchor, this.NODES[0]), last: lastTs || t
+        };
+      }
+      changed = true;
+    }
+    d.stats = d.stats || {};
+    d.stats._srs = 2;
+    d.stats.reviewDays = d.stats.reviewDays || {};
+    d.stats.totalKnown = this.countKnown(d);
+    return true;
+  },
+
+  /* ---- 手动重来：把该词退回学习起点（记为遗忘） ---- */
+  reset(listId, w, when){
+    const d = AppAuth.data();
+    const k = this.key(listId, w);
+    const c = d.wordState[k];
+    if(!c) return null;
+    const t = when || now();
+    const today = this.dayOf(t);
+    c.s = 'learning'; c.d0 = today; c.n = 0;
+    c.due = this.dayAdd(today, this.NODES[0]);
+    c.last = t; c.born = c.born || today;
+    d.stats.totalKnown = this.countKnown(d);
+    AppAuth.save(d);
+    return c;
+  },
+
   countKnown(d){
     let n = 0;
-    for(const k in d.wordState){ if(this.isDone(d.wordState[k])) n++; }
+    for(const k in d.wordState){ if(this.isMastered(d.wordState[k])) n++; }
     return n;
   },
-  isKnown(listId, w){
-    const c = this.get(listId, w);
-    return this.isDone(c);
-  },
+  isKnown(listId, w){ return this.isMastered(this.get(listId, w)); },
+
+  /* ---- 三态 ---- */
   stageOf(c){
-    if(!c) return { txt:'未学习', cls:'tag-blue' };
-    if(this.isDone(c)) return { txt:'已掌握', cls:'tag-green' };
-    const i = c.i || 0;
-    if(i === 0) return { txt:'不认识', cls:'tag-red' };
-    if(i === 1) return { txt:'待复习', cls:'tag-orange' };
-    return { txt:'学习中', cls:'tag-blue' };
+    if(!c) return { txt:'新单词', cls:'tag-blue' };
+    if(this.isMastered(c)) return { txt:'已掌握', cls:'tag-green' };
+    return { txt:'学习中', cls:'tag-orange' };
   },
+  stageTxt(c){ return this.stageOf(c).txt; },
+
   dueCount(listId, entries){
     const d = AppAuth.data();
-    const t = now();
+    const t = this.today();
     let n = 0;
     for(const e of entries){
       const c = d.wordState[this.key(listId, e.w)];
-      if(c && !this.isDone(c) && c.due <= t) n++;
+      if(this.isDue(c, t)) n++;
     }
     return n;
+  },
+
+  /* ---- 复习清单：把到期单词按「原定复习日」分组，中间没有内容的日子明确标为空缺 ---- */
+  batches(listId, entries, today){
+    const d = AppAuth.data();
+    const t = today || this.today();
+    const map = new Map();
+    for(const e of entries){
+      const c = d.wordState[this.key(listId, e.w)];
+      if(!this.isDue(c, t)) continue;
+      const day = this.dueDay(c);
+      if(!map.has(day)) map.set(day, []);
+      map.get(day).push(e);
+    }
+    const log = ((d.stats || {}).reviewDays) || {};
+    const days = Array.from(map.keys()).sort();
+    const rows = [];
+    let prev = null;
+    for(const day of days){
+      if(prev !== null){
+        const gap = this.dayDiff(prev, day);
+        for(let i = 1; i < gap && rows.length < 24; i++){
+          const g = this.dayAdd(prev, i);
+          rows.push({ day: g, words: [], gap: true, done: log[g] || 0 });
+        }
+      }
+      rows.push({ day, words: map.get(day), gap: false, done: log[day] || 0 });
+      prev = day;
+    }
+    return rows;
   }
 };
 
@@ -2484,66 +2670,12 @@ function calcStreak(stats){
   return streak;
 }
 
-/* 跨设备数据合并：两台设备的数据按“记录级并集”合并，不再整包覆盖。
-   学习记录(wordState/dayLog)取并集且单条冲突以“最近操作”为准；
-   设置/筛选/学习会话以 meta.updated 较新的一侧为准。 */
-function deepClone(v){ return JSON.parse(JSON.stringify(v)); }
-function mergeUserData(local, cloud){
-  const L = (local && typeof local === 'object') ? local : {};
-  const C = (cloud && typeof cloud === 'object') ? cloud : {};
-  // 整体重置（恢复出厂 / 恢复备份）拥有最高优先级：谁最近重置过，就以谁的整份数据为准
-  const lAll = L.allResetAt || 0, cAll = C.allResetAt || 0;
-  if(lAll > cAll) return finalizeMerge(L, C);
-  if(cAll > lAll) return finalizeMerge(C, L);
-  // 仅清空学习记录时，以最近一次重置的一端为准（避免另一端把已清空的词合并回来）
-  const lW = L.wordResetAt || 0, cW = C.wordResetAt || 0;
-  if(lW > cW) return finalizeMerge(L, C);
-  if(cW > lW) return finalizeMerge(C, L);
-  const out = deepClone(C);
-  const ws = {};
-  const Lw = L.wordState || {}, Cw = C.wordState || {};
-  for(const k of new Set(Object.keys(Cw).concat(Object.keys(Lw)))){
-    const a = Cw[k], b = Lw[k];
-    if(a && b) ws[k] = (b.last || 0) >= (a.last || 0) ? deepClone(b) : deepClone(a);
-    else ws[k] = deepClone(a || b);
-  }
-  out.wordState = ws;
-  const dl = {};
-  const Ld = (L.stats && L.stats.dayLog) || {}, Cd = (C.stats && C.stats.dayLog) || {};
-  for(const k of new Set(Object.keys(Cd).concat(Object.keys(Ld)))){
-    dl[k] = Math.max(Cd[k] || 0, Ld[k] || 0);
-  }
-  const cs = C.stats || {}, ls = L.stats || {};
-  const dayKeys = Object.keys(dl).filter(k => dl[k] > 0);
-  out.stats = {
-    created: Math.min(cs.created || Date.now(), ls.created || Date.now()),
-    studyDays: dayKeys.length,
-    lastStudyDay: dayKeys.slice().sort().pop() || (String(cs.lastStudyDay || '').localeCompare(String(ls.lastStudyDay || '')) >= 0 ? cs.lastStudyDay || '' : ls.lastStudyDay || ''),
-    dayLog: dl,
-    totalStudy: Math.max(cs.totalStudy || 0, ls.totalStudy || 0),
-    totalKnown: 0,
-    totalReview: Math.max(cs.totalReview || 0, ls.totalReview || 0)
-  };
-  const lu = (L.meta && L.meta.updated) || 0, cu = (C.meta && C.meta.updated) || 0;
-  const newer = lu >= cu ? L : C;
-  if(newer.settings) out.settings = deepClone(newer.settings);
-  if(newer.filter) out.filter = deepClone(newer.filter);
-  if(newer.presets) out.presets = deepClone(newer.presets);
-  if(newer.studySession) out.studySession = deepClone(newer.studySession);
-  out.meta = { updated: Math.max(lu, cu, Date.now()) };
-  if(typeof SRS !== 'undefined' && SRS.countKnown) out.stats.totalKnown = SRS.countKnown(out);
-  return out;
-}
-function finalizeMerge(main, other){
-  const out = deepClone(main);
-  if(!out.meta || typeof out.meta !== 'object') out.meta = {};
-  out.meta.updated = Math.max((main.meta && main.meta.updated) || 0, (other && other.meta && other.meta.updated) || 0, Date.now());
-  out.stats = out.stats || {};
-  out.stats.dayLog = out.stats.dayLog || {};
-  out.stats.totalKnown = 0;
-  if(typeof SRS !== 'undefined' && SRS.countKnown) out.stats.totalKnown = SRS.countKnown(out);
-  return out;
-}
+/* 跨设备合并（mergeUserData / finalizeMerge）已在 v2.0.0 移除：
+   在线优先下云端是唯一权威，Supa.pullMerge() 直接以云端覆盖本机；
+   同浏览器多标签页的未上传改动由 sl.pending.<user> 标记保护。
+   v2.1 起 wordState 改为艾宾浩斯日级结构（born/d0/n/due），
+   旧的「记录级并集」合并逻辑已不适用，整块删除以免误用。 */
+
 
 /* 单词发音（speechSynthesis，失败静默降级） */
 function speakWord(w){
@@ -2639,7 +2771,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.0.0', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.1.0', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -2668,7 +2800,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.0.0', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.1.0', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -2728,6 +2860,11 @@ const AppUI = {
     }catch(e){}
     const s = AppAuth.current();
     if(!s){ AppAuth.showAuth(); return; }
+    // 旧数据迁移（v1「等级 i」→ v2「艾宾浩斯日级节点」）：幂等，只跑一次
+    try{
+      const _md = AppAuth.data();
+      if(typeof SRS !== 'undefined' && SRS.migrate(_md)) AppAuth.save(_md);
+    }catch(e){}
     // 已有登录状态：直接进入主界面
     $('#view-auth').hidden = true;
     $('#view-main').hidden = false;
@@ -2852,10 +2989,24 @@ const AppUI = {
     let lastTs = 0;
     for(const k in d.wordState){ const v = d.wordState[k]; if(v.last > lastTs) lastTs = v.last; }
     const todayMarks = (d.stats.dayLog && d.stats.dayLog[todayStr()]) || 0;
+    const todayReview = (d.stats.reviewDays && d.stats.reviewDays[todayStr()]) || 0;
+    // 三态统计：新单词（词表内从未接触）/ 学习中 / 已掌握
+    let learnN = 0;
+    for(const k in d.wordState){ if(!SRS.isMastered(d.wordState[k])) learnN++; }
+    const newN = (() => {
+      const r = AppFilter.result;
+      if(!r) return null;
+      let n = 0;
+      for(const e of r.kept){
+        if(!d.wordState[SRS.key(r.targetId, e.w)]) n++;
+      }
+      return n;
+    })();
     $('#dash-stats').innerHTML = [
-      ['checkCircle','已掌握词汇', known, '完成整条遗忘曲线后计入掌握 <button class="tip" onclick="termTip(&quot;curve&quot;)" aria-label="什么是遗忘曲线" title="什么是遗忘曲线">?</button>', 'stat-green'],
-      ['clock','待复习', due, due ? '今日到期单词数' : '今日无到期单词', 'stat-orange'],
-      ['flame','累计学习天数', d.stats.studyDays + (d.stats.lastStudyDay===todayStr()?1:0), '坚持每日复习', 'stat-red']
+      ['bookOpen','新单词', newN === null ? '—' : newN, newN === null ? '生成词表后显示' : '当前词表中还没接触过的词', 'stat-blue'],
+      ['clock','学习中', learnN, '已接触过，正在走 6 遍复习', 'stat-orange'],
+      ['checkCircle','已掌握', known, '走完 +1/2/4/7/15/21 天全部 6 遍 <button class="tip" onclick="termTip(&quot;curve&quot;)" aria-label="什么是遗忘曲线" title="什么是遗忘曲线">?</button>', 'stat-green'],
+      ['refresh','今日需复习', due, due ? ('已复习 ' + todayReview + ' 词') : '今日无到期单词', 'stat-red']
     ].map(x => '<div class="stat"><span class="stat-ico '+x[4]+'">'+icon(x[0])+'</span><div class="stat-body"><span class="k">'+x[1]+'</span><span class="v">'+x[2]+'</span><span class="d">'+x[3]+'</span></div></div>').join('');
     // 近 7 日学习趋势（来自每日学习日志，纯 CSS 柱状，无第三方图表依赖）
     const log = d.stats.dayLog || {};
@@ -2875,7 +3026,7 @@ const AppUI = {
       '<div style="display:flex;justify-content:space-between;align-items:baseline;font-size:14px;margin-bottom:4px"><span class="muted">今日已认识</span><b>'+todayMarks+' 词</b></div>' +
       '<div class="bar" style="margin:8px 0 6px"><i style="width:'+Math.min(100, Math.round(todayMarks / Math.max(1, d.settings.daily) * 100))+'%"></i></div>' +
       '<div class="wk">'+bars+'</div>' +
-      '<div class="muted small">'+(lastTs ? '上次学习：'+relTime(lastTs)+' · ' : '')+'每日目标 '+d.settings.daily+' 词 · 仅统计点「认识」的单词，重复「不认识」不累计。</div>';
+      '<div class="muted small">'+(lastTs ? '上次学习：'+relTime(lastTs)+' · ' : '')+'每日目标 '+d.settings.daily+' 词（按新学单词数计）· 复习计划按艾宾浩斯日期自动安排，与认得与否无关。</div>';
     const tip = $('#dash-english-tip');
     if(AppFilter.result){
       const r = AppFilter.result;
@@ -3375,8 +3526,8 @@ const AppStudy = {
       seen.add(key);
       const c = st[SRS.key(r.targetId, e.w)];
       if(!c){ poolNew.push(e); continue; }
-      if((c.reps || 0) > 0) poolQuiz.push(e);
-      if(!SRS.isDone(c) && c.due <= now()) poolDue.push(e);
+      poolQuiz.push(e);                        // 已接触过的词都可抽测
+      if(SRS.isDue(c)) poolDue.push(e);        // 按艾宾浩斯日级节点到期
     }
     const order = d.settings.studyOrder || 'random';
     const s = d.settings;
@@ -3384,7 +3535,7 @@ const AppStudy = {
       // 复习计划：只取今日到期（按到期时间优先，其次字母序）
       poolDue.sort((a,b) => {
         const ca = st[SRS.key(r.targetId, a.w)] || {}, cb = st[SRS.key(r.targetId, b.w)] || {};
-        return (ca.due || 0) - (cb.due || 0) || a.w.localeCompare(b.w);
+        return String(SRS.dueDay(ca)).localeCompare(String(SRS.dueDay(cb))) || a.w.localeCompare(b.w);
       });
       this._avail = poolDue.length; this._requested = poolDue.length;
       return poolDue;
@@ -3455,8 +3606,8 @@ const AppStudy = {
       seenC.add(key);
       const c = st[SRS.key(r.targetId, e.w)];
       if(!c){ newN++; continue; }
-      if((c.reps || 0) > 0) quizN++;
-      if(!SRS.isDone(c) && c.due <= now()) dueN++;
+      quizN++;
+      if(SRS.isDue(c)) dueN++;
     }
     const s = AppAuth.data().settings;
     const mode = (['new','review','quiz'].indexOf(s.studyModeChoice || 'new') >= 0) ? (s.studyModeChoice || 'new') : 'new';
@@ -3486,7 +3637,7 @@ const AppStudy = {
     if(!wrap) return;
     if(mode === 'review'){
       wrap.innerHTML =
-        '<div class="muted">今日到期 <b style="color:var(--warn)">'+cfg.dueN+'</b> 个待复习单词，按到期时间先后复习。</div>' +
+        '<div class="muted">今日到期 <b style="color:var(--warn)">'+cfg.dueN+'</b> 个单词，按原定复习日先后进行。</div>' +
         (cfg.dueN ? '' : '<div class="muted small">当前没有到期的复习计划，可先学新词或稍后再来。</div>');
       if(label) label.textContent = cfg.dueN ? ('开始复习 · '+cfg.dueN+' 词') : '暂无到期复习';
       return;
@@ -3651,7 +3802,7 @@ const AppStudy = {
       if(!Store.get('backupTipShown', false)){ Store.set('backupTipShown', true);
         setTimeout(()=>{ try{ toast('本轮完成，进度已自动备份。建议到「设置 → 数据与备份」导出文件，换设备也不丢。','ok'); }catch(e){} }, 900); }
       box.innerHTML = '<div class="study-done"><div class="big">'+icon('checkCircle', 44)+'</div><h3>本轮学习完成</h3>' +
-      '<p class="muted" role="status">本轮共学习 '+s.deck.length+' 个单词'+(s.requested && s.requested > s.deck.length ? '（申请 '+s.requested+' 个，词表仅剩 '+s.deck.length+' 个）' : '')+'：认识 '+s.marks.good+' 词，模糊 '+(s.marks.hard||0)+' 词，不认识 '+s.marks.again+' 词。评分已记录到学习记录。</p>' +
+      '<p class="muted" role="status">本轮共学习 '+s.deck.length+' 个单词'+(s.requested && s.requested > s.deck.length ? '（申请 '+s.requested+' 个，词表仅剩 '+s.deck.length+' 个）' : '')+'：记得 '+s.marks.good+' 词，模糊 '+(s.marks.hard||0)+' 词，不记得 '+s.marks.again+' 词。这些词已进入「学习中」，明天开始第 1 遍复习。</p>' +
       '<div style="display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap"><button class="btn btn-primary" onclick="AppStudy.start()">再来一轮</button><button class="btn" onclick="AppUI.englishTab(\'record\')">查看学习记录</button><button class="btn" onclick="AppUI.englishTab(\'review\')">开始复习</button></div></div>';
       burstFx(box.querySelector('.study-done'), 10);
       return;
@@ -3659,18 +3810,19 @@ const AppStudy = {
     const e = s.deck[s.idx];
     const total = s.deck.length;
     const curState = AppAuth.data().wordState[SRS.key(AppFilter.result.targetId, e.w)];
-    const stage = curState ? SRS.stageOf(curState) : { txt:'新词', cls:'tag-blue' };
+    const stage = SRS.stageOf(curState);
     box.innerHTML =
       '<div class="study-wrap">' +
       '<div class="study-meta"><span>第 '+(s.idx+1)+' / '+total+' 个</span><span class="tag '+stage.cls+'">'+stage.txt+'</span></div>' +
       '<div class="bar" style="margin-bottom:16px" role="progressbar" aria-valuemin="0" aria-valuemax="'+total+'" aria-valuenow="'+(s.idx+1)+'" aria-label="学习进度"><i style="width:'+Math.round(s.idx/total*100)+'%"></i></div>' +
       '<div class="flashcard"><div class="fc-word-wrap"><span class="fc-word" style="font-size:'+fcFontSize(e.w)+'px;white-space:nowrap">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppStudy.speak()" aria-label="朗读 '+esc(e.w)+'">'+icon('volume2', 20)+'</button></div>' +
       '<div class="fc-ph" id="fc-ph"></div>' +
+      passNote(curState) +
       '<div id="fc-body" style="width:100%">'+(s.revealed ? '<div class="reveal-in">'+cardBody(e)+'</div>' : (s.idx < 3 ? '<div class="fc-preview"><div class="fc-preview-hint">先回忆它的意思与发音，再点下方按钮核对</div><button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示释义</button></div>' : '<button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示释义</button>'))+'</div></div>' +
       '<div class="fc-btns">' +
-      '<button class="btn again" onclick="AppStudy.mark(\'again\')">不认识</button>' +
-      '<button class="btn good" onclick="AppStudy.mark(\'good\')">认识</button></div>' +
-      '<div class="fc-hint"><span class="kbd">空格</span> 显示释义 · <span class="kbd">1</span> 不认识 · <span class="kbd">2</span> 认识 · <span class="kbd">Esc</span> 退出</div>' +
+      '<button class="btn again" onclick="AppStudy.mark(\'again\')">不记得</button>' +
+      '<button class="btn good" onclick="AppStudy.mark(\'good\')">记得</button></div>' +
+      '<div class="fc-hint"><span class="kbd">空格</span> 显示释义 · <span class="kbd">1</span> 不记得 · <span class="kbd">2</span> 记得 · <span class="kbd">Esc</span> 退出</div>' +
       '</div>';
     fillPh(e);
     const fdEl = document.getElementById('fc-def');
@@ -3692,7 +3844,7 @@ const AppStudy = {
     if(!s) return;
     const e = s.deck[s.idx];
     const targetId = AppFilter.result.targetId;
-    SRS.mark(targetId, e.w, level);
+    SRS.learn(targetId, e.w);   // 新单词首次接触：不论认识与否，一律进入「学习中」
     if(s.marks){ s.marks[level] = (s.marks[level] || 0) + 1; }
     if(level === 'again'){
       // 10 个词之后再出现一次
@@ -3779,7 +3931,7 @@ function burstFx(anchor, count){
   setTimeout(() => { if(wrap.parentNode) wrap.parentNode.removeChild(wrap); }, 900);
 }
 
-/* ================= 复习 ================= */
+/* ================= 复习（先出清单，再开始复习） ================= */
 const AppReview = {
   state: null,
   render(){
@@ -3789,35 +3941,87 @@ const AppReview = {
       box.innerHTML = '<div class="card empty"><div class="big">'+icon('bookOpen', 40)+'</div><p>请先生成个人词表。</p></div>';
       return;
     }
-    const d = AppAuth.data();
-    const due = r.kept.filter(e => {
-      const c = d.wordState[SRS.key(r.targetId, e.w)];
-      return c && !SRS.isDone(c) && c.due <= now();
-    });
-    if(!due.length){
-      box.innerHTML = '<div class="card empty"><div class="big">'+icon('checkCircle', 40)+'</div><h3 style="margin-bottom:6px">今日复习已完成</h3><p>当前没有到期需要复习的单词。</p><div style="margin-top:14px"><button class="btn btn-primary" onclick="AppUI.englishTab(\'study\')">学习新词</button></div></div>';
+    if(this.state){ this.renderCard(); return; }   // 复习进行中
+    const today = SRS.today();
+    const rows = SRS.batches(r.targetId, r.kept, today);
+    const total = rows.reduce((n, x) => n + (x.words ? x.words.length : 0), 0);
+    if(!total){
+      box.innerHTML = '<div class="card empty"><div class="big">'+icon('checkCircle', 40)+'</div><h3 style="margin-bottom:6px">今日复习已完成</h3>'
+        + '<p>当前没有到期需要复习的单词。</p>'
+        + '<div class="muted small" style="margin-top:10px">复习节点：学完当天起 +1 / +2 / +4 / +7 / +15 / +21 天，走完全部 6 遍即自动变为「已掌握」。</div>'
+        + '<div style="margin-top:14px"><button class="btn btn-primary" onclick="AppUI.englishTab(\'study\')">学习新词</button></div></div>';
       return;
     }
-    if(!this.state || this.state.deck.length !== due.length || this.state.targetId !== r.targetId){
-      this.state = { mode:'review', deck:due, idx:0, revealed:false, targetId:r.targetId };
-    }
+    // ---- 复习清单 ----
+    const real = rows.filter(x => !x.gap);
+    const overdue = real.filter(x => x.day < today).reduce((n,x) => n + x.words.length, 0);
+    const rowsHtml = rows.map(x => {
+      const wc = x.words ? x.words.length : 0;
+      if(x.gap){
+        return '<div class="rv-row rv-gap"><span class="rv-day">'+SRS.mind(x.day)+'</span>'
+          + '<span class="rv-desc">空缺 · 当天没有复习内容</span>'
+          + '<span class="rv-n">—</span><span class="rv-tag muted">'+(x.done ? ('已复习 '+x.done+' 词') : '未复习')+'</span></div>';
+      }
+      const c0 = AppAuth.data().wordState[SRS.key(r.targetId, x.words[0].w)] || {};
+      const round = Math.min((c0.n || 0) + 1, SRS.ROUNDS);
+      const late = x.day < today;
+      const dRel = SRS.dayDiff(x.day, today);
+      const rel = dRel === 0 ? '今天' : (dRel === 1 ? '昨天' : dRel + ' 天前');
+      return '<div class="rv-row"><span class="rv-day">'+SRS.mind(x.day)+'<i>'+rel+'</i></span>'
+        + '<span class="rv-desc">第 '+round+' 遍复习'+(late ? ' · 逾期顺延，并入今天' : '')+'</span>'
+        + '<span class="rv-n">'+wc+' 词</span>'
+        + '<span class="rv-tag '+(late ? 'tag-orange' : 'tag-green')+'">'+(late ? '顺延' : '今日到期')+'</span></div>';
+    }).join('');
+    box.innerHTML =
+      '<div class="card"><div class="card-title"><span class="dot"></span>今日复习清单 · '+SRS.mind(today)+'</div>'
+      + '<div class="muted" style="margin-bottom:14px">共 <b>'+total+'</b> 个单词今天需要复习，来自 '+real.length+' 个批次'
+      + (overdue ? '（其中 <b style="color:var(--warn)">'+overdue+'</b> 个是之前没复习、顺延到今天的）' : '')
+      + '。复习一遍记一遍；漏掉的日子会在此列出空缺。</div>'
+      + '<div class="rv-list">'+rowsHtml+'</div>'
+      + '<div class="muted small" style="margin-top:14px">复习节点：学完当天起来第 +1 / +2 / +4 / +7 / +15 / +21 天，共 6 遍，走完即自动变为「已掌握」。逾期完成的词会以当天为新的起点重新排后续节点。</div>'
+      + '<div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">'
+      + '<button class="btn btn-primary btn-lg" onclick="AppReview.start()">开始复习（'+total+' 词）</button>'
+      + '<button class="btn" onclick="AppUI.englishTab(\'study\')">先学新词</button>'
+      + '</div></div>';
+  },
+  start(){
+    const r = AppFilter.result;
+    if(!r) return;
+    const today = SRS.today();
+    const rows = SRS.batches(r.targetId, r.kept, today);
+    const deck = [];
+    for(const x of rows){ if(!x.gap) for(const e of x.words) deck.push(e); }
+    if(!deck.length){ this.state = null; this.render(); return; }
+    this.state = { mode:'review', deck, idx:0, revealed:false, targetId:r.targetId };
     this.renderCard();
   },
   renderCard(){
     const box = $('#tab-review');
     const s = this.state;
+    if(!s) return this.render();
     if(s.idx >= s.deck.length){
-      box.innerHTML = '<div class="card empty"><div class="big">'+icon('checkCircle', 40)+'</div><h3 style="margin-bottom:6px">复习完成</h3><p>本轮 '+s.deck.length+' 个单词已全部复习，评分已记录。</p><div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn btn-primary" onclick="AppReview.render()">再检查一遍</button><button class="btn" onclick="AppUI.englishTab(\'record\')">查看学习记录</button><button class="btn" onclick="AppUI.englishTab(\'study\')">学习新词</button></div></div>';
+      const d = AppAuth.data();
+      const achieved = (d.stats.reviewDays && d.stats.reviewDays[SRS.today()]) || 0;
+      box.innerHTML = '<div class="card empty"><div class="big">'+icon('checkCircle', 40)+'</div><h3 style="margin-bottom:6px">本次复习完成</h3>'
+        + '<p>本轮 '+s.deck.length+' 个单词已过了一遍，已记入复习计划。今天累计复习 '+achieved+' 词。</p>'
+        + '<div class="muted small" style="margin-top:8px">走完全部 6 遍的词已自动变为「已掌握」。</div>'
+        + '<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">'
+        + '<button class="btn btn-primary" onclick="AppReview.state=null;AppReview.render()">返回复习清单</button>'
+        + '<button class="btn" onclick="AppUI.englishTab(\'record\')">查看学习记录</button>'
+        + '<button class="btn" onclick="AppUI.englishTab(\'study\')">学习新词</button></div></div>';
       return;
     }
     const e = s.deck[s.idx];
     const total = s.deck.length;
+    const c = AppAuth.data().wordState[SRS.key(s.targetId, e.w)];
+    const stage = SRS.stageOf(c);
     box.innerHTML =
       '<div class="study-wrap">' +
-      '<div class="study-meta"><span>复习 '+(s.idx+1)+' / '+total+'</span><button class="btn btn-sm btn-ghost" onclick="AppReview.stop()">结束复习</button></div>' +
+      '<div class="study-meta"><span>复习 '+(s.idx+1)+' / '+total+'</span><span class="tag '+stage.cls+'">第 '+Math.min((c && c.n || 0) + 1, SRS.ROUNDS)+' 遍</span><button class="btn btn-sm btn-ghost" onclick="AppReview.stop()">结束复习</button></div>' +
       '<div class="bar" style="margin-bottom:16px" role="progressbar" aria-valuemin="0" aria-valuemax="'+total+'" aria-valuenow="'+(s.idx+1)+'" aria-label="复习进度"><i style="width:'+Math.round(s.idx/total*100)+'%"></i></div>' +
       '<div class="flashcard"><div class="fc-word-wrap"><span class="fc-word" style="font-size:'+fcFontSize(e.w)+'px;white-space:nowrap">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppReview.speak()" aria-label="朗读 '+esc(e.w)+'">'+icon('volume2', 20)+'</button></div>' +
       '<div class="fc-ph" id="fc-ph"></div>' +
+      passNote(c) +
       '<div id="fc-body" style="width:100%">'+(s.revealed ? cardBody(e) : '<button class="btn btn-primary btn-lg" onclick="AppReview.reveal()">显示释义</button>')+'</div></div>' +
       '<div class="fc-btns">' +
       '<button class="btn again" onclick="AppReview.mark(\'again\')">忘了</button>' +
@@ -3844,12 +4048,14 @@ const AppReview = {
     if(!s || !s.deck[s.idx]) return;
     speakWord(s.deck[s.idx].w);
   },
+  /* 复习一遍记一遍：计划按时间推进，认得/不认得都不改变节点安排 */
   mark(level){
     const s = this.state; if(!s) return;
     const e = s.deck[s.idx];
-    SRS.mark(s.targetId, e.w, level);
+    SRS.completeRound(s.targetId, e.w);
     if(level === 'good') burstFx(document.querySelector('#tab-review .fc-btns .good'), 8);
     if(level === 'again'){
+      // 本次会话内再出现一次（不影响复习计划）
       const again = s.deck.splice(s.idx, 1)[0];
       s.deck.splice(s.deck.length, 0, again);
     } else s.idx++;
@@ -3874,22 +4080,18 @@ const AppRecord = {
       const listId = k.slice(0, sep), word = k.slice(sep + 1);
       if(this.scope === 'current' && listId !== currentTarget) continue;
       const v = st[k];
-      recs.push({ listId, word, s:v.s, i:v.i, due:v.due||0, reps:v.reps||0, last:v.last||0 });
+      if(!v || typeof v !== 'object') continue;
+      recs.push({ listId, word, c: v, last: v.last || 0 });
     }
     recs.sort((a,b) => (b.last||0) - (a.last||0));
-    const stOf = v => SRS.stageOf({ s:v.s, i:v.i||0, due:v.due||0 });
-    const done = recs.filter(r => SRS.isDone({ s:r.s, i:r.i||0, due:r.due||0 })).length;
-    const unknown = recs.filter(r => !SRS.isDone({ s:r.s, i:r.i||0 }) && (r.i||0) === 0).length;
-    const active = recs.filter(r => !SRS.isDone({ s:r.s, i:r.i||0 }) && (r.i||0) >= 1);
-    const dueN = active.filter(r => r.due <= now()).length;
-    const waitN = recs.filter(r => !SRS.isDone({ s:r.s, i:r.i||0 }) && (r.i||0) === 1).length;
-    const learningN = recs.filter(r => !SRS.isDone({ s:r.s, i:r.i||0 }) && (r.i||0) >= 2).length;
+    const today = SRS.today();
+    const done = recs.filter(r => SRS.isMastered(r.c)).length;
+    const learning = recs.filter(r => !SRS.isMastered(r.c)).length;
+    const dueList = recs.filter(r => SRS.isDue(r.c, today));
     let list = recs;
-    if(this.filter === 'known') list = list.filter(r => SRS.isDone({ s:r.s, i:r.i||0 }));
-    if(this.filter === 'unknown') list = list.filter(r => !SRS.isDone({ s:r.s, i:r.i||0 }) && (r.i||0) === 0);
-    if(this.filter === 'learning') list = list.filter(r => !SRS.isDone({ s:r.s, i:r.i||0 }) && (r.i||0) >= 2);
-    if(this.filter === 'review') list = list.filter(r => !SRS.isDone({ s:r.s, i:r.i||0 }) && (r.i||0) === 1);
-    if(this.filter === 'due') list = active.filter(r => r.due <= now());
+    if(this.filter === 'known') list = list.filter(r => SRS.isMastered(r.c));
+    if(this.filter === 'learning') list = list.filter(r => !SRS.isMastered(r.c));
+    if(this.filter === 'due') list = list.filter(r => SRS.isDue(r.c, today));
     const q = this.q.trim().toLowerCase();
     if(q) list = list.filter(r => r.word.toLowerCase().includes(q));
     const total = list.length;
@@ -3900,44 +4102,47 @@ const AppRecord = {
       (currentTarget ? '<option value="current"'+(this.scope==='current'?' selected':'')+'>当前词表（'+esc((WL.byId(currentTarget)||{}).name)+'）</option>' : '');
     const rows = slice.map(r => {
       const def = this.defOf(r.listId, r.word);
-      const stage = stOf(r);
+      const stage = SRS.stageOf(r.c);
       const status = '<span class="tag '+stage.cls+'">'+stage.txt+'</span>';
       const listTag = '<span class="tag">'+esc((WL.byId(r.listId)||{name:r.listId}).name)+'</span>';
-      const isDone = SRS.isDone({ s:r.s, i:r.i||0 });
-      const dueTxt = isDone ? '—' : ((r.i||0) === 0 ? '待认识' : (r.due <= now() ? '已到期' : fmtDate(r.due)));
+      const mastered = SRS.isMastered(r.c);
+      const dd = SRS.dueDay(r.c);
+      const late = !mastered && dd && dd < today;
+      const dueTxt = mastered ? '—' : (late ? '<span style="color:var(--warn)">已逾期</span>（'+SRS.mind(dd)+'）' : (dd === today ? '今天' : SRS.mind(dd)));
+      const prog = mastered ? '6 / 6 遍' : ((r.c.n || 0) + ' / ' + SRS.ROUNDS + ' 遍');
       const enc = encodeURIComponent(r.word);
-      const act = isDone
-        ? '<button class="btn btn-sm" onclick="AppRecord.mark(\''+r.listId+'\',\''+enc+'\',\'again\')">标记遗忘</button>'
-        : '<button class="btn btn-sm" onclick="AppRecord.mark(\''+r.listId+'\',\''+enc+'\',\'good\')">标记认识</button><button class="btn btn-sm" onclick="AppRecord.mark(\''+r.listId+'\',\''+enc+'\',\'again\')">标记遗忘</button>';
+      const act = mastered
+        ? '<button class="btn btn-sm" onclick="AppRecord.mark(\''+r.listId+'\',\''+enc+'\',\'reset\')">标记遗忘</button>'
+        : '<button class="btn btn-sm" onclick="AppRecord.mark(\''+r.listId+'\',\''+enc+'\',\'round\')">复习一遍</button>'
+          + '<button class="btn btn-sm" onclick="AppRecord.mark(\''+r.listId+'\',\''+enc+'\',\'reset\')">重新开始</button>';
       const del = '<button class="btn btn-sm btn-danger" onclick="AppRecord.remove(\''+r.listId+'\',\''+enc+'\')">移出记录</button>';
-      return '<tr><td class="w" data-l="单词">'+esc(r.word)+'</td><td class="df"'+(def?'':' data-dw="'+esc(r.word)+'"')+' data-l="释义">'+(def?esc(def):'…')+'</td><td data-l="词库 / 状态">'+listTag+' '+status+'</td><td data-l="复习次数" class="num" style="text-align:center">'+r.reps+'</td><td class="muted" style="font-size:12px" data-l="上次学习">'+(r.last?fmtDate(r.last):'—')+'</td><td class="muted" style="font-size:12px" data-l="下次复习">'+dueTxt+'</td><td class="op" data-l="操作">'+act+' '+del+'</td></tr>';
+      return '<tr><td class="w" data-l="单词">'+esc(r.word)+passNote(r.c)+'</td><td class="df"'+(def?'':' data-dw="'+esc(r.word)+'"')+' data-l="释义">'+(def?esc(def):'…')+'</td><td data-l="词库 / 状态">'+listTag+' '+status+'</td><td data-l="复习进度" class="num" style="text-align:center">'+prog+'</td><td class="muted" style="font-size:12px" data-l="上次学习">'+(r.last?fmtDate(r.last):'—')+'</td><td class="muted" style="font-size:12px" data-l="下次复习">'+dueTxt+'</td><td class="op" data-l="操作">'+act+' '+del+'</td></tr>';
     }).join('');
     const pager = '<div class="pager"><button class="btn btn-sm" onclick="AppRecord.page--;AppRecord.render()" '+(this.page<=1?'disabled':'')+'>上一页</button><span>第 '+this.page+' / '+pages+' 页 · 共 '+total+' 条</span><button class="btn btn-sm" onclick="AppRecord.page++;AppRecord.render()" '+(this.page>=pages?'disabled':'')+'>下一页</button></div>';
     box.innerHTML =
       '<div class="card" style="margin-bottom:16px"><div class="card-title"><span class="dot"></span>学习记录总览</div>' +
       '<div class="filter-summary">' +
-      '<div class="stat"><span class="stat-ico stat-blue">'+icon('file')+'</span><div class="stat-body"><span class="k">已学习词汇</span><span class="v">'+recs.length+'</span><span class="d">参与过评分的单词总数</span></div></div>' +
-      '<div class="stat"><span class="stat-ico stat-green">'+icon('checkCircle')+'</span><div class="stat-body"><span class="k" style="color:var(--accent)">已掌握</span><span class="v" style="color:var(--accent)">'+done+'</span><span class="d">完成整条遗忘曲线</span></div></div>' +
-      '<div class="stat"><span class="stat-ico stat-orange">'+icon('clock')+'</span><div class="stat-body"><span class="k">未掌握</span><span class="v">'+(recs.length-done)+'</span><span class="d">'+((recs.length-done) ? ('待复习 '+waitN+' · 学习中 '+learningN+' · 不认识 '+unknown+'（点「认识」开始记忆）') : '全部已掌握')+'</span></div></div>' +
+      '<div class="stat"><span class="stat-ico stat-blue">'+icon('file')+'</span><div class="stat-body"><span class="k">已学习词汇</span><span class="v">'+recs.length+'</span><span class="d">接触过的单词总数（学习中 + 已掌握）</span></div></div>' +
+      '<div class="stat"><span class="stat-ico stat-orange">'+icon('clock')+'</span><div class="stat-body"><span class="k">学习中</span><span class="v">'+learning+'</span><span class="d">尚未走完 6 遍复习</span></div></div>' +
+      '<div class="stat"><span class="stat-ico stat-green">'+icon('checkCircle')+'</span><div class="stat-body"><span class="k" style="color:var(--accent)">已掌握</span><span class="v" style="color:var(--accent)">'+done+'</span><span class="d">已走完全部 6 遍（+1/2/4/7/15/21 天）</span></div></div>' +
+      '<div class="stat"><span class="stat-ico stat-red">'+icon('refresh')+'</span><div class="stat-body"><span class="k">今日需复习</span><span class="v">'+dueList.length+'</span><span class="d">'+(dueList.length ? '含之前顺延未复习的' : '今日无到期单词')+'</span></div></div>' +
       '</div></div>' +
       '<div class="card"><div class="card-title"><span class="dot" style="background:var(--accent)"></span>单词状态明细</div>' +
       '<div class="search-row">' +
       '<select id="record-scope" onchange="AppRecord.scope=this.value;AppRecord.page=1;AppRecord.render()">'+scopeOpts+'</select>' +
       '<select id="record-filter" onchange="AppRecord.filter=this.value;AppRecord.page=1;AppRecord.render()">' +
       '<option value="all"'+(this.filter==='all'?' selected':'')+'>全部状态</option>' +
-      '<option value="review"'+(this.filter==='review'?' selected':'')+'>待复习（认识 1 次）</option>' +
-      '<option value="learning"'+(this.filter==='learning'?' selected':'')+'>学习中（2 次及以上）</option>' +
-      '<option value="unknown"'+(this.filter==='unknown'?' selected':'')+'>不认识</option>' +
-      '<option value="due"'+(this.filter==='due'?' selected':'')+'>已到期</option>' +
-      '<option value="known"'+(this.filter==='known'?' selected':'')+'>已掌握</option></select>' +
+      '<option value="learning"'+(this.filter==='learning'?' selected':'')+'>学习中</option>' +
+      '<option value="known"'+(this.filter==='known'?' selected':'')+'>已掌握</option>' +
+      '<option value="due"'+(this.filter==='due'?' selected':'')+'>今日需复习</option></select>' +
       '<input id="record-q" placeholder="搜索单词…" value="'+esc(this.q)+'">' +
       '<button class="btn btn-primary" onclick="AppRecord.q=$(\'#record-q\').value;AppRecord.page=1;AppRecord.render()">搜索</button>' +
       (this.q ? '<button class="btn btn-sm" onclick="AppRecord.q=\'\';AppRecord.page=1;AppRecord.render()">清除</button>' : '') +
       '<button class="btn btn-sm btn-danger" style="margin-left:auto" onclick="AppRecord.clearAll()">清空记录</button>' +
       '</div>' +
       (total
-        ? '<div class="table-scroll"><table class="wlist"><thead><tr><th>单词</th><th>释义</th><th>状态</th><th style="text-align:center">复习次数</th><th>上次学习</th><th>下次复习</th><th>操作</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+pager
-        : '<div class="empty"><div class="big">'+icon('file', 40)+'</div><p>该范围内还没有学习记录，开始背单词后会自动记录每个词的评分与复习安排。</p><div style="margin-top:12px"><button class="btn btn-primary" onclick="AppUI.englishTab(\'study\')">去背单词</button></div></div>') +
+        ? '<div class="table-scroll"><table class="wlist"><thead><tr><th>单词</th><th>释义</th><th>状态</th><th style="text-align:center">复习进度</th><th>上次学习</th><th>下次复习</th><th>操作</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+pager
+        : '<div class="empty"><div class="big">'+icon('file', 40)+'</div><p>该范围内还没有学习记录，开始背单词后会自动记录每个词的状态与复习安排。</p><div style="margin-top:12px"><button class="btn btn-primary" onclick="AppUI.englishTab(\'study\')">去背单词</button></div></div>') +
       '</div>';
     fillDictCells(box);
   },
@@ -3949,8 +4154,8 @@ const AppRecord = {
   },
   mark(listId, word, level){
     const w = decodeURIComponent(word);
-    SRS.mark(listId, w, level);
-    toast(level === 'good' ? '已标记为认识' : '已标记为遗忘');
+    if(level === 'round'){ SRS.completeRound(listId, w); toast('已记一遍复习'); }
+    else { SRS.reset(listId, w); toast('已退回学习起点，明天的复习重新开始'); }
     this.render();
   },
   remove(listId, word){
@@ -4006,7 +4211,7 @@ const AppBrowse = {
       const stTag = stage ? '<span class="tag '+stage.cls+'">'+stage.txt+'</span>' : '';
       const enc = encodeURIComponent(e.w);
       const def = defText(e, 80);
-      return '<tr><td class="w">'+esc(e.w)+'</td><td class="ph">'+(e.ph ? esc(e.ph) : '<span class="muted" data-pw="'+esc(e.w)+'" title="正在补齐音标…">…</span>')+'</td><td class="df"'+(def?'':' data-dw="'+esc(e.w)+'"')+'>'+(def?esc(def):'…')+'</td><td class="op"><button onclick="AppBrowse.detail(\''+enc+'\')">详情</button>'+(stTag?' '+stTag:'')+'</td></tr>';
+      return '<tr><td class="w">'+esc(e.w)+passNote(c)+'</td><td class="ph">'+(e.ph ? esc(e.ph) : '<span class="muted" data-pw="'+esc(e.w)+'" title="正在补齐音标…">…</span>')+'</td><td class="df"'+(def?'':' data-dw="'+esc(e.w)+'"')+'>'+(def?esc(def):'…')+'</td><td class="op"><button onclick="AppBrowse.detail(\''+enc+'\')">详情</button>'+(stTag?' '+stTag:'')+'</td></tr>';
     }).join('');
     const pager = '<div class="pager"><button class="btn btn-sm" onclick="AppBrowse.page--;AppBrowse.render()" '+(this.page<=1?'disabled':'')+'>‹ 上一页</button><span>第 '+this.page+' / '+pages+' 页 · 共 '+total+' 词</span><button class="btn btn-sm" onclick="AppBrowse.page++;AppBrowse.render()" '+(this.page>=pages?'disabled':'')+'>下一页 ›</button></div>';
     box.innerHTML =
@@ -4043,12 +4248,14 @@ const AppBrowse = {
     const e = entries.find(x => x.w === w) || { w, ph:'', def:'', phrases:[] };
     const d = AppAuth.data();
     const st = AppAuth.data().wordState[SRS.key(r.targetId, e.w)];
-    const stage = st ? SRS.stageOf(st) : { txt:'未学习', cls:'tag-blue' };
+    const stage = SRS.stageOf(st);
     const link = 'https://dict.youdao.com/result?word='+encodeURIComponent(e.w);
     openModal(
       '<button class="close" onclick="AppUI.closeModal()">×</button>' +
       '<div class="word-detail"><div class="wd">'+esc(e.w)+'</div>' +
-      '<div class="wmeta">'+(e.ph?'<span class="tag tag-blue">'+esc(e.ph)+'</span>':'<span class="tag tag-blue" id="wd-ph"></span>')+'<span class="tag '+stage.cls+'">'+stage.txt+'</span></div>' +
+      passNote(st) +
+      '<div class="wmeta">'+(e.ph?'<span class="tag tag-blue">'+esc(e.ph)+'</span>':'<span class="tag tag-blue" id="wd-ph"></span>')+'<span class="tag '+stage.cls+'">'+stage.txt+'</span>' +
+      (st && !SRS.isMastered(st) ? '<span class="tag tag-blue">第 '+Math.min((st.n||0)+1, SRS.ROUNDS)+' 遍复习待做</span>' : '') + '</div>' +
       (Array.isArray(e.def) && e.def.length ? '<div class="sec">释义</div><ul>'+e.def.map(([p,v]) => '<li>'+(p?'<b>'+esc(p)+'.</b> ':'')+esc(v)+'</li>').join('')+'</ul>' : (typeof e.def === 'string' && e.def ? '<div class="sec">释义</div><div class="muted">'+esc(e.def)+'</div>' : '<div class="sec">释义</div><div class="muted" id="wd-def">词库未收录释义，正在获取在线翻译…</div>')) +
       (Array.isArray(e.phrases) && e.phrases.length ? '<div class="sec">词组搭配</div><ul>'+e.phrases.slice(0,8).map(([p,v]) => '<li><b>'+esc(p)+'</b>'+(v?' · '+esc(v):'')+'</li>').join('')+'</ul>' : '') +
       '<div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap">' +
