@@ -157,8 +157,9 @@ p,li,td,th{text-wrap:pretty}
 .feature-hint{display:flex; gap:8px; align-items:center; margin-top:20px; padding:12px 14px; background:var(--panel2); border-radius:13px; font-size:12.5px; color:var(--muted)}
 
 /* shell */
-.shell{display:flex; min-height:100dvh}
-.sidebar{width:var(--sidebar-w); flex-shrink:0; background:var(--panel); border-right:1px solid var(--line); padding:20px 14px 16px; display:flex; flex-direction:column; gap:4px; position:sticky; top:0; height:100dvh; overflow-y:auto}
+/* --vpu 由 JS 按运行时 CSS zoom 折算（zoom 会连 100dvh 一起放大，直接用 100dvh 会溢出整屏） */
+.shell{display:flex; min-height:var(--vpu,100dvh)}
+.sidebar{width:var(--sidebar-w); flex-shrink:0; background:var(--panel); border-right:1px solid var(--line); padding:20px 14px 16px; display:flex; flex-direction:column; gap:4px; position:sticky; top:0; height:var(--vpu,100dvh); overflow-y:auto}
 .side-brand{display:flex; align-items:center; gap:10px; font-size:17px; font-weight:800; letter-spacing:.18em; padding:4px 12px 18px; color:var(--text); margin-left:.18em}
 .side-brand::before{content:""; width:22px; height:22px; border-radius:8px; background:linear-gradient(160deg,var(--primary),var(--primary2)); box-shadow:0 5px 12px -5px rgba(124,58,237,.7); margin-right:2px; margin-left:.18em}
 .nav-btn{display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:12px; font-size:14px; font-weight:650; color:var(--muted); transition-property:background-color,color; transition-duration:140ms; transition-timing-function:ease-out; text-align:left; width:100%}
@@ -428,6 +429,9 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
 
 /* ---- 主区留白与内容节奏 ---- */
 .main{padding-top:34px; padding-bottom:84px}
+/* 桌面端没有底部导航要避让，84px 底部留白纯属浪费，还会把背单词整页顶出屏幕。
+   收窄到 28px，把省下的高度还给单词卡片。 */
+@media (min-width:861px){ .main{padding-bottom:28px} }
 .card{border-radius:20px}
 #page-dashboard > .grid{margin-top:24px}
 #page-dashboard .topbar{margin-bottom:26px}
@@ -3065,17 +3069,16 @@ function fitStudyViewport(){
       const availVisual = window.innerHeight - r0.top - bnH - 18;   // 视觉像素
       let h = Math.max(300, Math.floor(availVisual / zoom));        // → CSS 像素
 
-      // 实测校正：按按钮实际位置反复微调，兜住 border/zoom 取整等误差
-      for(let i = 0; i < 3; i++){
+      // 实测校正：按「整页是否溢出视口」反复微调。
+      // 注意不能只看按钮位置——卡片下方还有次级入口行、主区底部留白等固定高度，
+      // 只看按钮会让整页多出 100+px 滚动（桌面端 zoom 1.15/1.3 时尤其明显）。
+      for(let i = 0; i < 4; i++){
         w.style.height = h + 'px';
         w.style.maxHeight = h + 'px';
-        const btns = w.querySelector('.fc-btns');
-        if(!btns) break;
-        const bb = btns.getBoundingClientRect().bottom;
-        const over = bb - (window.innerHeight - bnH - 6);           // 超出量（视觉像素）
-        if(over > 0){ h = Math.max(300, h - Math.ceil(over / zoom) - 2); continue; }
-        // 还有富余就适当放大，避免留白过多
-        const slack = (window.innerHeight - bnH - 6) - bb;
+        const docOver = document.documentElement.scrollHeight - window.innerHeight;  // 视觉像素
+        if(docOver > 2){ h = Math.max(300, h - Math.ceil(docOver / zoom) - 2); continue; }
+        // 整页还有富余就适当放大，避免留白过多
+        const slack = -docOver;
         if(slack > 60 && i === 0){ h = h + Math.floor((slack - 24) / zoom / 2); continue; }
         break;
       }
@@ -3772,8 +3775,19 @@ function applyScale(v){
     el.style.fontSize = Math.round(scale * 100) + '%';
   }
   // 缩放会改变视觉尺寸，卡片锁高必须按新 zoom 重算
+  syncVpu();
   try{ if(typeof fitStudyViewport === 'function') setTimeout(fitStudyViewport, 0); }catch(e){}
 }
+/* CSS zoom 会连 100vh/100dvh 一起放大（zoom=1.15 时 100dvh 渲染成 1035px，而视口只有 900px），
+   结果桌面端整页多出滚动条、侧栏底部用户信息落到屏外。这里按 zoom 折算成布局可用的真实视口高度。 */
+function syncVpu(){
+  const el = document.documentElement;
+  if(!el) return;
+  let z = 1;
+  try{ const v = parseFloat(getComputedStyle(el).zoom); if(v && v > 0) z = v; }catch(e){}
+  el.style.setProperty('--vpu', (window.innerHeight / z) + 'px');
+}
+try{ syncVpu(); }catch(e){}
 function syncScaleUI(){
   const el = $('#set-scale'), lab = $('#set-scale-val');
   if(!el || !lab) return;
@@ -3785,6 +3799,7 @@ function syncScaleUI(){
 let scaleResizeTimer = null;
 window.addEventListener('resize', () => {
   clearTimeout(scaleResizeTimer);
+  syncVpu();                       // 视口高度变了就要立刻更新，与是否自动缩放无关
   scaleResizeTimer = setTimeout(() => {
     const s = AppAuth.data().settings;
     if(s.autoScale !== false){
