@@ -917,12 +917,16 @@ html.sl-has-session #view-auth{display:none}
 /* v2.4：背单词整屏适配——卡片填满可视高度，释义区内部滚动，按钮永远可见 */
 .study-wrap{display:flex; flex-direction:column}
 .study-wrap .flashcard{flex:1 1 auto; min-height:0; overflow:hidden}
-.study-wrap .flashcard > #fc-body{flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain}
+/* 释义区保底高度：空间紧张时先让配图让位，绝不让释义被压成 0 高度 */
+.study-wrap .flashcard > #fc-body{flex:1 1 auto; min-height:112px; overflow-y:auto; overscroll-behavior:contain}
+/* 配图是装饰性内容，空间不足时优先缩小 */
+.study-wrap .flashcard > .fc-img{flex:0 1 auto; min-height:0; overflow:hidden; max-height:min(145px, 18vh)}
+.study-wrap .flashcard > .fc-img img{max-height:100%; width:auto}
 .study-wrap .fc-btns{flex:0 0 auto}
-.study-wrap .fc-img img{max-height:min(145px, 18vh)}
 @media (max-width:720px){
   .study-wrap .fc-word{font-size:28px}
-  .study-wrap .fc-img img{max-height:min(110px, 14vh)}
+  .study-wrap .flashcard > .fc-img{max-height:min(104px, 13vh)}
+  .study-wrap .flashcard > #fc-body{min-height:96px}
 }
 
 /* 单词配图（v2.2）：小图卡片 + 加载动画。刻意收小尺寸，避免配图喧宾夺主 */
@@ -2821,6 +2825,16 @@ const Fit = {
     const avail = (el.parentElement ? el.parentElement.clientWidth : 0) || el.clientWidth || 0;
     // 布局还没结算：不要据此缩小（等下一帧再校准）
     if(avail <= 0) return true;
+
+    // 高度模式（data-fit-h）：释义这类长文本块要能整块塞进固定高度的容器，
+    // 优先「缩放压缩」，缩到最小仍放不下才交给容器内部滚动。
+    if(el.hasAttribute('data-fit-h')){
+      const host = el.parentElement || el;
+      const hostH = host.clientHeight || 0;
+      if(hostH > 0 && el.scrollHeight > hostH + 1) return false;
+      // 宽度也要正常，避免缩到合适高度后仍然横向溢出
+    }
+
     let textW = 0;
     try{
       const r = document.createRange();
@@ -3026,22 +3040,76 @@ const CountSheet = {
 
 /* ================= 背单词整屏适配（v2.4） =================
    手机窄屏下点「显示释义」后长释义会把「记得/不记得」挤出屏幕。
-   做法：把卡片高度锁定为可视区剩余高度，释义区内部滚动，按钮始终固定在底部。 */
+   做法：把卡片高度锁定为可视区剩余高度，释义区内部滚动，按钮始终固定在底部。
+
+   ⚠️ 关键点：应用用 CSS `zoom`（根元素）做界面缩放，autoScale 会按窗口宽度把 1280px 以上放大到 110~130%。
+   此时 getBoundingClientRect() 返回的是**缩放后的视觉像素**，而 style.height 是**未缩放的 CSS 像素**，
+   直接赋值会让实际渲染高度多出 zoom 倍（1440px 宽时 1.15 倍 → 卡片高出 100+px，按钮被顶出屏幕）。
+   因此这里必须把可用高度除以 zoom 换算回 CSS 像素，并在赋值后**实测校正**一次。 */
+function _rootZoom(){
+  try{
+    const z = parseFloat(getComputedStyle(document.documentElement).zoom);
+    return (z && z > 0 && isFinite(z)) ? z : 1;
+  }catch(e){ return 1; }
+}
 function fitStudyViewport(){
   try{
+    const zoom = _rootZoom();
     const wraps = document.querySelectorAll('#tab-study .study-wrap, #tab-review .study-wrap');
     for(const w of wraps){
       if(!w.isConnected) continue;
-      const r = w.getBoundingClientRect();
-      if(r.height === 0 && r.width === 0) continue;
+      const r0 = w.getBoundingClientRect();
+      if(r0.height === 0 && r0.width === 0) continue;
       const bn = document.getElementById('bottom-nav');
       const bnH = (bn && getComputedStyle(bn).display !== 'none') ? bn.getBoundingClientRect().height : 0;
-      const avail = window.innerHeight - r.top - bnH - 18;
-      const h = Math.max(340, Math.floor(avail));
+      const availVisual = window.innerHeight - r0.top - bnH - 18;   // 视觉像素
+      let h = Math.max(300, Math.floor(availVisual / zoom));        // → CSS 像素
+
+      // 实测校正：按按钮实际位置反复微调，兜住 border/zoom 取整等误差
+      for(let i = 0; i < 3; i++){
+        w.style.height = h + 'px';
+        w.style.maxHeight = h + 'px';
+        const btns = w.querySelector('.fc-btns');
+        if(!btns) break;
+        const bb = btns.getBoundingClientRect().bottom;
+        const over = bb - (window.innerHeight - bnH - 6);           // 超出量（视觉像素）
+        if(over > 0){ h = Math.max(300, h - Math.ceil(over / zoom) - 2); continue; }
+        // 还有富余就适当放大，避免留白过多
+        const slack = (window.innerHeight - bnH - 6) - bb;
+        if(slack > 60 && i === 0){ h = h + Math.floor((slack - 24) / zoom / 2); continue; }
+        break;
+      }
       w.style.height = h + 'px';
       w.style.maxHeight = h + 'px';
     }
+    fitBodyHeight();    // 释义长就整体缩放压缩，缩到最小仍放不下才内部滚动
     fitNow(document);   // 高度变化后重新校准字号
+    // 配图/音标/在线释义是异步到达的，内容长出来后再复核一次
+    setTimeout(() => { try{ fitBodyHeight(); fitNow(document); }catch(e){} }, 400);
+    setTimeout(() => { try{ fitBodyHeight(); }catch(e){} }, 1500);
+  }catch(e){}
+}
+
+/* 释义区整块「缩放压缩」：长释义优先缩小而不是把按钮挤出屏幕。
+   用 zoom 而不是只缩字号——这样列表、虚线框、配图会一起等比缩小，版面更整齐；
+   缩到 0.55 倍仍放不下才交给 #fc-body 内部滚动（保底可用）。 */
+function fitBodyHeight(){
+  try{
+    const bodies = document.querySelectorAll('#tab-study #fc-body, #tab-review #fc-body');
+    for(const body of bodies){
+      const inner = body.firstElementChild;
+      if(!inner) continue;
+      inner.style.zoom = '';                       // 先复位再重新计算
+      const avail = body.clientHeight;
+      if(!avail) continue;
+      if(body.scrollHeight <= avail + 2) continue; // 本来就放得下
+      let z = 1;
+      for(let i = 0; i < 20 && z > 0.55; i++){
+        z = Math.round((z - 0.05) * 100) / 100;
+        inner.style.zoom = String(z);
+        if(body.scrollHeight <= avail + 2) break;
+      }
+    }
   }catch(e){}
 }
 window.addEventListener('resize', () => { setTimeout(fitStudyViewport, 200); });
@@ -3703,6 +3771,8 @@ function applyScale(v){
   } else {
     el.style.fontSize = Math.round(scale * 100) + '%';
   }
+  // 缩放会改变视觉尺寸，卡片锁高必须按新 zoom 重算
+  try{ if(typeof fitStudyViewport === 'function') setTimeout(fitStudyViewport, 0); }catch(e){}
 }
 function syncScaleUI(){
   const el = $('#set-scale'), lab = $('#set-scale-val');
