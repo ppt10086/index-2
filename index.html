@@ -896,6 +896,35 @@ html.sl-has-session #view-auth{display:none}
   .en-cta{min-height:54px; font-size:16px}
 }
 
+/* v2.4：下滑式数量选择窗（学新词 / 开始复习 / 抽测共用） */
+.sheet-mask{position:fixed; inset:0; z-index:8000; background:rgba(20,16,40,.28); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px)}
+.sheet{position:absolute; left:50%; top:0; transform:translate(-50%,0); width:min(460px,94vw);
+  background:var(--panel); border:1px solid var(--line); border-radius:0 0 20px 20px;
+  box-shadow:0 14px 40px rgba(0,0,0,.20); padding:18px 18px 20px;
+  display:flex; flex-direction:column; gap:10px;
+  animation:sheetDown .22s var(--ease) both}
+@keyframes sheetDown{from{transform:translate(-50%,-100%)} to{transform:translate(-50%,0)}}
+.sheet-head{display:flex; align-items:center; justify-content:space-between; gap:10px}
+.sheet-head b{font-size:16px}
+.sheet-x{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:4px 6px;border-radius:8px}
+.sheet-x:hover{background:var(--panel2); color:var(--text)}
+.sheet-sub{font-size:12.5px; line-height:1.6}
+.sheet-opt{width:100%; min-height:46px; justify-content:center; font-weight:700}
+.sheet-custom{display:flex; gap:8px; align-items:center}
+.sheet-custom .sheet-opt{width:auto; flex:0 0 auto; padding:0 14px}
+.sheet-in{flex:1 1 auto; min-width:0; min-height:46px; text-align:center}
+
+/* v2.4：背单词整屏适配——卡片填满可视高度，释义区内部滚动，按钮永远可见 */
+.study-wrap{display:flex; flex-direction:column}
+.study-wrap .flashcard{flex:1 1 auto; min-height:0; overflow:hidden}
+.study-wrap .flashcard > #fc-body{flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain}
+.study-wrap .fc-btns{flex:0 0 auto}
+.study-wrap .fc-img img{max-height:min(145px, 18vh)}
+@media (max-width:720px){
+  .study-wrap .fc-word{font-size:28px}
+  .study-wrap .fc-img img{max-height:min(110px, 14vh)}
+}
+
 /* 单词配图（v2.2）：小图卡片 + 加载动画。刻意收小尺寸，避免配图喧宾夺主 */
 .fc-img{display:flex;align-items:center;justify-content:center;margin:2px 0 10px;width:100%}
 .fc-img img{max-width:min(250px, 68vw); max-height:145px; width:auto; height:auto;
@@ -979,14 +1008,13 @@ html.sl-has-session #view-auth{display:none}
     <div class="side-brand" translate="no">STUDYLENS</div>
     <button class="nav-btn active" data-page="dashboard" onclick="AppUI.go('dashboard')"><span class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>概览</button>
     <button class="nav-btn" data-page="english" onclick="AppUI.go('english')"><span class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>英语学习</button>
-    <button class="nav-btn" data-page="math" onclick="AppUI.go('math')"><span class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg></span>数学<span class="soon-badge">规划中</span></button>
     <button class="nav-btn" data-page="settings" onclick="AppUI.go('settings')"><span class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>设置</button>
     <div class="nav-sep"></div>
     <div class="side-user">
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 2.3.0 · 背单词主导<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 2.4.0 · 全在线词库<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -1039,13 +1067,6 @@ html.sl-has-session #view-auth{display:none}
       <div id="tab-record" hidden></div>
     </section>
 
-    <!-- 数学 -->
-    <section id="page-math" hidden>
-      <div class="topbar"><div><h1>数学</h1><div class="sub">功能规划与设计说明</div></div></div>
-      <div class="banner info"><b>模块说明：</b>数学模块以错题本、公式手册、每日一题、知识图谱为主线，具体功能将分阶段上线，不涉及对现有英语功能的改动。</div>
-      <div id="math-grid"></div>
-      <div class="muted small" style="margin-top:14px;line-height:1.8">以上功能均处于规划/评估阶段，暂无已上线内容；后续如开放，会在此更新并点亮导航入口，不影响现有英语功能。欢迎先用好英语模块。</div>
-    </section>
 
     <!-- 词库中心 -->
     <section id="page-library" hidden>
@@ -1055,9 +1076,9 @@ html.sl-has-session #view-auth{display:none}
       <div class="card"><div class="card-title"><span class="dot"></span>词库列表</div><div id="library-list"></div></div>
       <div class="card"><div class="card-title"><span class="dot" style="background:var(--accent)"></span>数据来源说明</div>
         <div class="muted" style="font-size:13px">
-          · <b>在线完整词表</b>：整理自 KyleBing 英语词库（含人教版小学/初中/高中等教材词表，以及四级 7508、六级 5651、高中 6008、初中 3223 等带释义与词组的版本），通过多个镜像在线加载<br>
-          · <b>站点基础词表</b>：整理自 mahavivo 英语词表（含小学大纲、中考词汇、高中词汇、四级、六级精简版，带音标释义），作为在线数据文件从本站加载，并为在线词表补齐音标<br>
-          · 两者互为补充：在线词表词量更大、含词组搭配；站点基础词表带音标、加载更快。v2.0.0 起词库不再内嵌于页面，全部在线加载<br>
+          · <b>全部词库均来自在线源</b>：整理自 <a href="https://github.com/KyleBing/english-vocabulary" target="_blank" rel="noopener">KyleBing/english-vocabulary</a>（含人教版小学/初中/高中等教材词表，以及四级 7508、六级 5651、高中 6008、初中 3223 等带释义与词组的版本），通过多个 CDN 镜像在线加载<br>
+          · <b>本应用已不再包含任何本地/内置词库</b>：v2.4 起删除了全部内置词表数据，词库一律联网获取，并在本机 IndexedDB 中缓存以加速下次打开<br>
+          · 如需离线使用，请保持网络可用；缓存可让「已加载过的词库」在弱网下也能秒开
           · <b>来源与许可</b>：<a href="https://github.com/KyleBing/english-vocabulary" target="_blank" rel="noopener">KyleBing/english-vocabulary</a>（开源词库，许可以仓库页为准）· <a href="https://github.com/mahavivo/english-wordlists" target="_blank" rel="noopener">mahavivo/english-wordlists</a>（整理词表）。数据仅供个人学习使用，商用请核对原始许可。
         </div>
       </div>
@@ -1107,7 +1128,7 @@ html.sl-has-session #view-auth{display:none}
               <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存外观</button>
             </div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.3.0</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.4.0</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用在线优先设计（v2.0.0）：账号与学习进度保存在云端数据库，需要联网使用；词库数据同样在线加载并缓存在本机，不再内嵌于页面。仍建议定期「导出数据备份」。</div>
@@ -1142,7 +1163,6 @@ html.sl-has-session #view-auth{display:none}
 <nav id="bottom-nav">
   <button class="bnav-btn active" data-page="dashboard" onclick="AppUI.go('dashboard')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>概览</button>
   <button class="bnav-btn" data-page="english" onclick="AppUI.go('english')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>英语</button>
-  <button class="bnav-btn" data-page="math" onclick="AppUI.go('math')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg></span>数学</button>
   <button class="bnav-btn" data-page="settings" onclick="AppUI.go('settings')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>设置</button>
 </nav>
 
@@ -1873,22 +1893,23 @@ const Dict = {
       }
     }catch(e){}
     let ph = '';
+    /* v2.4：音标改由 Datamuse 提供。
+       原先用的 api.dictionaryapi.dev 不返回 CORS 头，浏览器里一直被拦截、静默返回空——
+       也就是说那个「在线音标兜底」从来没生效过，音标实际全靠已删除的本地词库。
+       Datamuse 支持跨域，且 ipa_pron 字段给出可读的 IPA（实测 13/13 覆盖）。 */
     try{
-      const url = 'https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(word);
+      const url = 'https://api.datamuse.com/words?sp=' + encodeURIComponent(word) + '&md=r&ipa=1&max=1';
       const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-      const timer = ctrl ? setTimeout(() => ctrl.abort(), 12000) : null;
-      const opts = {};
+      const timer = ctrl ? setTimeout(() => ctrl.abort(), 10000) : null;
+      const opts = { cache: 'force-cache' };
       if(ctrl) opts.signal = ctrl.signal;
       const r = await fetch(url, opts);
       if(timer) clearTimeout(timer);
       if(r.ok){
-        const data = await r.json();
-        if(Array.isArray(data) && data[0]){
-          const phs = data[0].phonetics || [];
-          for(const p of phs){ if(p && p.text){ ph = p.text; break; } }
-          if(!ph && data[0].phonetic) ph = data[0].phonetic;
-        } else if(data && data.phonetic){
-          ph = data.phonetic;
+        const arr = await r.json();
+        const tags = (Array.isArray(arr) && arr[0] && arr[0].tags) || [];
+        for(const t of tags){
+          if(typeof t === 'string' && t.indexOf('ipa_pron:') === 0){ ph = t.slice(9).trim(); break; }
         }
       }
     }catch(e){ ph = ''; }
@@ -2019,93 +2040,55 @@ const KB_MIRRORS = [
   u => 'https://mirror.ghproxy.com/https://raw.githubusercontent.com/KyleBing/english-vocabulary/master/full_line_tsv/simple/%E6%AD%A3%E5%BA%8F/' + u
 ];
 
-/* 站点自有词库数据（在线优先 v2.0.0：不再内联进 HTML，改为运行时在线加载）
-   首选同源（index-2 仓库的 wordlists/builtin/），失败再走 CDN 镜像。 */
-const SL_REPO_RAW = 'https://raw.githubusercontent.com/ppt10086/index-2/main/wordlists/builtin/';
-const SL_BUILTIN_MIRRORS = [
-  u => new URL('wordlists/builtin/' + u, location.href).href,
-  u => 'https://cdn.jsdelivr.net/gh/ppt10086/index-2@main/wordlists/builtin/' + u,
-  u => SL_REPO_RAW + u,
-  u => 'https://ghfast.top/' + SL_REPO_RAW + u,
-  u => 'https://ghproxy.net/' + SL_REPO_RAW + u
-];
-
-/* 加载站点托管的词库数据（形态与旧 EMBEDDED 完全一致，便于复用下游逻辑） */
-const BUILTIN = {
-  cache: new Map(),
-  async get(id){
-    if(this.cache.has(id)) return this.cache.get(id);
-    let out = null;
-    try{
-      let text = await cachedBuiltin(id);
-      if(!text){
-        text = await fetchBuiltin(id);
-        try{ await WL.initIDB(); IDB.put('b:'+id, text); }catch(e){}
-      }
-      const j = JSON.parse(text);
-      // 支持两种形态：{kind,words}（当前构建产物）与 {id:{kind,words}}（旧内嵌结构）
-      if(j && j.words) out = j;
-      else if(j && j[id]) out = j[id];
-      else out = null;
-    }catch(e){ out = null; }
-    this.cache.set(id, out);
-    return out;
-  },
-  has(id){ return this.cache.has(id) && !!this.cache.get(id); },
-  clear(){ this.cache.clear(); }
-};
-
-async function fetchBuiltin(id){
-  const file = id + '.json';
-  let lastErr = null;
-  for(const m of SL_BUILTIN_MIRRORS){
-    let url;
-    try{ url = m(file); }catch(e){ continue; }
-    try{
-      const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-      const timer = ctrl ? setTimeout(() => ctrl.abort(), 30000) : null;
-      const opts = { cache: 'no-store' };
-      if(ctrl) opts.signal = ctrl.signal;
-      const r = await fetch(url, opts);
-      if(timer) clearTimeout(timer);
-      if(!r.ok) throw new Error('HTTP ' + r.status);
-      const t = await r.text();
-      if(!t || t.charCodeAt(0) !== 123) throw new Error('bad payload');
-      return t;
-    }catch(e){ lastErr = e; }
-  }
-  throw lastErr || new Error('词库数据加载失败');
-}
-
-async function cachedBuiltin(id){
-  try{
-    await WL.initIDB();
-    if(IDB.db) return await IDB.get('b:'+id);
-  }catch(e){}
-  return null;
-}
-
-function builtinEntries(e){
-  if(!e || !e.words) return null;
-  if(e.kind === 'words') return e.words.map(w => ({ w, ph:'', def:'', phrases:[] }));
-  return e.words.map(a => ({ w:a[0], ph:a[1]||'', def:a[2]||'', phrases:[] }));
-}
+/* v2.4：本地/内置词库已彻底移除（站点托管的 wordlists/builtin 也已删除并从仓库清理）。
+   所有词库一律来自在线源（KyleBing/english-vocabulary，多镜像 + IndexedDB 缓存加速）。 */
 
 const WL = {
+  /* v2.4：词库全部来自在线源（KyleBing/english-vocabulary），不再有任何本地/内置词库。
+     原先三个「内置」词库改为其在线对应物：
+       小学英语大纲 → 人教小学 3-6 年级；中考英语词汇 → 初中.txt；高中英语大纲 → 高中.txt
+     原先与它们重复的 ppep / middle2 / hs2 已合并删除（旧选择由 migrateListIds 迁移）。 */
   registry: [
-    { id:'primary', name:'小学英语大纲', group:'primary', desc:'小学阶段大纲词汇', builtin:true },
-    { id:'ppep',    name:'人教版小学词汇', group:'primary', desc:'人教版小学课本词汇（3-6 年级，含释义词组）', builtin:true, defs:true, online:['人教小学三年级.txt','人教小学四年级.txt','人教小学五年级.txt','人教小学六年级.txt'] },
-    { id:'middle',  name:'中考英语词汇', group:'middle', desc:'初中毕业通用词汇（含音标）', builtin:true },
+    { id:'primary', name:'小学英语', group:'primary', desc:'人教版小学课本词汇（3-6 年级，含释义词组）', defs:true, online:['人教小学三年级.txt','人教小学四年级.txt','人教小学五年级.txt','人教小学六年级.txt'] },
+    { id:'middle',  name:'中考·初中英语', group:'middle', desc:'初中通用词汇（含释义词组与音标）', defs:true, online:['初中.txt'] },
     { id:'mfltr',   name:'外研社初中', group:'middle', desc:'外研版初中课本词汇', defs:true, online:['外研社初中.txt'] },
-    { id:'middle2', name:'通用初中词表', group:'middle', desc:'KyleBing 初中词汇（含释义词组）', defs:true, online:['初中.txt'] },
-    { id:'ppep_m',  name:'人教版初中词汇', group:'middle', desc:'人教版初中课本词汇（7-9 年级，含释义词组）', builtin:true, defs:true, online:['人教初中七年级.txt','人教初中八年级.txt','人教初中九年级.txt'] },
-    { id:'hs',      name:'高中英语大纲', group:'hs', desc:'高中大纲词汇', builtin:true },
-    { id:'hs2',     name:'通用高中词表', group:'hs', desc:'KyleBing 高中词汇（含释义词组）', defs:true, online:['高中.txt'] },
-    { id:'hspep',   name:'人教版高中词汇', group:'hs', desc:'人教版高中课本词汇（含释义词组）', builtin:true, defs:true, online:['人教高中.txt'] },
+    { id:'ppep_m',  name:'人教版初中词汇', group:'middle', desc:'人教版初中课本词汇（7-9 年级，含释义词组）', defs:true, online:['人教初中七年级.txt','人教初中八年级.txt','人教初中九年级.txt'] },
+    { id:'hs',      name:'高中英语', group:'hs', desc:'高中通用词汇（含释义词组与音标）', defs:true, online:['高中.txt'] },
+    { id:'hspep',   name:'人教版高中词汇', group:'hs', desc:'人教版高中课本词汇（含释义词组）', defs:true, online:['人教高中.txt'] },
     { id:'hsbn',    name:'北师大版高中', group:'hs', desc:'北师大版高中课本词汇', defs:true, online:['北师高中.txt'] },
-    { id:'cet4',    name:'四级词汇', group:'target', desc:'大学英语四级（含音标；在线完整版另含词组）', builtin:true, defs:true, online:['四级.txt'] },
-    { id:'cet6',    name:'六级词汇', group:'target', desc:'大学英语六级（含音标；在线完整版另含词组）', builtin:true, defs:true, online:['六级.txt'] }
+    { id:'cet4',    name:'四级词汇', group:'target', desc:'大学英语四级（含音标与词组）', defs:true, online:['四级.txt'] },
+    { id:'cet6',    name:'六级词汇', group:'target', desc:'大学英语六级（含音标与词组）', defs:true, online:['六级.txt'] }
   ],
+  /* 已删除的词库 id → 对应在线词库 id（用于迁移旧选择） */
+  REMAP: { ppep:'primary', middle2:'middle', hs2:'hs', primary:null, middle:null, hs:null },
+  migrateListIds(d){
+    if(!d || !d.filter) return false;
+    const fix = id => {
+      if(id === 'ppep') return 'primary';
+      if(id === 'middle2') return 'middle';
+      if(id === 'hs2') return 'hs';
+      return id;
+    };
+    let changed = false;
+    const f = d.filter;
+    const nt = fix(f.target);
+    if(nt !== f.target){ f.target = nt; changed = true; }
+    const seen = new Set();
+    const nb = [];
+    for(const b of (f.bases || [])){
+      const x = fix(b);
+      if(!seen.has(x) && WL.byId(x)){ seen.add(x); nb.push(x); }
+    }
+    if(JSON.stringify(nb) !== JSON.stringify(f.bases || [])){ f.bases = nb; changed = true; }
+    for(const pr of (d.presets || [])){
+      if(pr && pr.target){ const x = fix(pr.target); if(x !== pr.target){ pr.target = x; changed = true; } }
+      if(pr && Array.isArray(pr.bases)){
+        const y = Array.from(new Set(pr.bases.map(fix).filter(id => WL.byId(id))));
+        if(JSON.stringify(y) !== JSON.stringify(pr.bases)){ pr.bases = y; changed = true; }
+      }
+    }
+    return changed;
+  },
   cache: new Map(),      // id -> {entries, source}
   status: new Map(),     // id -> idle|loading|ready|error
   idbReady: false,
@@ -2116,49 +2099,25 @@ const WL = {
     const o = (opts && typeof opts === 'object') ? opts : { force: !!opts };
     const def = this.byId(id);
     if(!def) return { entries:[], source:'none' };
-    if(this.cache.has(id) && !o.force){
-      const c = this.cache.get(id);
-      const wantOnline = o.preferOnline === true && o.network !== false &&
-        c.source === 'builtin' && def.online && def.online.length &&
-        AppAuth.data().settings.useOnline;
-      if(!wantOnline) return c;
-    }
+    if(this.cache.has(id) && !o.force) return this.cache.get(id);
     this.status.set(id, 'loading');
     AppUI.onListStatus && AppUI.onListStatus();
     const network = o.network !== false;
     let entries = null, source = 'none';
-    // 1) 在线完整版（KyleBing 词库，多镜像 + IndexedDB 缓存）
-    if(network && def.online && def.online.length && AppAuth.data().settings.useOnline){
+    // 唯一来源：在线词库（IndexedDB 仅作加速缓存，不作为「本地词库」）
+    if(def.online && def.online.length){
       try{
         const cached = await cachedText(id);
-        const text = cached || await this.fetchFiles(def.online);
-        if(!cached) IDB.put('w:'+id, text);
-        entries = await this.parseTsvAsync(text, def.defs === true);
-        source = 'online';
-      }catch(e){ entries = null; }
-    }
-    if(!entries){
-      const cached = await cachedText(id);
-      if(cached){
-        try{
-          entries = await this.parseTsvAsync(cached, def.defs === true);
+        let text = cached;
+        if(!text && network){
+          text = await this.fetchFiles(def.online);
+          try{ await this.initIDB(); IDB.put('w:'+id, text); }catch(e){}
+        }
+        if(text){
+          entries = await this.parseTsvAsync(text, def.defs === true);
           source = 'online';
-        }catch(e){ entries = null; }
-      }
-    }
-    // 2) 站点托管的词库数据（在线优先 v2.0.0：同源优先，CDN 镜像兜底）
-    const builtin = network ? await BUILTIN.get(id) : (BUILTIN.cache.get(id) || null);
-    if(!entries && builtin){
-      entries = builtinEntries(builtin);
-      source = 'builtin';
-    }
-    // 3) 用托管词库的音标补全在线词表（KyleBing 在线词库不含音标）
-    if(entries && source === 'online' && builtin && builtin.kind === 'entries' && builtin.words && builtin.words.length){
-      const phMap = {};
-      for(const a of builtin.words){ if(a && a[1]) phMap[Morph.norm(a[0])] = a[1]; }
-      if(Object.keys(phMap).length){
-        for(const it of entries){ if(!it.ph){ const p = phMap[Morph.norm(it.w)]; if(p) it.ph = p; } }
-      }
+        }
+      }catch(e){ entries = null; }
     }
     this.cache.set(id, { entries, source });
     this.status.set(id, entries && entries.length ? 'ready' : 'error');
@@ -2233,14 +2192,13 @@ const WL = {
     this.cache.forEach(v => { if(v && v.entries) n += v.entries.length; });
     return n;
   },
+  /* v2.4：不再有本地/内置词库，状态只有「在线词库（绿）／同步中／未加载」三种 */
   sourceLabel(id){
     const s = this.status.get(id) || 'idle';
     const c = this.cache.get(id);
     if(s === 'loading') return { txt:'同步中…', cls:'tag-orange' };
-    if(c && c.source === 'online') return { txt:'在线版', cls:'tag-green' };
-    if(c && c.source === 'builtin') return { txt:'基础版', cls:'tag-blue' };
-    const def = this.byId(id);
-    if(def && def.builtin) return { txt:'待加载', cls:'tag-blue' };
+    if(c && c.source === 'online' && c.entries && c.entries.length) return { txt:'在线词库', cls:'tag-green' };
+    if(s === 'error') return { txt:'同步失败', cls:'tag-red' };
     return { txt:'未加载', cls:'' };
   }
 };
@@ -2906,23 +2864,24 @@ const WordImg = {
   MAX_CONCURRENT: 2,       // 并发上限，避免打满数据库连接
   enabled: true,
 
-  get(word){
+  get(word, gloss){
     const w = String(word || '').trim().toLowerCase();
     if(!w || !this.enabled || !Supa.active()) return Promise.resolve(null);
-    if(this.cache.has(w)) return Promise.resolve(this.cache.get(w));
-    if(this.pending.has(w)) return this.pending.get(w);
-    const p = new Promise(resolve => { this.queue.push({ w, resolve }); this.drain(); });
-    this.pending.set(w, p);
+    const key = w + '|' + (gloss || '');
+    if(this.cache.has(key)) return Promise.resolve(this.cache.get(key));
+    if(this.pending.has(key)) return this.pending.get(key);
+    const p = new Promise(resolve => { this.queue.push({ w, g: gloss || '', key, resolve }); this.drain(); });
+    this.pending.set(key, p);
     return p;
   },
   drain(){
     while(this.active < this.MAX_CONCURRENT && this.queue.length){
       const job = this.queue.shift();
       this.active++;
-      this.fetchOne(job.w)
-        .then(res => { this.cache.set(job.w, res); job.resolve(res); })
-        .catch(() => { this.cache.set(job.w, null); job.resolve(null); })
-        .then(() => { this.pending.delete(job.w); this.active--; this.drain(); });
+      this.fetchOne(job.w, job.g)
+        .then(res => { this.cache.set(job.key, res); job.resolve(res); })
+        .catch(() => { this.cache.set(job.key, null); job.resolve(null); })
+        .then(() => { this.pending.delete(job.key); this.active--; this.drain(); });
     }
   },
   withTimeout(p, ms){
@@ -2931,11 +2890,18 @@ const WordImg = {
       p.then(v => { clearTimeout(t); resolve(v); }, e => { clearTimeout(t); reject(e); });
     });
   },
-  async fetchOne(w){
-    try{
-      const r = await this.withTimeout(Supa.rpc('sl_image', { p_word: w }), this.TIMEOUT);
-      if(r && r.ok && r.url) return { url: String(r.url), title: String(r.title || '') };
-    }catch(e){}
+  /* v2.4 级联：先纯英文（百度对具体名词排序最好），失败再带中文释义。
+     每次只发一个请求，序列化以免超出数据库语句超时。 */
+  async fetchOne(w, gloss){
+    const tries = [''];
+    if(gloss) tries.push(gloss);
+    for(const g of tries){
+      try{
+        const args = g ? { p_word: w, p_gloss: g } : { p_word: w };
+        const r = await this.withTimeout(Supa.rpc('sl_image', args), this.TIMEOUT);
+        if(r && r.ok && r.url) return { url: String(r.url), title: String(r.title || '') };
+      }catch(e){}
+    }
     return null;
   },
   /* 预取：给接下来的若干单词提前取图，背到时无需等待 */
@@ -2943,8 +2909,9 @@ const WordImg = {
     if(!this.enabled) return;
     const list = (words || []).slice(0, ahead || 6);
     for(const it of list){
-      const w = (it && it.w !== undefined) ? it.w : it;
-      this.get(w).catch(() => {});
+      const isObj = it && typeof it === 'object';
+      const w = isObj ? it.w : it;
+      this.get(w, isObj ? glossOf(it) : '').catch(() => {});
     }
   },
   /* 会话结束即丢弃（不存储） */
@@ -2955,15 +2922,29 @@ const WordImg = {
   }
 };
 
+/* 取词条的中文释义（供配图搜索做语义锚定），去掉词性与括号 */
+function glossOf(e){
+  try{
+    if(!e) return '';
+    let t = '';
+    if(Array.isArray(e.def) && e.def.length) t = e.def.map(x => Array.isArray(x) ? x[1] : x).join(' ');
+    else if(typeof e.def === 'string') t = e.def;
+    if(!t) return '';
+    t = String(t).replace(/[a-zA-Z.·;；,，()（）\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+    // 只取前半段，太长反而干扰搜索
+    return t.slice(0, 14);
+  }catch(err){ return ''; }
+}
+
 /* 把配图渲染到容器里（含加载动画；失败或超时则整块隐藏） */
-async function fillWordImage(box, word){
+async function fillWordImage(box, word, gloss){
   if(!box) return;
   const show = (() => { try{ return AppAuth.data().settings.showImg !== false; }catch(e){ return true; } })();
   if(!show || !WordImg.enabled){ box.hidden = true; box.innerHTML = ''; return; }
   box.hidden = false;
   box.innerHTML = '<div class="img-skel"><i></i><span>配图中…</span></div>';
   let res = null;
-  try{ res = await WordImg.get(word); }catch(e){ res = null; }
+  try{ res = await WordImg.get(word, gloss); }catch(e){ res = null; }
   if(!box.isConnected) return;
   if(!res || !res.url){ box.hidden = true; box.innerHTML = ''; return; }
   const img = new Image();
@@ -2980,7 +2961,93 @@ async function fillWordImage(box, word){
   img.src = res.url;
 }
 
-/* 长单词不换行时按长度给一个初始上限，最终由 Fit 精修（保留旧函数名兼容） */
+/* ================= 下滑式数量选择窗（v2.4） =================
+   学新词 / 开始复习 / 抽测共用：从顶部滑下一个小窗，选「我的偏好 / 全部 / 自定义」。 */
+const CountSheet = {
+  el: null,
+  close(){
+    if(this.el && this.el.parentNode) this.el.parentNode.removeChild(this.el);
+    this.el = null;
+    document.onkeydown = null;
+  },
+  open(cfg){
+    this.close();
+    const wrap = document.createElement('div');
+    wrap.className = 'sheet-mask';
+    const max = Math.max(1, cfg.max | 0);
+    wrap.innerHTML =
+      '<div class="sheet" role="dialog" aria-modal="true" aria-label="'+esc(cfg.title)+'">' +
+        '<div class="sheet-head"><b>'+esc(cfg.title)+'</b><button class="sheet-x" aria-label="关闭">✕</button></div>' +
+        '<div class="sheet-sub muted">'+esc(cfg.sub || '')+'</div>' +
+        '<button class="btn btn-primary sheet-opt" data-n="'+Math.min(cfg.preferred, max)+'">'+esc(cfg.preferredLabel)+'</button>' +
+        '<button class="btn sheet-opt" data-n="'+max+'">全部 · '+max+' 个</button>' +
+        '<div class="sheet-custom">' +
+          '<button class="btn sheet-opt" data-custom>自定义</button>' +
+          '<input class="sheet-in" type="number" inputmode="numeric" min="1" max="'+max+'" placeholder="1 - '+max+'">' +
+          '<button class="btn btn-primary sheet-ok">开始</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(wrap);
+    this.el = wrap;
+
+    const pick = n => {
+      n = Math.max(1, Math.min(max, Math.floor(n) || 0));
+      this.close();
+      try{ cfg.onPick(n); }catch(e){ showFatal(e && e.message ? e.message : String(e)); }
+    };
+    wrap.addEventListener('click', ev => {
+      if(ev.target === wrap){ this.close(); return; }            // 点遮罩关闭
+      if(ev.target.closest('.sheet-x')){ this.close(); return; }
+      const opt = ev.target.closest('[data-n]');
+      if(opt){ pick(parseInt(opt.dataset.n, 10)); return; }
+      if(ev.target.closest('[data-custom]')){
+        const inp = wrap.querySelector('.sheet-in');
+        if(inp){ inp.focus(); inp.select(); }
+        return;
+      }
+      if(ev.target.closest('.sheet-ok')){
+        const inp = wrap.querySelector('.sheet-in');
+        const v = parseInt(inp && inp.value, 10);
+        if(!v || v < 1){ toast('请输入 1 - '+max+' 之间的数量', 'warn'); if(inp) inp.focus(); return; }
+        pick(v);
+      }
+    });
+    wrap.addEventListener('keydown', ev => {
+      if(ev.key === 'Enter'){
+        ev.preventDefault();
+        const inp = wrap.querySelector('.sheet-in');
+        const v = parseInt(inp && inp.value, 10);
+        if(v >= 1) pick(v);
+      } else if(ev.key === 'Escape'){ ev.preventDefault(); this.close(); }
+    });
+    setTimeout(() => { const i = wrap.querySelector('.sheet-in'); if(i) i.focus(); }, 60);
+  }
+};
+
+/* ================= 背单词整屏适配（v2.4） =================
+   手机窄屏下点「显示释义」后长释义会把「记得/不记得」挤出屏幕。
+   做法：把卡片高度锁定为可视区剩余高度，释义区内部滚动，按钮始终固定在底部。 */
+function fitStudyViewport(){
+  try{
+    const wraps = document.querySelectorAll('#tab-study .study-wrap, #tab-review .study-wrap');
+    for(const w of wraps){
+      if(!w.isConnected) continue;
+      const r = w.getBoundingClientRect();
+      if(r.height === 0 && r.width === 0) continue;
+      const bn = document.getElementById('bottom-nav');
+      const bnH = (bn && getComputedStyle(bn).display !== 'none') ? bn.getBoundingClientRect().height : 0;
+      const avail = window.innerHeight - r.top - bnH - 18;
+      const h = Math.max(340, Math.floor(avail));
+      w.style.height = h + 'px';
+      w.style.maxHeight = h + 'px';
+    }
+    fitNow(document);   // 高度变化后重新校准字号
+  }catch(e){}
+}
+window.addEventListener('resize', () => { setTimeout(fitStudyViewport, 200); });
+window.addEventListener('orientationchange', () => { setTimeout(fitStudyViewport, 300); });
+
+
 function fcFontSize(w){
   const len = String(w || '').length;
   const base = (typeof window !== 'undefined' && window.innerWidth <= 720) ? 30 : 42;
@@ -3037,7 +3104,6 @@ const AppFilter = {
 const Modules = {
   registry: [
     { id:'english', name:'英语', icon:'bookOpen', desc:'四级/六级词汇精筛与背诵', planning:false, page:'english' },
-    { id:'math', name:'数学', icon:'calculator', desc:'错题本 · 公式手册 · 每日一题（待上线）', planning:true, page:'math' }
   ],
   add(def){ if(def && def.id && !this.registry.find(x => x.id === def.id)) this.registry.push(def); }
 };
@@ -3048,7 +3114,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.3.0', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.4.0', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -3077,7 +3143,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.3.0', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.4.0', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -3112,16 +3178,14 @@ const AppData = {
   }
 };
 
-/* 词库数据改为运行时在线加载（见上方 BUILTIN / wordlists/builtin/*.json） */
+/* 词库全部在线加载（v2.4：本地/内置词库已删除） */
 
 
 /* ================= 词库估算词数（未加载时显示） ================= */
-const EST = { primary:440, ppep:815, middle:1896, mfltr:2162, middle2:3223, ppep_m:2276, hs:3446, hs2:6008, hspep:3530, hsbn:3293, cet4:4540, cet6:2220 };
+const EST = { primary:815, middle:3223, mfltr:2162, ppep_m:2276, hs:6008, hspep:3530, hsbn:3293, cet4:7508, cet6:5651 };
 WL.count = function(id){
   const c = this.cache.get(id);
   if(c && c.entries && c.entries.length) return c.entries.length;
-  const b = BUILTIN.cache.get(id);
-  if(b && b.words) return b.words.length;
   return EST[id] || 0;
 };
 /* ================= 应用界面 ================= */
@@ -3133,14 +3197,17 @@ const AppUI = {
       const raw = (typeof location !== 'undefined' && location.hash) ? location.hash : '';
       const h = raw.replace(/^#\/?/, '');
       if(h === 'library'){ AppSettings.catName = 'library'; AppSettings._keepCat = true; this.page = 'settings'; }
-      else if(['dashboard','english','math','settings'].indexOf(h) >= 0) this.page = h;
+      else if(['dashboard','english','settings'].indexOf(h) >= 0) this.page = h;
     }catch(e){}
     const s = AppAuth.current();
     if(!s){ AppAuth.showAuth(); return; }
     // 旧数据迁移（v1「等级 i」→ v2「艾宾浩斯日级节点」）：幂等，只跑一次
     try{
       const _md = AppAuth.data();
-      if(typeof SRS !== 'undefined' && SRS.migrate(_md)) AppAuth.save(_md);
+      let _ch = false;
+      if(typeof SRS !== 'undefined' && SRS.migrate(_md)) _ch = true;
+      if(typeof WL !== 'undefined' && WL.migrateListIds && WL.migrateListIds(_md)) _ch = true;
+      if(_ch) AppAuth.save(_md);
     }catch(e){}
     // 已有登录状态：直接进入主界面
     $('#view-auth').hidden = true;
@@ -3201,12 +3268,11 @@ const AppUI = {
     document.onkeydown = null;
     $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
     $$('.bnav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
-    ['dashboard','english','math','settings'].forEach(p => {
+    ['dashboard','english','settings'].forEach(p => {
       $('#page-'+p).hidden = p !== page;
     });
     if(page === 'dashboard') this.renderDashboard();
     if(page === 'english') this.renderEnglish();
-    if(page === 'math') this.renderMath();
     if(page === 'library') AppLibrary.render();
     if(page === 'settings') this.renderSettings();
     window.scrollTo({top:0});
@@ -3264,9 +3330,8 @@ const AppUI = {
         '<div class="card-title"><span class="dot"></span>欢迎使用 StudyLens</div>' +
         '<div class="muted" style="font-size:13.5px;line-height:1.9">' +
         '这是你的个人学习空间，几个区域分别是：<br>' +
-        '· <b>英语学习</b>：词表筛选 → 背单词 → 复习 → 学习记录。选择主词库和次词库后自动生成专属词表；<br>' +
+        '· <b>背单词</b>：今天要背的内容已经排好，直接开始即可；复习清单也在同一处；<br>' +
         '· <b>词库中心</b>：查看、更新各年级与四六级词库；<br>' +
-        '· <b>数学</b>：规划中的模块，后续上线；<br>' +
         '· <b>设置</b>：账号、学习偏好、界面与云端同步。<br>' +
         '建议第一步：进入「英语学习 → 词表筛选」，选好主词库和次词库，生成词表后开始背单词。</div>' +
         '<div style="margin-top:14px"><button class="btn btn-primary" onclick="AppUI.dismissWelcome()">开始使用</button></div></div>';
@@ -3333,18 +3398,6 @@ const AppUI = {
     } else {
       tip.innerHTML = '尚未生成个人词表。请前往「词表筛选」，选择主词库与次词库后生成专属词表。';
     }
-  },
-  renderMath(){
-    const items = [
-      ['edit','错题本','按知识点归集错题，支持定期重做与错误率统计'],
-      ['book','公式手册','高等数学、线性代数、概率论常用公式检索与收藏'],
-      ['target','每日一题','依据学习进度推送习题，记录正确率'],
-      ['share','知识图谱','呈现章节知识点关联，便于定位薄弱环节']
-    ];
-    const phases = ['规划中','规划中','评估中','评估中'];
-    $('#math-grid').innerHTML = '<div class="placeholder-grid">' + items.map((x,i) =>
-      '<div class="ph-card"><div class="pico">'+icon(x[0], 30)+'</div><h4>'+x[1]+'</h4><p>'+x[2]+'</p><span class="soon">'+phases[i]+'</span></div>'
-    ).join('') + '</div>';
   },
   renderSettings(){
     const s = AppAuth.data().settings;
@@ -3413,14 +3466,18 @@ const AppUI = {
     const f = d.filter;
     const groups = [
       ['target','四六级',['cet4','cet6']],
-      ['hs','高中阶段',['hs','hs2','hspep','hsbn']],
-      ['middle','初中阶段',['middle','mfltr','middle2','ppep_m']],
-      ['primary','小学阶段',['primary','ppep']]
+      ['hs','高中阶段',['hs','hspep','hsbn']],
+      ['middle','初中阶段',['middle','mfltr','ppep_m']],
+      ['primary','小学阶段',['primary']]
     ];
-    const ico = id => ({ cet4:'book', cet6:'bookOpen', hs:'layers', hs2:'trend', hspep:'edit', hsbn:'list', middle:'archive', mfltr:'file', middle2:'file', ppep_m:'grid', primary:'grad', ppep:'grid' }[id] || 'book');
+    const ico = id => ({ cet4:'book', cet6:'bookOpen', hs:'layers', hspep:'edit', hsbn:'list', middle:'archive', mfltr:'file', ppep_m:'grid', primary:'grad' }[id] || 'book');
+    /* v2.4：词库只有在线一种来源，绿点 = 正在使用在线词库 */
     const stHtml = id => {
       const st = WL.sourceLabel(id);
-      return '<span class="status-dot" style="background:'+(st.cls==='tag-green'?'var(--accent)':st.cls==='tag-blue'?'var(--primary)':'var(--muted)')+'"></span>'+WL.count(id)+' 词';
+      const on = st.cls === 'tag-green';
+      return '<span class="status-dot" style="background:'+(on?'var(--accent)':st.cls==='tag-orange'?'var(--warn)':'var(--muted)')+'"></span>'
+        + '<span style="color:'+(on?'var(--accent)':'var(--muted)')+'">'+(on?'在线词库':esc(st.txt))+'</span>'
+        + '<span class="muted" style="margin-left:6px">'+WL.count(id)+' 词</span>';
     };
     const mainHtml = id => {
       const def = WL.byId(id);
@@ -3831,20 +3888,20 @@ const AppStudy = {
     const order = d.settings.studyOrder || 'random';
     const s = d.settings;
     if(mode === 'review'){
-      // 复习计划：只取今日到期（按到期时间优先，其次字母序）
+      // 复习计划：只取今日到期（按原定复习日先后，其次字母序）
       poolDue.sort((a,b) => {
         const ca = st[SRS.key(r.targetId, a.w)] || {}, cb = st[SRS.key(r.targetId, b.w)] || {};
         return String(SRS.dueDay(ca)).localeCompare(String(SRS.dueDay(cb))) || a.w.localeCompare(b.w);
       });
-      this._avail = poolDue.length; this._requested = poolDue.length;
-      return poolDue;
+      const wantR = Math.max(0, this.wantCount || poolDue.length);
+      this._avail = poolDue.length; this._requested = wantR || poolDue.length;
+      return poolDue.slice(0, Math.min(wantR || poolDue.length, poolDue.length));
     }
     if(mode === 'quiz'){
-      // 学习情况抽测：从已学（参与过评分）词汇中随机抽取指定数量
+      // 学习情况抽测：从已学词汇中随机抽取（不写任何学习记录，见 mark()）
       const arr = poolQuiz.slice();
       for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
-      const q = parseInt(($('#study-quiz') || {}).value || '', 10);
-      const want = q > 0 ? q : 10;
+      const want = Math.max(1, this.wantCount || Math.min(20, arr.length));
       this._avail = arr.length; this._requested = want;
       return arr.slice(0, Math.min(arr.length, want));
     }
@@ -3852,14 +3909,9 @@ const AppStudy = {
     let ordered = poolNew.slice();
     if(order === 'alpha') ordered.sort((a,b) => a.w.localeCompare(b.w));
     else { for(let i=ordered.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [ordered[i],ordered[j]]=[ordered[j],ordered[i]]; } }
-    const sel = $('#study-limit');
-    const lc = this.limitChoice;
-    const selMode = sel ? sel.value : (lc ? lc.mode : 'settings');
     let want;
-    if(selMode === 'all') want = ordered.length;
-    else if(selMode === 'custom'){
-      const c = parseInt((sel ? ($('#study-custom') || {}).value : (lc ? lc.count : 0)) || '', 10);
-      want = c > 0 ? c : ordered.length;
+    if(this.wantCount > 0){
+      want = this.wantCount;                     // v2.4：来自下滑小窗的选择
     } else if(s.studyMode === 'fixed'){
       want = s.studyFixed || 30;
     } else if(s.studyMode === 'all'){
@@ -3951,24 +4003,51 @@ const AppStudy = {
           '<div class="en-num"><b>'+masteredN+'</b><span>已掌握</span></div>' +
         '</div>' +
         (totalDue
-          ? '<button class="btn btn-primary en-cta" onclick="AppUI.englishTab(\'review\')">'+icon('refresh')+' 开始复习 · '+totalDue+' 词</button>'
+          ? '<button class="btn btn-primary en-cta" onclick="AppStudy.askCount(\'review\','+totalDue+')">'+icon('refresh')+' 开始复习 · '+totalDue+' 词</button>'
           : '<div class="en-done-hint">'+icon('checkCircle')+' 今天没有到期的复习</div>') +
         (newN
-          ? '<button class="btn btn-lg en-cta2" onclick="AppStudy.quickStart(\'new\')">'+icon('play')+' 学新词 · 还剩 '+newN+' 词</button>'
+          ? '<button class="btn btn-lg en-cta2" onclick="AppStudy.askCount(\'new\','+newN+')">'+icon('play')+' 学新词 · 还剩 '+newN+' 词</button>'
           : '<button class="btn btn-lg en-cta2" disabled>词表里的新词已学完</button>') +
         (realB.length ? '<div class="rv-list en-batches">'+batchRows+'</div>' : '') +
         '<div class="fc-hint">复习按艾宾浩斯日期自动安排：学完当天起 +1/+2/+4/+7/+15/+21 天共 6 遍，走完即「已掌握」。点上面的按钮先看清单、再开始复习。</div>' +
-        (quizN ? '<div style="text-align:center"><button class="btn btn-sm btn-ghost" onclick="AppStudy.quickStart(\'quiz\')">'+icon('search', 14)+' 学习情况抽测（已学 '+quizN+' 词）</button></div>' : '') +
+        (quizN ? '<div style="text-align:center"><button class="btn btn-sm btn-ghost" onclick="AppStudy.askCount(\'quiz\','+quizN+')">'+icon('search', 14)+' 学习情况抽测（已学 '+quizN+' 词，不计入任何统计）</button></div>' : '') +
       '</div>';
   },
-  /* 从主导区一键开始（跳过中间的模式选择） */
-  quickStart(mode){
+  /* v2.4：点「学新词 / 开始复习 / 抽测」→ 下滑小窗选择数量 */
+  askCount(mode, max){
+    const s = AppAuth.data().settings;
+    const prefer = Math.max(1, Math.min(max,
+      s.studyMode === 'fixed' ? (s.studyFixed || 30) : (s.daily || 20)));
+    const isQuiz = mode === 'quiz';
+    CountSheet.open({
+      title: isQuiz ? '抽测多少个单词？' : (mode === 'review' ? '复习多少个单词？' : '这次学多少个新词？'),
+      sub: isQuiz
+        ? ('从已学过的 '+max+' 个词里随机抽。抽测结果只作自测，不计入学习记录与任何词汇数量。')
+        : ('可复习/可学共 '+max+' 个。' + (mode === 'review'
+            ? '复习一遍记一遍，走完全部 6 遍即「已掌握」。'
+            : '学完的新词会进入「学习中」，明天开始第 1 遍复习。')),
+      preferred: isQuiz ? Math.min(20, max) : prefer,
+      preferredLabel: isQuiz ? ('抽 '+Math.min(20, max)+' 个') : ('我的偏好 · '+prefer+' 个'),
+      max: max,
+      onPick: n => { this.quickStart(mode, n); }
+    });
+  },
+  /* 直接开始（带指定数量） */
+  quickStart(mode, count){
     this.mode = (['new','review','quiz'].indexOf(mode) >= 0) ? mode : 'new';
+    this.wantCount = (count && count > 0) ? Math.floor(count) : 0;
     try{
       const d = AppAuth.data();
       d.settings.studyModeChoice = this.mode;
       AppAuth.save(d);
     }catch(e){}
+    if(this.mode === 'review'){
+      // 复习统一走「先清单、后复习」的流程，数量在复习清单页生效
+      AppReview.state = null;
+      AppReview.wantCount = this.wantCount;
+      AppUI.englishTab('review');
+      return;
+    }
     this.start();
   },
   paintOptions(cfg){
@@ -4058,13 +4137,15 @@ const AppStudy = {
     if(this._avail && this._requested > this._avail){
       toast('词表剩余 '+this._avail+' 词，本次学习 '+deck.length+' 个（少于所选的 '+this._requested+' 个）', 'warn');
     }
-    this.state = { mode:'study', deck, idx:0, revealed:false, round:0, marks:{ good:0, hard:0, again:0 }, requested: this._requested || deck.length, avail: this._avail || deck.length };
+    // v2.4：state.mode 必须跟随实际模式，抽测（quiz）才能被 mark() 识别为「不写记录」
+    this.state = { mode: (this.mode || 'study'), deck, idx:0, revealed:false, round:0, marks:{ good:0, hard:0, again:0 }, requested: this._requested || deck.length, avail: this._avail || deck.length };
     this.saveSession();
     this.render();
   },
   saveSession(){
     const s = this.state;
     if(!s) return;
+    if(s.mode === 'quiz') return;   // v2.4：抽测不落盘、不续传、不进任何统计
     const d = AppAuth.data();
     const r = AppFilter.result;
     d.studySession = {
@@ -4143,8 +4224,10 @@ const AppStudy = {
       AppData.autoBackup();
       if(!Store.get('backupTipShown', false)){ Store.set('backupTipShown', true);
         setTimeout(()=>{ try{ toast('本轮完成，进度已自动备份。建议到「设置 → 数据与备份」导出文件，换设备也不丢。','ok'); }catch(e){} }, 900); }
-      box.innerHTML = '<div class="study-done"><div class="big">'+icon('checkCircle', 44)+'</div><h3>本轮学习完成</h3>' +
-      '<p class="muted" role="status">本轮共学习 '+s.deck.length+' 个单词'+(s.requested && s.requested > s.deck.length ? '（申请 '+s.requested+' 个，词表仅剩 '+s.deck.length+' 个）' : '')+'：记得 '+s.marks.good+' 词，模糊 '+(s.marks.hard||0)+' 词，不记得 '+s.marks.again+' 词。这些词已进入「学习中」，明天开始第 1 遍复习。</p>' +
+      const isQuiz = s.mode === 'quiz';
+      box.innerHTML = '<div class="study-done"><div class="big">'+icon('checkCircle', 44)+'</div><h3>'+(isQuiz ? '抽测完成' : '本轮学习完成')+'</h3>' +
+      '<p class="muted" role="status">本轮共过 '+s.deck.length+' 个单词'+(s.requested && s.requested > s.deck.length ? '（申请 '+s.requested+' 个，可用仅 '+s.deck.length+' 个）' : '')+'：记得 '+s.marks.good+' 词，模糊 '+(s.marks.hard||0)+' 词，不记得 '+s.marks.again+' 词。'
+        + (isQuiz ? '抽测只作自测，不计入学习记录与任何词汇数量。' : '这些词已进入「学习中」，明天开始第 1 遍复习。') + '</p>' +
       '<div style="display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap"><button class="btn btn-primary" onclick="AppStudy.start()">再来一轮</button><button class="btn" onclick="AppUI.englishTab(\'record\')">查看学习记录</button><button class="btn" onclick="AppUI.englishTab(\'review\')">开始复习</button></div></div>';
       burstFx(box.querySelector('.study-done'), 10);
       return;
@@ -4172,7 +4255,8 @@ const AppStudy = {
     if(fdEl) Dict.fillDef(e, fdEl);
     this.bindKeys();
     fitNow(box);
-    fillWordImage(document.getElementById('fc-img'), e.w);
+    fitStudyViewport();                                        // 保证整屏可见、按钮不被挤出
+    fillWordImage(document.getElementById('fc-img'), e.w, glossOf(e));
     WordImg.prefetch(s.deck.slice(s.idx + 1, s.idx + 7), 6);   // 提前取图，避免背到时等待
     const vst = AppAuth.data().settings;
     if(vst && vst.autoSpeak && !s.revealed){
@@ -4190,11 +4274,14 @@ const AppStudy = {
     if(!s) return;
     const e = s.deck[s.idx];
     const targetId = AppFilter.result.targetId;
-    // 已接触过的词（复习/抽测）走「完成一遍复习」；全新词走「首次学习」。
-    // 这样「复习」并入背单词后仍按艾宾浩斯日期推进，不会被当成新词重置进度。
-    const cur = AppAuth.data().wordState[SRS.key(targetId, e.w)];
-    if(cur && !SRS.isMastered(cur)) SRS.completeRound(targetId, e.w);
-    else SRS.learn(targetId, e.w);
+    // v2.4：抽测只作自测——不写 wordState、不计入 totalStudy/dayLog/任何词汇数量
+    if(s.mode !== 'quiz'){
+      // 已接触过的词（复习）走「完成一遍复习」；全新词走「首次学习」。
+      // 这样「复习」并入背单词后仍按艾宾浩斯日期推进，不会被当成新词重置进度。
+      const cur = AppAuth.data().wordState[SRS.key(targetId, e.w)];
+      if(cur && !SRS.isMastered(cur)) SRS.completeRound(targetId, e.w);
+      else SRS.learn(targetId, e.w);
+    }
     if(s.marks){ s.marks[level] = (s.marks[level] || 0) + 1; }
     if(level === 'again'){
       // 10 个词之后再出现一次
@@ -4335,15 +4422,19 @@ const AppReview = {
       + '<button class="btn" onclick="AppUI.englishTab(\'study\')">先学新词</button>'
       + '</div></div>';
   },
-  start(){
+  start(limit){
     const r = AppFilter.result;
     if(!r) return;
     const today = SRS.today();
     const rows = SRS.batches(r.targetId, r.kept, today);
-    const deck = [];
-    for(const x of rows){ if(!x.gap) for(const e of x.words) deck.push(e); }
-    if(!deck.length){ this.state = null; this.render(); return; }
-    this.state = { mode:'review', deck, idx:0, revealed:false, targetId:r.targetId };
+    const all = [];
+    for(const x of rows){ if(!x.gap) for(const e of x.words) all.push(e); }
+    if(!all.length){ this.state = null; this.render(); return; }
+    // v2.4：数量来自下滑小窗（我的偏好 / 全部 / 自定义）；未指定则全做
+    const want = Math.max(1, Math.min(all.length, limit || this.wantCount || all.length));
+    this.wantCount = want;
+    const deck = all.slice(0, want);
+    this.state = { mode:'review', deck, idx:0, revealed:false, targetId:r.targetId, total: all.length };
     this.renderCard();
   },
   renderCard(){
@@ -4357,7 +4448,7 @@ const AppReview = {
         + '<p>本轮 '+s.deck.length+' 个单词已过了一遍，已记入复习计划。今天累计复习 '+achieved+' 词。</p>'
         + '<div class="muted small" style="margin-top:8px">走完全部 6 遍的词已自动变为「已掌握」。</div>'
         + '<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">'
-        + '<button class="btn btn-primary" onclick="AppReview.state=null;AppReview.render()">返回复习清单</button>'
+        + '<button class="btn btn-primary" onclick="AppReview.wantCount=0;AppReview.state=null;AppReview.render()">返回复习清单</button>'
         + '<button class="btn" onclick="AppUI.englishTab(\'record\')">查看学习记录</button>'
         + '<button class="btn" onclick="AppUI.englishTab(\'study\')">学习新词</button></div></div>';
       return;
@@ -4383,7 +4474,8 @@ const AppReview = {
     const fdEl = document.getElementById('fc-def');
     if(fdEl) Dict.fillDef(e, fdEl);
     fitNow(box);
-    fillWordImage(document.getElementById('fc-img'), e.w);
+    fitStudyViewport();                                        // 保证整屏可见、按钮不被挤出
+    fillWordImage(document.getElementById('fc-img'), e.w, glossOf(e));
     WordImg.prefetch(s.deck.slice(s.idx + 1, s.idx + 7), 6);
     const vst = AppAuth.data().settings;
     if(vst && vst.autoSpeak && !s.revealed){
@@ -4623,7 +4715,7 @@ const AppBrowse = {
       '<a class="btn btn-sm" href="'+link+'" target="_blank" rel="noopener">'+icon('external')+' 在有道词典查看</a>' +
       '<button class="btn btn-sm" onclick="AppUI.closeModal()">关闭</button></div></div>'
     );
-    fillWordImage(document.getElementById('wd-img'), e.w);
+    fillWordImage(document.getElementById('wd-img'), e.w, glossOf(e));
     fitNow($('#modal-root'));
     if(!e.ph){
       Dict.attach(e.w, ph => {
@@ -4651,7 +4743,11 @@ const AppLibrary = {
       return;
     } else {
       const total = WL.cache.size ? Array.from(WL.cache.values()).reduce((s,v)=>s+(v.entries?v.entries.length:0),0) : 0;
-      status.innerHTML = '<div class="banner info">'+icon('cloud')+' <span>词库数据在线加载并通过多个镜像更新，随后缓存在本机以加速下次打开。当前已加载 <b>'+fmtN(total)+'</b> 个词条。</span></div>';
+      const live = WL.registry.filter(x => (WL.status.get(x.id) || '') === 'ready').length;
+      status.innerHTML = '<div class="banner info" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+        + icon('cloud')
+        + '<span class="tag tag-green" style="flex-shrink:0">✓ 正在使用在线词库</span>'
+        + '<span>全部 '+WL.registry.length+' 个词库均来自在线源（多镜像自动切换），本机仅作缓存加速。已加载 <b>'+(live?live:0)+'</b> 个词库、<b>'+fmtN(total)+'</b> 个词条。</span></div>';
     }
     const groups = [['primary','小学'],['middle','初中'],['hs','高中'],['target','四六级目标']];
     box.innerHTML = groups.map(([g,label]) => {
@@ -4836,7 +4932,7 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
       try{
         const h = location.hash.replace(/^#\/?/, '');
         if(h === 'library'){ AppSettings.catName = 'library'; AppSettings._keepCat = true; if(AppUI.page !== 'settings') AppUI.go('settings', true); }
-        else if(['dashboard','english','math','settings'].indexOf(h) >= 0 && h !== AppUI.page){
+        else if(['dashboard','english','settings'].indexOf(h) >= 0 && h !== AppUI.page){
           AppUI.go(h, true);
         }
       }catch(e){}
