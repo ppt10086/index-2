@@ -817,6 +817,12 @@ li,td,th{text-wrap:normal}
 /* 术语说明按钮 / 背词提示 / 文本断行（v1.9.4 体验优化） */
 .tip{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--primary-soft);color:var(--primary);font-size:10.5px;font-weight:800;line-height:1;margin-left:4px;vertical-align:1px;cursor:pointer;user-select:none}
 .tip:hover{background:var(--primary);color:#fff}
+/* 内测标记 + 内测功能警示行（v2.4.2 配图默认关闭） */
+.beta-tag{display:inline-block;margin-left:5px;padding:2px 7px;border-radius:999px;background:var(--warn-soft);color:var(--warn);font-size:10.5px;font-weight:800;letter-spacing:.02em;vertical-align:1px;white-space:nowrap}
+.set-warn{display:flex;flex-direction:column;gap:3px;margin:2px 0 4px;padding:9px 12px;border-radius:11px;
+  background:var(--warn-soft);border:1px solid rgba(189,114,9,.22);font-size:12px;line-height:1.55}
+.set-warn b{color:var(--warn);font-size:12.5px}
+.set-warn span{color:var(--muted)}
 .fc-preview{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
 .fc-preview-hint{font-size:13px;color:var(--muted);text-align:center}
 .un,.side-user .un,#dash-name{overflow-wrap:anywhere;word-break:break-word}
@@ -1022,7 +1028,7 @@ html.sl-has-session #view-auth{display:none}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 2.4.1 · 全在线词库<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 2.4.2 · 全在线词库<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -1121,7 +1127,11 @@ html.sl-has-session #view-auth{display:none}
             <div class="kv"><span class="kk">显示音标</span><span class="vv"><label class="switch"><input type="checkbox" id="set-phon"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">发音口音</span><span class="vv"><select id="set-voice" style="width:150px"><option value="en-US">美音</option><option value="en-GB">英音</option></select></span></div>
             <div class="kv"><span class="kk">翻卡自动朗读</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autospeak"><span class="sl"></span></label></span></div>
-            <div class="kv"><span class="kk">背词显示配图 <button class="tip" onclick="termTip(&quot;img&quot;)" aria-label="配图说明" title="配图说明">?</button></span><span class="vv"><label class="switch"><input type="checkbox" id="set-showimg"><span class="sl"></span></label></span></div>
+            <div class="kv"><span class="kk">背词显示配图 <span class="beta-tag">内测中</span> <button class="tip" onclick="termTip(&quot;img&quot;)" aria-label="配图说明" title="配图说明">?</button></span><span class="vv"><label class="switch"><input type="checkbox" id="set-showimg"><span class="sl"></span></label></span></div>
+            <div class="set-warn" id="set-showimg-warn">
+              <b>该内容内测中，开启后会导致不稳定。</b>
+              <span>配图会调用站外图片搜索，可能出现卡顿、图片与词义不符或页面异常；默认关闭，建议保持关闭。</span>
+            </div>
             <div class="kv"><span class="kk">默认剔除衍生词 <button class="tip" onclick="termTip(&quot;deriv&quot;)" aria-label="什么是衍生词" title="什么是衍生词">?</button></span><span class="vv"><label class="switch"><input type="checkbox" id="set-deriv"><span class="sl"></span></label></span></div>
             <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap">
               <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存偏好</button>
@@ -1136,7 +1146,7 @@ html.sl-has-session #view-auth{display:none}
               <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存外观</button>
             </div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.4.1</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.4.2</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用在线优先设计（v2.0.0）：账号与学习进度保存在云端数据库，需要联网使用；词库数据同样在线加载并缓存在本机，不再内嵌于页面。仍建议定期「导出数据备份」。</div>
@@ -1646,7 +1656,7 @@ const TERMS = {
   target: '主词库：你真正要学的词库（例如四级）；系统只从这个词库中为你挑词。',
   base: '次词库：用来“剔除”的词库。主词库中与次词库重复的词（含衍生词）会被自动去掉，避免重复学习已掌握内容。',
   quiz: '学习情况抽测：从你已经学过的词里随机抽一批，快速检验还记得多少。',
-  img: '背词配图：每次遇到新单词时，用该单词去百度图片搜一张最能描述的图片显示在卡片上，帮助建立形象记忆。图片取自公开网络搜索结果，仅供个人学习参考；不下载、不保存，仅在当前会话内临时显示。搜索超过数秒没有结果就不显示。'
+  img: '背词配图（内测中，默认关闭）：开启后，每次遇到新单词会用该单词去站外图片搜索取一张图显示在卡片上，帮助建立形象记忆。图片取自公开网络搜索结果，仅供个人学习参考；不下载、不保存，仅在当前会话内临时显示，搜索超过数秒没有结果就不显示。<br><br><b>该内容内测中，开启后会导致不稳定</b>：会真的发起站外请求，可能带来卡顿、图片与词义不符（抽象词基本搜不到）、图床限流或偶发请求失败等情况，失败时该区域会整块隐藏而不是显示破图。建议保持关闭。'
 };
 function termTip(name){
   const t = TERMS[name] || '';
@@ -1660,7 +1670,7 @@ const AppAuth = {
   defaultData(){
     const deployed = typeof location !== 'undefined' && location.protocol === 'https:';
     return {
-      settings: { daily: 20, phon: true, deriv: true, theme: 'auto', useOnline: true, autoOnline: true, studyMode: 'daily', studyFixed: 30, studyOrder: 'random', uiScale: 100, autoScale: true, onboarded: false, voice: 'en-US', autoSpeak: false, studyModeChoice: 'new', showImg: true, cloud: { enabled: deployed, lastSync: 0, endpoint: '' } },
+      settings: { daily: 20, phon: true, deriv: true, theme: 'auto', useOnline: true, autoOnline: true, studyMode: 'daily', studyFixed: 30, studyOrder: 'random', uiScale: 100, autoScale: true, onboarded: false, voice: 'en-US', autoSpeak: false, studyModeChoice: 'new', showImg: false, cloud: { enabled: deployed, lastSync: 0, endpoint: '' } },
       filter: { target: 'cet4', bases: ['primary','middle','hs'], deriv: true, presetName: '' },
       presets: [],
       wordState: {},
@@ -2872,7 +2882,14 @@ window.addEventListener('resize', () => { clearTimeout(_fitT); _fitT = setTimeou
 /* ================= 单词配图（百度图片，经后端代理） =================
    浏览器直连百度图片搜索会被 CORS 拦截（实测直连与公共代理均不可用），
    因此走 Supabase RPC `sl_image` 由数据库代发请求（RPC 本身允许跨域）。
-   要求：取第一张、数秒内没结果就不显示、不落盘存储（仅当前会话内存复用）。 */
+   要求：取第一张、数秒内没结果就不显示、不落盘存储（仅当前会话内存复用）。
+
+   ⚠️ v2.4.2 起这是**内测功能，默认关闭**，必须在「设置 → 偏好」里显式开启（showImg === true）。
+   旧账号里没有这个字段 → 视为关闭，与新用户一致。开启后会真的去请求外部搜索、
+   带来说明书已标注的不稳定性（图床限流、抽象词搜不到、偶发网络重置）。 */
+function imgEnabled(){
+  try{ return AppAuth.data().settings.showImg === true && WordImg.enabled; }catch(e){ return false; }
+}
 const WordImg = {
   cache: new Map(),        // word -> {url,title} | null
   pending: new Map(),
@@ -2880,11 +2897,12 @@ const WordImg = {
   active: 0,
   TIMEOUT: 5000,           // 单次搜索超时（超过则视为无图）
   MAX_CONCURRENT: 2,       // 并发上限，避免打满数据库连接
-  enabled: true,
+  enabled: true,           // 总开关（内测期留给排查用；日常开关是设置里的 showImg）
 
   get(word, gloss){
     const w = String(word || '').trim().toLowerCase();
-    if(!w || !this.enabled || !Supa.active()) return Promise.resolve(null);
+    // 唯一闸门：功能没开就一个请求都不发（prefetch 也走这里）
+    if(!w || !imgEnabled() || !Supa.active()) return Promise.resolve(null);
     const key = w + '|' + (gloss || '');
     if(this.cache.has(key)) return Promise.resolve(this.cache.get(key));
     if(this.pending.has(key)) return this.pending.get(key);
@@ -2922,9 +2940,9 @@ const WordImg = {
     }
     return null;
   },
-  /* 预取：给接下来的若干单词提前取图，背到时无需等待 */
+  /* 预取：给接下来的若干单词提前取图，背到时无需等待（功能没开就完全不动） */
   prefetch(words, ahead){
-    if(!this.enabled) return;
+    if(!imgEnabled()) return;
     const list = (words || []).slice(0, ahead || 6);
     for(const it of list){
       const isObj = it && typeof it === 'object';
@@ -2957,8 +2975,7 @@ function glossOf(e){
 /* 把配图渲染到容器里（含加载动画；失败或超时则整块隐藏） */
 async function fillWordImage(box, word, gloss){
   if(!box) return;
-  const show = (() => { try{ return AppAuth.data().settings.showImg !== false; }catch(e){ return true; } })();
-  if(!show || !WordImg.enabled){ box.hidden = true; box.innerHTML = ''; return; }
+  if(!imgEnabled()){ box.hidden = true; box.innerHTML = ''; return; }
   box.hidden = false;
   box.innerHTML = '<div class="img-skel"><i></i><span>配图中…</span></div>';
   let res = null;
@@ -3185,7 +3202,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.4.1', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.4.2', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -3214,7 +3231,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.4.1', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.4.2', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -3497,7 +3514,7 @@ const AppUI = {
     $('#set-phon').checked = s.phon;
     if($('#set-voice')) $('#set-voice').value = (s.voice === 'en-GB') ? 'en-GB' : 'en-US';
     if($('#set-autospeak')) $('#set-autospeak').checked = !!s.autoSpeak;
-    if($('#set-showimg')) $('#set-showimg').checked = s.showImg !== false;
+    if($('#set-showimg')) $('#set-showimg').checked = s.showImg === true;   // 内测功能：只认显式开启
     if($('#set-autoonline')) $('#set-autoonline').checked = true;
     $('#set-deriv').checked = s.deriv;
     $('#set-theme').value = s.theme;
@@ -4328,7 +4345,7 @@ const AppStudy = {
       '<div class="flashcard"><div class="fc-word-wrap"><span class="fc-word" data-fit data-fit-nowrap data-fit-max="'+fcFontSize(e.w)+'">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppStudy.speak()" aria-label="朗读 '+esc(e.w)+'（快捷键 ·）" title="朗读（快捷键 ·）">'+icon('volume2', 20)+'</button></div>' +
       '<div class="fc-ph" id="fc-ph"></div>' +
       passNote(curState) +
-      '<div class="fc-img" id="fc-img"></div>' +
+      '<div class="fc-img" id="fc-img"'+(imgEnabled() ? '' : ' hidden')+'></div>' +
       '<div id="fc-body" style="width:100%">'+(s.revealed ? '<div class="reveal-in">'+cardBody(e)+'</div>' : (s.idx < 3 ? '<div class="fc-preview"><div class="fc-preview-hint">先回忆它的意思与发音，再点下方按钮核对</div><button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示释义</button></div>' : '<button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示释义</button>'))+'</div></div>' +
       '<div class="fc-btns">' +
       '<button class="btn again" onclick="AppStudy.mark(\'again\')">不记得</button>' +
@@ -4549,7 +4566,7 @@ const AppReview = {
       '<div class="flashcard"><div class="fc-word-wrap"><span class="fc-word" data-fit data-fit-nowrap data-fit-max="'+fcFontSize(e.w)+'">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppReview.speak()" aria-label="朗读 '+esc(e.w)+'（快捷键 ·）" title="朗读（快捷键 ·）">'+icon('volume2', 20)+'</button></div>' +
       '<div class="fc-ph" id="fc-ph"></div>' +
       passNote(c) +
-      '<div class="fc-img" id="fc-img"></div>' +
+      '<div class="fc-img" id="fc-img"'+(imgEnabled() ? '' : ' hidden')+'></div>' +
       '<div id="fc-body" style="width:100%">'+(s.revealed ? cardBody(e) : '<button class="btn btn-primary btn-lg" onclick="AppReview.reveal()">显示释义</button>')+'</div></div>' +
       '<div class="fc-btns">' +
       '<button class="btn again" onclick="AppReview.mark(\'again\')">忘了</button>' +
@@ -4791,7 +4808,7 @@ const AppBrowse = {
       '<button class="close" onclick="AppUI.closeModal()">×</button>' +
       '<div class="word-detail"><div class="wd" data-fit data-fit-nowrap>'+esc(e.w)+'</div>' +
       passNote(st) +
-      '<div class="wd-img" id="wd-img"></div>' +
+      '<div class="wd-img" id="wd-img"'+(imgEnabled() ? '' : ' hidden')+'></div>' +
       '<div class="wmeta">'+(e.ph?'<span class="tag tag-blue">'+esc(e.ph)+'</span>':'<span class="tag tag-blue" id="wd-ph"></span>')+'<span class="tag '+stage.cls+'">'+stage.txt+'</span>' +
       (st && !SRS.isMastered(st) ? '<span class="tag tag-blue">第 '+Math.min((st.n||0)+1, SRS.ROUNDS)+' 遍复习待做</span>' : '') + '</div>' +
       (Array.isArray(e.def) && e.def.length ? '<div class="sec">释义</div><ul>'+e.def.map(([p,v]) => '<li>'+(p?'<b>'+esc(p)+'.</b> ':'')+esc(v)+'</li>').join('')+'</ul>' : (typeof e.def === 'string' && e.def ? '<div class="sec">释义</div><div class="muted">'+esc(e.def)+'</div>' : '<div class="sec">释义</div><div class="muted" id="wd-def">词库未收录释义，正在获取在线翻译…</div>')) +
@@ -4890,6 +4907,12 @@ const AppSettings = {
     d.settings.voice = $('#set-voice').value === 'en-GB' ? 'en-GB' : 'en-US';
     d.settings.autoSpeak = $('#set-autospeak').checked;
     if($('#set-showimg')) d.settings.showImg = $('#set-showimg').checked;
+    // 配图（内测）关掉时立刻丢弃缓存并让当前卡片的配图区消失，不留残影
+    if(!d.settings.showImg){
+      try{ WordImg.clear(); }catch(e){}
+      const ib = document.getElementById('fc-img');
+      if(ib){ ib.hidden = true; ib.innerHTML = ''; }
+    }
     d.settings.autoOnline = true;
     d.settings.useOnline = true;
     d.settings.deriv = $('#set-deriv').checked;
