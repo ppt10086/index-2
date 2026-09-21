@@ -836,7 +836,7 @@ li,td,th{text-wrap:normal}
 /* 术语说明按钮 / 背词提示 / 文本断行（v1.9.4 体验优化） */
 .tip{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--primary-soft);color:var(--primary);font-size:10.5px;font-weight:800;line-height:1;margin-left:4px;vertical-align:1px;cursor:pointer;user-select:none}
 .tip:hover{background:var(--primary);color:#fff}
-/* 内测标记 + 内测功能警示行（v2.5.0 配图默认关闭） */
+/* 内测标记 + 内测功能警示行（v2.5.1 配图默认关闭） */
 .beta-tag{display:inline-block;margin-left:5px;padding:2px 7px;border-radius:999px;background:var(--warn-soft);color:var(--warn);font-size:10.5px;font-weight:800;letter-spacing:.02em;vertical-align:1px;white-space:nowrap}
 .set-warn{display:flex;flex-direction:column;gap:3px;margin:2px 0 4px;padding:9px 12px;border-radius:11px;
   background:var(--warn-soft);border:1px solid rgba(189,114,9,.22);font-size:12px;line-height:1.55}
@@ -1050,7 +1050,7 @@ html.sl-has-session #view-auth{display:none}
       <div class="avatar" id="side-avatar">?</div>
       <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
     </div>
-    <div class="side-foot">版本 2.5.0 · 全在线词库<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 2.5.1 · 全在线词库<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -1179,7 +1179,7 @@ html.sl-has-session #view-auth{display:none}
               <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存外观</button>
             </div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.5.0</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.5.1</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用在线优先设计（v2.0.0）：账号与学习进度保存在云端数据库，需要联网使用；词库数据同样在线加载并缓存在本机，不再内嵌于页面。仍建议定期「导出数据备份」。</div>
@@ -1317,6 +1317,7 @@ const Supa = {
   tried: false,
   _busy: false,
   _dirty: false,
+  _gen: 0,             // 改动代数：每次 onDataChanged 自增，用来识别「上传期间又有改动」
   _retryTimer: null,
   _watchTimer: null,
   lastOk: null,
@@ -1431,17 +1432,30 @@ const Supa = {
       if(r && r.ok) this._hadRemote = false;
     }catch(e){}
   },
-  /* ---- 自动同步泵：每个必要动作后串行上传；失败静默重试，持续失败才交给 Net 判定 ---- */
+  /* ---- 自动同步泵：每个必要动作后串行上传；失败静默重试，持续失败才交给 Net 判定 ----
+     ⚠️ 用「改动代数 _gen」而不是只看 _dirty：
+     上传是异步的，飞行途中完全可能又发生新的改动。若成功分支无条件把 _dirty 置 false
+     并清掉待同步标记，那次改动就被静默吞掉（本机有、云端没有，且界面显示「已同步」）。
+     所以：上传前记下代数，成功后若代数变了，说明期间有新改动 → 保留 dirty/标记再传一轮。
+     （这个窗口是复刻套件的自检脚本先发现的：learn() 触发的上传还在飞，
+       紧接着的一次 save() 就被丢了。） */
   async _pump(){
     if(this._busy) return;
     this._busy = true;
     try{
       do{
         this._dirty = false;
+        const gen = this._gen;
         const s = AppAuth.current();
         if(!s) break;
         try{
           await this.saveData(AppAuth.data());
+          if(this._gen !== gen){
+            // 上传期间又改了：这一轮的结果已经过时，保留下一次上传
+            this._dirty = true;
+            this._markPending();
+            continue;
+          }
           this._dirty = false;
           this._clearPending();
           this.lastOk = Date.now();
@@ -1468,6 +1482,7 @@ const Supa = {
     if(!this.active()) return;
     const s = AppAuth.current();
     if(!s) return;
+    this._gen++;
     this._dirty = true;
     this._markPending();
     this._pump();
@@ -2917,7 +2932,7 @@ window.addEventListener('resize', () => { clearTimeout(_fitT); _fitT = setTimeou
    因此走 Supabase RPC `sl_image` 由数据库代发请求（RPC 本身允许跨域）。
    要求：取第一张、数秒内没结果就不显示、不落盘存储（仅当前会话内存复用）。
 
-   ⚠️ v2.5.0 起这是**内测功能，默认关闭**，必须在「设置 → 偏好」里显式开启（showImg === true）。
+   ⚠️ v2.5.1 起这是**内测功能，默认关闭**，必须在「设置 → 偏好」里显式开启（showImg === true）。
    旧账号里没有这个字段 → 视为关闭，与新用户一致。开启后会真的去请求外部搜索、
    带来说明书已标注的不稳定性（图床限流、抽象词搜不到、偶发网络重置）。 */
 function imgEnabled(){
@@ -3235,7 +3250,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.5.0', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.5.1', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -3264,7 +3279,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.5.0', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.5.1', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
