@@ -16,15 +16,15 @@
 <meta name="apple-mobile-web-app-title" content="StudyLens">
 <style>
 :root{
-  /* 黑白灰梯度主题（v2.6.1）：整套配色只用中性灰阶。
+  /* 黑白灰梯度主题（v2.6.2）：整套配色只用中性灰阶。
      品牌色 = 近黑（深色主题下反过来 = 近白）；层级靠「灰阶深浅 + 实心/描边」区分，不靠色相。 */
-  --bg:#f7f7f8; --panel:#ffffff; --panel2:#f2f2f3; --panel3:#fafafa;
-  --text:#32323a; --muted:#6d6d75; --line:#e7e7e9; --line2:#cfcfd4;
-  --primary:#32323a; --primary2:#23232a; --primary-soft:#ececef;
-  --btn-solid:#43434c; --btn-solid-hover:#33333b; --btn-fg:#ffffff;
-  --accent:#55555f; --accent-soft:#eeeef0;
-  --warn:#55555f; --warn-soft:#f1f1f3;
-  --danger:#3a3a42; --danger-soft:#eeeef0;
+  --bg:#eeeef1; --panel:#f8f8fa; --panel2:#e9e9ed; --panel3:#f3f3f6;
+  --text:#4a4a52; --muted:#6d6d76; --line:#e2e2e6; --line2:#cdcdd3;
+  --primary:#4a4a52; --primary2:#3a3a42; --primary-soft:#e8e8eb;
+  --btn-solid:#55555f; --btn-solid-hover:#45454e; --btn-fg:#ffffff;
+  --accent:#62626c; --accent-soft:#e8e8eb;
+  --warn:#62626c; --warn-soft:#eaeaed;
+  --danger:#4d4d56; --danger-soft:#e8e8eb;
   --radius:18px; --radius-sm:11px; --radius-lg:24px;
   --shadow:0 0 0 1px rgba(0,0,0,.05), 0 2px 6px rgba(0,0,0,.05), 0 22px 46px -22px rgba(0,0,0,.20);
   --shadow-sm:0 0 0 1px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.04), 0 8px 22px -14px rgba(0,0,0,.16);
@@ -32,13 +32,13 @@
   color-scheme:light;
 }
 [data-theme="dark"]{
-  --bg:#17171b; --panel:#1e1e23; --panel2:#27272d; --panel3:#1b1b20;
-  --text:#dcdce1; --muted:#a1a1a9; --line:#31313a; --line2:#4a4a54;
-  --primary:#dcdce1; --primary2:#ececf0; --primary-soft:#2a2a31;
-  --btn-solid:#d7d7dd; --btn-solid-hover:#e6e6ea; --btn-fg:#1c1c22;
-  --accent:#bfbfc7; --accent-soft:#26262c;
-  --warn:#bfbfc7; --warn-soft:#28282f;
-  --danger:#dcdce1; --danger-soft:#28282f;
+  --bg:#1b1b21; --panel:#232329; --panel2:#2b2b32; --panel3:#1f1f25;
+  --text:#cdcdd3; --muted:#9c9ca5; --line:#34343d; --line2:#4e4e59;
+  --primary:#cdcdd3; --primary2:#dedee4; --primary-soft:#2d2d35;
+  --btn-solid:#c9c9d0; --btn-solid-hover:#d8d8de; --btn-fg:#22222a;
+  --accent:#b4b4bd; --accent-soft:#292930;
+  --warn:#b4b4bd; --warn-soft:#2b2b33;
+  --danger:#cdcdd3; --danger-soft:#2b2b33;
   --shadow:0 0 0 1px rgba(255,255,255,.05), 0 2px 6px rgba(0,0,0,.30), 0 24px 48px -22px rgba(0,0,0,.6);
   --shadow-sm:0 0 0 1px rgba(255,255,255,.04), 0 1px 2px rgba(0,0,0,.28), 0 10px 26px -16px rgba(0,0,0,.6);
   color-scheme:dark;
@@ -163,7 +163,7 @@ p,li,td,th{text-wrap:pretty}
 /* shell */
 /* --vpu 由 JS 按运行时 CSS zoom 折算（zoom 会连 100dvh 一起放大，直接用 100dvh 会溢出整屏） */
 .shell{display:flex; min-height:var(--vpu,100dvh)}
-/* 侧栏（v2.6.1）：参考 ChatGPT 的可折叠样式。
+/* 侧栏（v2.6.2）：参考 ChatGPT 的可折叠样式。
    左上角只有一个三条杠按钮：点开/收起；收起后宽度归零、边框与内边距一并去掉，
    不留任何边。状态记在 html.side-collapsed 上（解析期就能定，避免开页闪一下）。 */
 .sidebar{width:var(--sidebar-w); flex-shrink:0; background:var(--panel); border-right:1px solid var(--line);
@@ -202,7 +202,10 @@ html.side-collapsed .main{padding-left:64px}
 .prof-avatar img{width:100%; height:100%; object-fit:cover; display:block}
 .prof-head-act{display:flex; flex-direction:column; gap:8px; min-width:0}
 .prof-head-act .row{gap:8px; flex-wrap:wrap}
-.side-user .avatar{width:34px; height:34px; border-radius:50%; background:var(--text); color:var(--bg); display:flex; align-items:center; justify-content:center; font-weight:750; font-size:14px; flex-shrink:0; box-shadow:0 4px 10px -4px rgba(0,0,0,.45)}
+.side-user .avatar{width:34px; height:34px; border-radius:50%; background:var(--text); color:var(--bg); display:flex; align-items:center; justify-content:center; font-weight:750; font-size:14px; flex-shrink:0; box-shadow:0 4px 10px -4px rgba(0,0,0,.45); overflow:hidden}
+/* 头像图片必须被限制在框内：原来只有 #prof-avatar 有 img 的尺寸规则，
+   侧栏那个 34px 的圆里塞进 192px 的原图就会溢出（v2.6.2 修） */
+.side-user .avatar img,.prof-avatar img{width:100%; height:100%; object-fit:cover; display:block; border-radius:inherit}
 .side-user .un{font-size:13px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .side-user .ut{font-size:11px; color:var(--muted)}
 .main{flex:1; padding:28px 34px 70px; max-width:1180px; margin:0 auto; width:100%}
@@ -405,14 +408,14 @@ input[type="range"]:focus-visible{box-shadow:none; outline:2px solid var(--prima
   --ease-out:cubic-bezier(.22,1,.36,1);
   --dur:170ms; --dur-slow:340ms;
   --space-xs:6px; --space-sm:10px; --space-md:16px; --space-lg:26px; --space-xl:40px;
-  --glass:rgba(255,255,255,.72); --glass-strong:rgba(255,255,255,.88);
+  --glass:rgba(248,248,250,.76); --glass-strong:rgba(248,248,250,.92);
   --glass-line:rgba(0,0,0,.08);
   /* 环境光斑：原来是紫/绿/蓝，现在只留灰阶深浅 */
   --amb-a:rgba(0,0,0,.05); --amb-b:rgba(0,0,0,.035); --amb-c:rgba(0,0,0,.025);
-  --skel-hi:rgba(255,255,255,.55);
+  --skel-hi:rgba(255,255,255,.75);
 }
 [data-theme="dark"]{
-  --glass:rgba(24,24,28,.62); --glass-strong:rgba(24,24,28,.84);
+  --glass:rgba(26,26,31,.62); --glass-strong:rgba(26,26,31,.84);
   --glass-line:rgba(255,255,255,.08);
   --amb-a:rgba(255,255,255,.055); --amb-b:rgba(255,255,255,.04); --amb-c:rgba(255,255,255,.025);
   --skel-hi:rgba(255,255,255,.06);
@@ -873,13 +876,13 @@ li,td,th{text-wrap:normal}
 /* 术语说明按钮 / 背词提示 / 文本断行（v1.9.4 体验优化） */
 .tip{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--primary-soft);color:var(--primary);font-size:10.5px;font-weight:800;line-height:1;margin-left:4px;vertical-align:1px;cursor:pointer;user-select:none}
 .tip:hover{background:var(--primary);color:var(--btn-fg)}
-/* 内测标记 + 内测功能警示行（v2.6.1 配图默认关闭） */
+/* 内测标记 + 内测功能警示行（v2.6.2 配图默认关闭） */
 .beta-tag{display:inline-block;margin-left:5px;padding:2px 7px;border-radius:999px;background:var(--warn-soft);color:var(--warn);font-size:10.5px;font-weight:800;letter-spacing:.02em;vertical-align:1px;white-space:nowrap}
 .set-warn{display:flex;flex-direction:column;gap:3px;margin:2px 0 4px;padding:9px 12px;border-radius:11px;
   background:var(--warn-soft);border:1px solid var(--line2);font-size:12px;line-height:1.55}
 .set-warn b{color:var(--warn);font-size:12.5px}
 .set-warn span{color:var(--muted)}
-/* 偏好自动保存提示（v2.6.1 起没有「保存」按钮了） */
+/* 偏好自动保存提示（v2.6.2 起没有「保存」按钮了） */
 .autosave-hint{margin-top:14px;padding:9px 12px;border-radius:11px;background:var(--panel2);
   border:1px solid var(--line);font-size:12px;color:var(--muted);transition:color .2s var(--ease),background .2s var(--ease)}
 .autosave-hint b{color:var(--text)}
@@ -1106,7 +1109,7 @@ html.sl-has-session #view-auth{display:none}
       <span class="su-txt"><span class="un" id="side-name">—</span><span class="ut" id="side-role">用户中心</span></span>
       <span class="su-chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
     </button>
-    <div class="side-foot">版本 2.6.1 · 全在线词库<br>词库数据整理自公开教学资料</div>
+    <div class="side-foot">版本 2.6.2 · 全在线词库<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -1232,7 +1235,7 @@ html.sl-has-session #view-auth{display:none}
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div>
             <div class="autosave-hint" id="prefs-autosave-appearance">改动会自动保存</div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.6.1</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.6.2</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用在线优先设计（v2.0.0）：账号与学习进度保存在云端数据库，需要联网使用；词库数据同样在线加载并缓存在本机，不再内嵌于页面。仍建议定期「导出数据备份」。</div>
@@ -1262,7 +1265,7 @@ html.sl-has-session #view-auth{display:none}
       </div>
     </section>
 
-    <!-- 用户中心（v2.6.1）：头像 / 昵称 / 个人信息，改动自动保存 -->
+    <!-- 用户中心（v2.6.2）：头像 / 昵称 / 个人信息，改动自动保存 -->
     <section id="page-profile" hidden>
       <div class="topbar"><div><h1>用户中心</h1><div class="sub">头像、昵称与个人信息；改动会自动保存到云端</div></div>
         <button class="btn btn-sm" onclick="AppUI.go('settings')">偏好设置</button></div>
@@ -1819,7 +1822,7 @@ const AppAuth = {
       filter: { target: 'cet4', bases: ['primary','middle','hs'], deriv: true, presetName: '' },
       presets: [],
       wordState: {},
-      profile: { nick: '', bio: '', email: '', avatar: '' },   // 用户中心资料（v2.6.1）
+      profile: { nick: '', bio: '', email: '', avatar: '' },   // 用户中心资料（v2.6.2）
       stats: { created: now(), studyDays: 0, lastStudyDay: '', dayLog: {}, totalStudy: 0, totalKnown: 0, totalReview: 0, reviewDays: {}, _srs: 2 },
       meta: { updated: 0 },
       studySession: null
@@ -3048,7 +3051,7 @@ window.addEventListener('resize', () => { clearTimeout(_fitT); _fitT = setTimeou
    因此走 Supabase RPC `sl_image` 由数据库代发请求（RPC 本身允许跨域）。
    要求：取第一张、数秒内没结果就不显示、不落盘存储（仅当前会话内存复用）。
 
-   ⚠️ v2.6.1 起这是**内测功能，默认关闭**，必须在「设置 → 偏好」里显式开启（showImg === true）。
+   ⚠️ v2.6.2 起这是**内测功能，默认关闭**，必须在「设置 → 偏好」里显式开启（showImg === true）。
    旧账号里没有这个字段 → 视为关闭，与新用户一致。开启后会真的去请求外部搜索、
    带来说明书已标注的不稳定性（图床限流、抽象词搜不到、偶发网络重置）。 */
 function imgEnabled(){
@@ -3366,7 +3369,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.6.1', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.6.2', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -3395,7 +3398,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.6.1', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.6.2', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -3445,7 +3448,7 @@ const AppUI = {
   page: 'dashboard',
   etab: 'study',                                // 进英语页默认落在「背新单词」入口（没有词表时该页会引导去筛选）
 
-  /* ---- 侧栏折叠（v2.6.1，参考 ChatGPT）----
+  /* ---- 侧栏折叠（v2.6.2，参考 ChatGPT）----
      状态放在 <html> 的 class 上：解析期就能定，开页不会先展开再收起闪一下；
      同一份状态也存进本机 localStorage（这是设备偏好，不进云端同步）。 */
   sideCollapsed(){ return document.documentElement.classList.contains('side-collapsed'); },
@@ -3499,7 +3502,7 @@ const AppUI = {
     $('#side-name').textContent = AppAuth.displayLabel();
     $('#side-role').textContent = '用户中心';
     $('#set-user').textContent = AppAuth.displayName();
-    AppProfile.paintAvatar();       // 侧栏头像：有上传过就显示图片（v2.6.1）
+    AppProfile.paintAvatar();       // 侧栏头像：有上传过就显示图片（v2.6.2）
     $('#set-daily').value = AppAuth.data().settings.daily;
     $('#set-phon').checked = AppAuth.data().settings.phon;
     if($('#set-voice')) $('#set-voice').value = (AppAuth.data().settings.voice === 'en-GB') ? 'en-GB' : 'en-US';
@@ -3725,7 +3728,7 @@ const AppUI = {
     $('#set-study-fixed').value = s.studyFixed || 30;
     $('#set-study-order').value = s.studyOrder || 'random';
     $('#set-autoscale').checked = s.autoScale !== false;
-    /* 界面缩放（v2.6.1）：拖动时只预览数字，**松开后才应用**。
+    /* 界面缩放（v2.6.2）：拖动时只预览数字，**松开后才应用**。
        拖动过程中反复改 zoom 会让整页反复重排（观感像在抖），而且每动一格都会写一次云端。 */
     const scaleEl = $('#set-scale'), scaleLab = $('#set-scale-val');
     scaleEl.oninput = () => {
@@ -4010,7 +4013,7 @@ function applyTheme(){
   const dark = s === 'dark' || (s === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
   const meta = document.querySelector('meta[name="theme-color"]');
-  if(meta) meta.setAttribute('content', dark ? '#17171b' : '#f7f7f8');
+  if(meta) meta.setAttribute('content', dark ? '#1b1b21' : '#eeeef1');
 }
 function autoScaleValue(){
   const w = window.innerWidth || document.documentElement.clientWidth || 1280;
@@ -5119,7 +5122,7 @@ const AppSettings = {
     this.catName = name;
     if(AppUI && typeof AppUI.renderSettings === 'function') AppUI.renderSettings();
   },
-  /* ---- 偏好自动保存（v2.6.1）----
+  /* ---- 偏好自动保存（v2.6.2）----
      已删除「保存偏好 / 保存外观」按钮：所有开关、下拉、输入框改动即保存。
      输入框用 change（失焦或回车才触发）而不是 input，避免每敲一个字符就写一次云端。 */
   AUTO_SAVE_IDS: ['set-daily', 'set-study-fixed', 'set-study-order', 'set-phon', 'set-voice',
@@ -5250,7 +5253,7 @@ const AppSettings = {
   }
 };
 
-/* ================= 用户中心（v2.6.1） =================
+/* ================= 用户中心（v2.6.2） =================
    头像 / 昵称 / 简介 / 邮箱，改动自动保存并随账号数据一起上云。
    头像在本机用 canvas 裁成正方形并压缩成 JPEG data URL 再存进 profile.avatar，
    不依赖任何上传服务，也不会把图片发给第三方。 */
