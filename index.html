@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="StudyLens — personal English vocabulary learning system">
 <title>StudyLens · Personal Learning System</title>
-<meta name="theme-color" content="#f6f4ff">
+<meta name="theme-color" content="#f7f7f8">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/plus-jakarta-sans@5/index.css" media="print" onload="this.media='all'">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2096%2096%22%20width%3D%2296%22%20height%3D%2296%22%20role%3D%22img%22%20aria-label%3D%22StudyLens%20minimal%20book%22%3E%0A%20%20%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%2288%22%20height%3D%2288%22%20rx%3D%2224%22%20fill%3D%22%23f6f4ff%22%2F%3E%0A%20%20%3Crect%20x%3D%224.75%22%20y%3D%224.75%22%20width%3D%2286.5%22%20height%3D%2286.5%22%20rx%3D%2223.25%22%20fill%3D%22none%22%20stroke%3D%22%23e7e0f8%22%20stroke-width%3D%221.5%22%2F%3E%0A%20%20%3C%21--%20%E8%B4%9F%E7%A9%BA%E9%97%B4%E5%AD%97%E6%AF%8D%20e%20%E4%B8%8E%E4%B9%A6%E9%A1%B5%20--%3E%0A%20%20%3Cpath%20d%3D%22M17%2042%20Q31%2031%2047%2040%20V72%20Q31%2063%2017%2074%20Z%22%20fill%3D%22none%22%20stroke%3D%22%231e1b4b%22%20stroke-width%3D%225.6%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M79%2042%20Q65%2031%2049%2040%20V72%20Q65%2063%2079%2074%20Z%22%20fill%3D%22none%22%20stroke%3D%22%231e1b4b%22%20stroke-width%3D%225.6%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2247%22%20cy%3D%2238%22%20r%3D%224%22%20fill%3D%22%231e1b4b%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M58%2056%20H68%20M58%2062%20H66%22%20stroke%3D%22%231e1b4b%22%20stroke-width%3D%224%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Ctext%20x%3D%2264%22%20y%3D%2255%22%20font-family%3D%22ui-rounded%2C%27Segoe%20UI%27%2Csystem-ui%2CArial%2Csans-serif%22%20font-size%3D%2214%22%20font-weight%3D%22800%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22central%22%20fill%3D%22%231e1b4b%22%3Ee%3C%2Ftext%3E%0A%20%20%3Ccircle%20cx%3D%2275%22%20cy%3D%2222%22%20r%3D%225.5%22%20fill%3D%22%237c3aed%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2220%22%20cy%3D%2280%22%20r%3D%224%22%20fill%3D%22%237c3aed%22%20fill-opacity%3D%22.55%22%2F%3E%0A%3C%2Fsvg%3E%0A">
@@ -16,40 +16,44 @@
 <meta name="apple-mobile-web-app-title" content="StudyLens">
 <style>
 :root{
-  --bg:#f6f4ff; --panel:#ffffff; --panel2:#f0edf8; --panel3:#faf9fd;
-  --text:#1e1b4b; --muted:#6b6482; --line:#e8e3f2; --line2:#cfc5e8;
-  --primary:#7c3aed; --primary2:#6d28d9; --primary-soft:#f0e9ff;
-  --accent:#0a7a50; --accent-soft:#e1f4ec;
-  --warn:#9a5500; --warn-soft:#faf0dd;
-  --danger:#c23636; --danger-soft:#fbe9e9;
+  /* 黑白灰梯度主题（v2.6.0）：整套配色只用中性灰阶。
+     品牌色 = 近黑（深色主题下反过来 = 近白）；层级靠「灰阶深浅 + 实心/描边」区分，不靠色相。 */
+  --bg:#f7f7f8; --panel:#ffffff; --panel2:#f2f2f3; --panel3:#fafafa;
+  --text:#111112; --muted:#6c6c71; --line:#e7e7e9; --line2:#cfcfd3;
+  --primary:#18181a; --primary2:#000000; --primary-soft:#ececee;
+  --btn-solid:#18181a; --btn-solid-hover:#000000; --btn-fg:#ffffff;
+  --accent:#3d3d40; --accent-soft:#ededef;
+  --warn:#4a4a4e; --warn-soft:#f1f1f2;
+  --danger:#1a1a1c; --danger-soft:#ededef;
   --radius:18px; --radius-sm:11px; --radius-lg:24px;
-  --shadow:0 0 0 1px rgba(34,27,56,.05), 0 2px 6px rgba(34,27,56,.05), 0 22px 46px -22px rgba(63,44,130,.22);
-  --shadow-sm:0 0 0 1px rgba(34,27,56,.04), 0 1px 2px rgba(34,27,56,.04), 0 8px 22px -14px rgba(63,44,130,.18);
+  --shadow:0 0 0 1px rgba(0,0,0,.05), 0 2px 6px rgba(0,0,0,.05), 0 22px 46px -22px rgba(0,0,0,.20);
+  --shadow-sm:0 0 0 1px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.04), 0 8px 22px -14px rgba(0,0,0,.16);
   --sidebar-w:248px;
   color-scheme:light;
 }
 [data-theme="dark"]{
-  --bg:#131020; --panel:#1c1829; --panel2:#241f36; --panel3:#191526;
-  --text:#f1edfa; --muted:#a49db9; --line:#2e2743; --line2:#4a4170;
-  --primary:#a78bfa; --primary2:#8b5cf6; --primary-soft:#332a55;
-  --accent:#34c48e; --accent-soft:#103528;
-  --warn:#e8ab45; --warn-soft:#3b2d12;
-  --danger:#ef6f6f; --danger-soft:#3d2028;
-  --shadow:0 0 0 1px rgba(241,237,250,.05), 0 2px 6px rgba(0,0,0,.22), 0 24px 48px -22px rgba(0,0,0,.5);
-  --shadow-sm:0 0 0 1px rgba(241,237,250,.04), 0 1px 2px rgba(0,0,0,.2), 0 10px 26px -16px rgba(0,0,0,.5);
+  --bg:#0f0f10; --panel:#17171a; --panel2:#1f1f22; --panel3:#131316;
+  --text:#f2f2f3; --muted:#a1a1a6; --line:#2a2a2e; --line2:#414146;
+  --primary:#f2f2f3; --primary2:#ffffff; --primary-soft:#25252a;
+  --btn-solid:#f2f2f3; --btn-solid-hover:#ffffff; --btn-fg:#111112;
+  --accent:#c9c9ce; --accent-soft:#232327;
+  --warn:#c9c9ce; --warn-soft:#25252a;
+  --danger:#f2f2f3; --danger-soft:#25252a;
+  --shadow:0 0 0 1px rgba(255,255,255,.05), 0 2px 6px rgba(0,0,0,.30), 0 24px 48px -22px rgba(0,0,0,.6);
+  --shadow-sm:0 0 0 1px rgba(255,255,255,.04), 0 1px 2px rgba(0,0,0,.28), 0 10px 26px -16px rgba(0,0,0,.6);
   color-scheme:dark;
 }
 *{box-sizing:border-box; margin:0; padding:0}
 html{scroll-behavior:smooth; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale}
 body{font-family:"Plus Jakarta Sans Variable","Plus Jakarta Sans","Segoe UI","PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif; background:var(--bg); color:var(--text); font-size:15px; line-height:1.62; overflow-x:hidden; -webkit-tap-highlight-color:transparent}
-.skip-link{position:fixed; left:14px; top:-60px; z-index:1000; background:var(--primary); color:#fff; padding:9px 16px; border-radius:11px; font-weight:700; font-size:14px; box-shadow:var(--shadow); transition:top .18s ease-out; text-decoration:none}
-.skip-link:focus{top:14px; color:#fff; text-decoration:none}
+.skip-link{position:fixed; left:14px; top:-60px; z-index:1000; background:var(--primary); color:var(--btn-fg); padding:9px 16px; border-radius:11px; font-weight:700; font-size:14px; box-shadow:var(--shadow); transition:top .18s ease-out; text-decoration:none}
+.skip-link:focus{top:14px; color:var(--btn-fg); text-decoration:none}
 /* 移动端禁用双击缩放与 300ms 点击延迟（保留双指缩放） */
 html,body,button,input,select,textarea,a,label,.btn,.nav-btn,.bnav-btn,.book-opt,.lib-row,.flashcard,.pager button,[onclick]{touch-action:manipulation}
 button{font-family:inherit; cursor:pointer; border:none; background:none; color:inherit}
 input,select,textarea{font-family:inherit; font-size:14px; color:var(--text); background:var(--panel); border:1px solid var(--line2); border-radius:var(--radius-sm); padding:9px 12px; outline:none; transition:border-color .15s ease-out, box-shadow .15s ease-out, background-color .15s ease-out}
-input:hover,select:hover,textarea:hover{border-color:#b9aede}
-[data-theme="dark"] input:hover,[data-theme="dark"] select:hover,[data-theme="dark"] textarea:hover{border-color:#55497d}
+input:hover,select:hover,textarea:hover{border-color:var(--line2)}
+[data-theme="dark"] input:hover,[data-theme="dark"] select:hover,[data-theme="dark"] textarea:hover{border-color:var(--line2)}
 input:focus,select:focus,textarea:focus{border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft)}
 input::placeholder{color:var(--muted); opacity:.75}
 a{color:var(--primary); text-decoration:none}
@@ -65,17 +69,17 @@ h1,h2,h3,h4{text-wrap:balance; line-height:1.3}
 p,li,td,th{text-wrap:pretty}
 
 /* buttons */
-.btn{display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:9px 17px; border-radius:12px; font-size:14px; font-weight:600; background:var(--panel); color:var(--text); border:1px solid var(--line2); transition-property:background-color,color,border-color,box-shadow,scale; transition-duration:150ms; transition-timing-function:ease-out; user-select:none; white-space:nowrap; box-shadow:0 1px 2px rgba(34,27,56,.03)}
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:9px 17px; border-radius:12px; font-size:14px; font-weight:600; background:var(--panel); color:var(--text); border:1px solid var(--line2); transition-property:background-color,color,border-color,box-shadow,scale; transition-duration:150ms; transition-timing-function:ease-out; user-select:none; white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,.03)}
 .btn:hover{border-color:var(--primary); color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft)}
 .btn:active{scale:.96}
-.btn-primary{background:linear-gradient(180deg,var(--primary),var(--primary2)); color:#fff; border:1px solid transparent; text-shadow:0 1px 2px rgba(20,10,40,.28); box-shadow:0 8px 18px -8px rgba(124,58,237,.55)}
-.btn-primary:hover{color:#fff; filter:brightness(1.05); box-shadow:0 10px 22px -8px rgba(124,58,237,.6)}
-.btn-primary:active{filter:brightness(.97)}
-.btn-accent{background:linear-gradient(180deg,var(--accent),#086b47); color:#fff; border:1px solid transparent; box-shadow:0 8px 18px -8px rgba(10,122,80,.5)}
-.btn-accent:hover{color:#fff; filter:brightness(1.05)}
-.btn-danger{background:var(--danger-soft); color:var(--danger); border:1px solid rgba(214,69,69,.3)}
+.btn-primary{background:var(--btn-solid); color:var(--btn-fg); border:1px solid transparent; box-shadow:0 8px 18px -10px rgba(0,0,0,.45)}
+.btn-primary:hover{background:var(--btn-solid-hover); color:var(--btn-fg); box-shadow:0 10px 22px -10px rgba(0,0,0,.5)}
+.btn-primary:active{opacity:.92}
+.btn-accent{background:var(--accent); color:var(--btn-fg); border:1px solid transparent; box-shadow:0 8px 18px -10px rgba(0,0,0,.35)}
+.btn-accent:hover{color:var(--btn-fg); opacity:.92}
+.btn-danger{background:var(--danger-soft); color:var(--danger); border:1px solid var(--line2)}
 .btn-danger:hover{border-color:var(--danger); box-shadow:0 0 0 3px var(--danger-soft)}
-.btn-ghost{background:transparent; border-color:transparent; color:#574f6e; box-shadow:none}
+.btn-ghost{background:transparent; border-color:transparent; color:var(--muted); box-shadow:none}
 .btn-ghost:hover{color:var(--primary); background:var(--primary-soft)}
 .btn-sm{padding:6px 13px; font-size:13px; border-radius:10px}
 .btn-lg{padding:12px 24px; font-size:15px; border-radius:14px}
@@ -125,7 +129,7 @@ p,li,td,th{text-wrap:pretty}
 
 /* progress */
 .bar{height:8px; border-radius:99px; background:var(--panel2); overflow:hidden}
-.bar > i{display:block; height:100%; border-radius:99px; background:linear-gradient(90deg,var(--primary),var(--accent)); transition:width .4s cubic-bezier(.2,0,0,1)}
+.bar > i{display:block; height:100%; border-radius:99px; background:var(--primary); transition:width .4s cubic-bezier(.2,0,0,1)}
 .ico-svg{display:inline-block; vertical-align:-.16em; flex-shrink:0}
 .nav-btn .ico{width:18px; height:18px; color:var(--muted); transition:color .15s ease-out}
 .nav-btn.active .ico{color:var(--primary)}
@@ -137,14 +141,14 @@ p,li,td,th{text-wrap:pretty}
 .tabs{display:flex; gap:4px; flex-wrap:wrap; margin-bottom:20px; background:var(--panel2); padding:5px; border-radius:14px; border:1px solid var(--line)}
 .tabs button{padding:9px 18px; border-radius:10px; font-size:14px; font-weight:650; color:var(--muted); transition-property:background-color,color,box-shadow; transition-duration:160ms; transition-timing-function:ease-out; display:inline-flex; align-items:center; gap:6px}
 .tabs button:hover{color:var(--text)}
-.tabs button.active{background:var(--panel); color:var(--primary); box-shadow:0 0 0 1px var(--line2), 0 4px 12px -6px rgba(34,27,56,.25)}
+.tabs button.active{background:var(--panel); color:var(--primary); box-shadow:0 0 0 1px var(--line2), 0 4px 12px -6px rgba(0,0,0,.18)}
 
 /* auth */
-.auth-wrap{min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:24px; background:radial-gradient(1100px 560px at 12% -12%, rgba(124,58,237,.13), transparent 62%), radial-gradient(900px 520px at 108% 112%, rgba(14,159,110,.12), transparent 60%), var(--bg)}
+.auth-wrap{min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:24px; background:radial-gradient(1100px 560px at 12% -12%, var(--amb-a), transparent 62%), radial-gradient(900px 520px at 108% 112%, var(--amb-b), transparent 60%), var(--bg)}
 .auth-card{width:100%; max-width:430px; background:var(--panel); border:1px solid var(--line); border-radius:26px; box-shadow:var(--shadow); padding:38px 34px 30px; position:relative; overflow:hidden}
-.auth-card::before{content:""; position:absolute; top:0; left:0; right:0; height:5px; background:linear-gradient(90deg,var(--primary),var(--accent))}
+.auth-card::before{content:""; position:absolute; top:0; left:0; right:0; height:5px; background:var(--primary)}
 .auth-brand{display:flex; align-items:center; justify-content:center; gap:10px; font-size:24px; font-weight:800; letter-spacing:.24em; color:var(--text); margin-left:.24em}
-.auth-brand::before{content:""; width:26px; height:26px; border-radius:9px; background:linear-gradient(160deg,var(--primary),var(--primary2)); box-shadow:0 6px 14px -6px rgba(124,58,237,.7); margin-right:4px; margin-left:.24em}
+.auth-brand::before{content:""; width:26px; height:26px; border-radius:9px; background:var(--primary); box-shadow:0 6px 14px -8px rgba(0,0,0,.45); margin-right:4px; margin-left:.24em}
 .auth-tagline{text-align:center; color:var(--muted); font-size:11.5px; letter-spacing:.22em; margin-top:6px; margin-bottom:20px}
 .auth-card .lead{color:var(--muted); font-size:13.5px; margin-bottom:24px; text-align:center; line-height:1.75; text-wrap:pretty}
 .field{margin-bottom:15px}
@@ -159,7 +163,7 @@ p,li,td,th{text-wrap:pretty}
 /* shell */
 /* --vpu 由 JS 按运行时 CSS zoom 折算（zoom 会连 100dvh 一起放大，直接用 100dvh 会溢出整屏） */
 .shell{display:flex; min-height:var(--vpu,100dvh)}
-/* 侧栏（v2.5.2）：参考 ChatGPT 的可折叠样式。
+/* 侧栏（v2.6.0）：参考 ChatGPT 的可折叠样式。
    左上角只有一个三条杠按钮：点开/收起；收起后宽度归零、边框与内边距一并去掉，
    不留任何边。状态记在 html.side-collapsed 上（解析期就能定，避免开页闪一下）。 */
 .sidebar{width:var(--sidebar-w); flex-shrink:0; background:var(--panel); border-right:1px solid var(--line);
@@ -184,8 +188,21 @@ html.side-collapsed .main{padding-left:64px}
 .nav-btn.active{background:var(--primary-soft); color:var(--primary); font-weight:700}
 .nav-sep{height:1px; background:var(--line); margin:12px 8px}
 .side-foot{margin-top:auto; padding:10px 8px 4px; font-size:12px; color:var(--muted); line-height:1.6; font-variant-numeric:tabular-nums}
-.side-user{display:flex; align-items:center; gap:10px; padding:10px; border-radius:13px; background:var(--panel2); margin-top:10px; border:1px solid var(--line)}
-.side-user .avatar{width:34px; height:34px; border-radius:50%; background:linear-gradient(160deg,var(--primary),var(--primary2)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:750; font-size:14px; flex-shrink:0; box-shadow:0 4px 10px -4px rgba(124,58,237,.6)}
+.side-user{display:flex; align-items:center; gap:10px; padding:10px; border-radius:13px; background:var(--panel2); margin-top:10px; border:1px solid var(--line); width:100%; text-align:left; color:inherit; cursor:pointer; transition:background .16s var(--ease), border-color .16s var(--ease)}
+.side-user:hover{background:var(--panel3); border-color:var(--line2)}
+.side-user.active{background:var(--primary-soft); border-color:var(--line2)}
+.side-user .su-txt{min-width:0; display:flex; flex-direction:column; flex:1}
+.side-user .su-chev{margin-left:auto; color:var(--muted); display:flex; align-items:center}
+.side-user:hover .su-chev{color:var(--text)}
+/* 用户中心页面 */
+.prof-head{display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin:6px 0 18px}
+.prof-avatar{width:76px; height:76px; border-radius:50%; background:var(--text); color:var(--bg); display:flex;
+  align-items:center; justify-content:center; font-weight:800; font-size:28px; flex-shrink:0;
+  overflow:hidden; box-shadow:0 6px 18px -10px rgba(0,0,0,.45)}
+.prof-avatar img{width:100%; height:100%; object-fit:cover; display:block}
+.prof-head-act{display:flex; flex-direction:column; gap:8px; min-width:0}
+.prof-head-act .row{gap:8px; flex-wrap:wrap}
+.side-user .avatar{width:34px; height:34px; border-radius:50%; background:var(--text); color:var(--bg); display:flex; align-items:center; justify-content:center; font-weight:750; font-size:14px; flex-shrink:0; box-shadow:0 4px 10px -4px rgba(0,0,0,.45)}
 .side-user .un{font-size:13px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .side-user .ut{font-size:11px; color:var(--muted)}
 .main{flex:1; padding:28px 34px 70px; max-width:1180px; margin:0 auto; width:100%}
@@ -245,10 +262,10 @@ html.side-collapsed .main{padding-left:64px}
 
 /* 学习专注卡片（本应用的标志性场景） */
 .study-wrap{max-width:660px; margin:0 auto; position:relative}
-.study-wrap::before{content:""; position:absolute; left:50%; top:46%; transform:translate(-50%,-50%); width:88%; height:70%; background:radial-gradient(closest-side, rgba(124,58,237,.10), transparent 72%); pointer-events:none}
+.study-wrap::before{content:""; position:absolute; left:50%; top:46%; transform:translate(-50%,-50%); width:88%; height:70%; background:radial-gradient(closest-side, var(--amb-a), transparent 72%); pointer-events:none}
 .study-meta{display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--muted); margin-bottom:12px; font-variant-numeric:tabular-nums}
 .flashcard{background:var(--panel); border:1px solid var(--line); border-radius:26px; box-shadow:var(--shadow); padding:44px 38px; text-align:center; min-height:330px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:15px; position:relative; overflow:hidden; transition-property:box-shadow,border-color; transition-duration:200ms; transition-timing-function:ease-out}
-.flashcard::before{content:""; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,var(--primary),var(--accent))}
+.flashcard::before{content:""; position:absolute; top:0; left:0; right:0; height:4px; background:var(--primary)}
 .flashcard:hover{border-color:var(--line2)}
 .fc-word{font-size:42px; font-weight:760; letter-spacing:-.015em; word-break:break-word; line-height:1.22; font-variant-numeric:tabular-nums}
 .fc-ph{color:var(--muted); font-size:17px; letter-spacing:.02em}
@@ -257,12 +274,12 @@ html.side-collapsed .main{padding-left:64px}
 .fc-phrases b{color:var(--primary)}
 .fc-btns{display:flex; gap:13px; margin-top:22px; justify-content:center; flex-wrap:wrap; position:relative}
 .fc-btns .btn{min-width:126px; padding:13px 18px; font-size:15px}
-.fc-btns .again{background:var(--danger-soft); color:var(--danger); border:1px solid rgba(194,54,54,.32)}
-.fc-btns .again:hover{box-shadow:0 0 0 3px var(--danger-soft); color:var(--danger)}
-.fc-btns .hard{background:var(--warn-soft); color:var(--warn); border:1px solid rgba(154,85,0,.32)}
-.fc-btns .hard:hover{box-shadow:0 0 0 3px var(--warn-soft); color:var(--warn)}
-.fc-btns .good{background:var(--accent-soft); color:var(--accent); border:1px solid rgba(10,122,80,.32)}
-.fc-btns .good:hover{box-shadow:0 0 0 3px var(--accent-soft); color:var(--accent)}
+.fc-btns .again{background:transparent; color:var(--text); border:1px solid var(--line2)}
+.fc-btns .again:hover{background:var(--panel2); box-shadow:0 0 0 3px var(--panel2); color:var(--text)}
+.fc-btns .hard{background:var(--panel2); color:var(--text); border:1px solid var(--line)}
+.fc-btns .hard:hover{background:var(--panel3); box-shadow:0 0 0 3px var(--panel2); color:var(--text)}
+.fc-btns .good{background:var(--btn-solid); color:var(--btn-fg); border:1px solid transparent}
+.fc-btns .good:hover{background:var(--btn-solid-hover); box-shadow:0 0 0 3px var(--primary-soft); color:var(--btn-fg)}
 .fc-hint{font-size:12px; color:var(--muted); margin-top:16px; text-align:center}
 .study-done{padding:56px 20px; text-align:center}
 .study-done .big{font-size:54px}
@@ -312,7 +329,7 @@ html.side-collapsed .main{padding-left:64px}
 .toast.err i{color:var(--danger)}
 .toast.warn i{color:var(--warn)}
 @keyframes slidein{from{opacity:0; transform:translateY(8px)}to{opacity:1; transform:none}}
-.modal-mask{position:fixed; inset:0; background:rgba(15,11,30,.48); backdrop-filter:blur(4px); z-index:900; display:flex; align-items:center; justify-content:center; padding:20px}
+.modal-mask{position:fixed; inset:0; background:rgba(0,0,0,.48); backdrop-filter:blur(4px); z-index:900; display:flex; align-items:center; justify-content:center; padding:20px}
 .modal{background:var(--panel); border:1px solid var(--line); border-radius:22px; box-shadow:var(--shadow); width:100%; max-width:540px; max-height:86dvh; overflow:auto; overscroll-behavior:contain; padding:28px; animation:pop .18s cubic-bezier(.2,0,0,1)}
 @keyframes pop{from{opacity:0; transform:scale(.97) translateY(4px)}to{opacity:1; transform:none}}
 .modal h3{font-size:18px; margin-bottom:6px; letter-spacing:-.01em}
@@ -321,7 +338,7 @@ html.side-collapsed .main{padding-left:64px}
 .modal p{font-size:14px; color:var(--muted)}
 
 /* 词库中心 */
-.lib-row{display:flex; align-items:center; gap:14px; padding:15px 17px; border:1px solid var(--line); border-radius:15px; margin-bottom:10px; background:var(--panel); box-shadow:0 1px 2px rgba(34,27,56,.02); flex-wrap:wrap; transition-property:border-color,box-shadow; transition-duration:150ms; transition-timing-function:ease-out}
+.lib-row{display:flex; align-items:center; gap:14px; padding:15px 17px; border:1px solid var(--line); border-radius:15px; margin-bottom:10px; background:var(--panel); box-shadow:0 1px 2px rgba(0,0,0,.02); flex-wrap:wrap; transition-property:border-color,box-shadow; transition-duration:150ms; transition-timing-function:ease-out}
 .lib-row:hover{border-color:var(--line2); box-shadow:var(--shadow-sm)}
 .lib-row .lname{font-weight:700; font-size:14.5px; letter-spacing:-.005em}
 .lib-row .linfo{font-size:12.5px; color:var(--muted)}
@@ -351,7 +368,7 @@ html.side-collapsed .main{padding-left:64px}
 .switch{position:relative; width:46px; height:26px; flex-shrink:0}
 .switch input{opacity:0; width:0; height:0}
 .switch .sl{position:absolute; inset:0; background:var(--line2); border-radius:999px; transition-property:background-color; transition-duration:180ms; transition-timing-function:ease-out; cursor:pointer}
-.switch .sl::before{content:""; position:absolute; width:20px; height:20px; left:3px; top:3px; background:#fff; border-radius:50%; transition-property:transform; transition-duration:180ms; transition-timing-function:cubic-bezier(.2,0,0,1); box-shadow:0 1px 3px rgba(0,0,0,.28)}
+.switch .sl::before{content:""; position:absolute; width:20px; height:20px; left:3px; top:3px; background:var(--panel); border-radius:50%; transition-property:transform; transition-duration:180ms; transition-timing-function:cubic-bezier(.2,0,0,1); box-shadow:0 1px 3px rgba(0,0,0,.28)}
 .switch input:checked + .sl{background:var(--primary)}
 .switch input:checked + .sl::before{transform:translateX(20px)}
 .switch input:focus-visible + .sl{box-shadow:0 0 0 3px var(--primary-soft)}
@@ -366,9 +383,9 @@ html.side-collapsed .main{padding-left:64px}
 .preset-row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
 .preset-row select{max-width:250px}
 .banner{display:flex; align-items:center; gap:12px; padding:14px 17px; border-radius:15px; font-size:13.5px; margin-bottom:18px; flex-wrap:wrap}
-.banner.info{background:var(--primary-soft); color:var(--text); border:1px solid rgba(124,58,237,.18)}
-.banner.warn{background:var(--warn-soft); color:var(--text); border:1px solid rgba(189,114,9,.22)}
-.banner.ok{background:var(--accent-soft); color:var(--text); border:1px solid rgba(14,159,110,.22)}
+.banner.info{background:var(--primary-soft); color:var(--text); border:1px solid var(--line2)}
+.banner.warn{background:var(--warn-soft); color:var(--text); border:1px solid var(--line2)}
+.banner.ok{background:var(--accent-soft); color:var(--text); border:1px solid var(--line2)}
 .banner .btn{margin-left:auto}
 .note-box{background:var(--panel2); padding:13px 16px; border-radius:12px; font-size:13px; color:var(--muted); margin:12px 0; line-height:1.7}
 .kbd{display:inline-block; background:var(--panel); border:1px solid var(--line2); border-bottom-width:2px; border-radius:7px; padding:1px 7px; font-size:12px; font-weight:700; margin:0 2px; color:var(--text); box-shadow:0 1px 0 var(--line2)}
@@ -388,15 +405,16 @@ input[type="range"]:focus-visible{box-shadow:none; outline:2px solid var(--prima
   --ease-out:cubic-bezier(.22,1,.36,1);
   --dur:170ms; --dur-slow:340ms;
   --space-xs:6px; --space-sm:10px; --space-md:16px; --space-lg:26px; --space-xl:40px;
-  --glass:rgba(255,255,255,.7); --glass-strong:rgba(255,255,255,.86);
-  --glass-line:rgba(34,27,56,.08);
-  --amb-a:rgba(124,92,255,.10); --amb-b:rgba(14,159,110,.08); --amb-c:rgba(63,140,255,.07);
+  --glass:rgba(255,255,255,.72); --glass-strong:rgba(255,255,255,.88);
+  --glass-line:rgba(0,0,0,.08);
+  /* 环境光斑：原来是紫/绿/蓝，现在只留灰阶深浅 */
+  --amb-a:rgba(0,0,0,.05); --amb-b:rgba(0,0,0,.035); --amb-c:rgba(0,0,0,.025);
   --skel-hi:rgba(255,255,255,.55);
 }
 [data-theme="dark"]{
-  --glass:rgba(28,24,41,.62); --glass-strong:rgba(30,25,44,.82);
-  --glass-line:rgba(241,237,250,.08);
-  --amb-a:rgba(150,120,255,.13); --amb-b:rgba(52,196,142,.09); --amb-c:rgba(91,124,255,.10);
+  --glass:rgba(23,23,26,.62); --glass-strong:rgba(23,23,26,.84);
+  --glass-line:rgba(255,255,255,.08);
+  --amb-a:rgba(255,255,255,.055); --amb-b:rgba(255,255,255,.04); --amb-c:rgba(255,255,255,.025);
   --skel-hi:rgba(255,255,255,.06);
 }
 body{position:relative}
@@ -424,17 +442,17 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
 /* ---- 登录页：沉浸式背景 ---- */
 .auth-wrap{position:relative; overflow:hidden; isolation:isolate;
   background:
-    radial-gradient(1200px 700px at 16% -12%, rgba(124,92,255,.22), transparent 58%),
-    radial-gradient(1000px 640px at 96% 18%, rgba(63,140,255,.16), transparent 60%),
-    radial-gradient(900px 700px at 60% 130%, rgba(14,159,110,.18), transparent 58%),
+    radial-gradient(1200px 700px at 16% -12%, var(--amb-a), transparent 58%),
+    radial-gradient(1000px 640px at 96% 18%, var(--amb-c), transparent 60%),
+    radial-gradient(900px 700px at 60% 130%, var(--amb-b), transparent 58%),
     var(--bg)}
 .auth-wrap::before,.auth-wrap::after{content:""; position:absolute; border-radius:50%; pointer-events:none; z-index:0;
   filter:blur(46px); opacity:.5; will-change:transform}
 .auth-wrap::before{width:360px; height:360px; left:-90px; top:-70px;
-  background:radial-gradient(circle at 35% 35%, rgba(150,120,255,.55), transparent 68%);
+  background:radial-gradient(circle at 35% 35%, rgba(120,120,125,.34), transparent 68%);
   animation:orb-drift-a 26s var(--ease-out) infinite alternate}
 .auth-wrap::after{width:420px; height:420px; right:-120px; bottom:-130px;
-  background:radial-gradient(circle at 62% 40%, rgba(52,196,142,.5), transparent 68%);
+  background:radial-gradient(circle at 62% 40%, rgba(120,120,125,.26), transparent 68%);
   animation:orb-drift-b 32s var(--ease-out) infinite alternate}
 @keyframes orb-drift-a{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(60px,44px,0) scale(1.12)}}
 @keyframes orb-drift-b{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(-70px,-36px,0) scale(1.1)}}
@@ -475,9 +493,9 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
   box-shadow:0 1px 3px rgba(0,0,0,.06)}
 #en-switch .en-sw-n{font-size:11.5px; font-weight:800; padding:2px 8px; border-radius:999px;
   background:var(--primary-soft); color:var(--primary); font-variant-numeric:tabular-nums}
-#en-switch .en-sw.active .en-sw-n{background:var(--primary); color:#fff}
+#en-switch .en-sw.active .en-sw-n{background:var(--primary); color:var(--btn-fg)}
 #en-switch .en-sw[data-tab="review"] .en-sw-n{background:var(--warn-soft); color:var(--warn)}
-#en-switch .en-sw[data-tab="review"].active .en-sw-n{background:var(--warn); color:#fff}
+#en-switch .en-sw[data-tab="review"].active .en-sw-n{background:var(--warn); color:var(--btn-fg)}
 @media (max-width:860px){
   #en-switch{width:100%; gap:5px}
   #en-switch .en-sw{flex:1 1 0; justify-content:center; padding:9px 8px; gap:6px; min-width:0}
@@ -498,12 +516,12 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
 .zone{margin-bottom:var(--space-xl)}
 .zone:last-child{margin-bottom:8px}
 .zone-head{display:flex; align-items:center; gap:9px; font-size:12px; font-weight:750; letter-spacing:.12em; color:var(--muted); margin:0 2px 10px; text-transform:uppercase}
-.zone-head::before{content:""; width:14px; height:2px; border-radius:99px; background:linear-gradient(90deg,var(--primary),var(--accent)); opacity:.8}
+.zone-head::before{content:""; width:14px; height:2px; border-radius:99px; background:var(--primary); opacity:.9}
 .vlist{list-style:none}
 .vlist > .book-opt{border:0; border-radius:0; background:transparent; padding:13px 10px; margin:0; box-shadow:none; width:100%}
 .vlist > .book-opt + .book-opt{border-top:1px solid var(--line)}
 .vlist > .book-opt:hover{background:var(--panel2)}
-.vlist > .book-opt.sel{background:var(--primary-soft); border-radius:14px; border:0; box-shadow:inset 0 0 0 1px rgba(124,58,237,.16)}
+.vlist > .book-opt.sel{background:var(--primary-soft); border-radius:14px; border:0; box-shadow:inset 0 0 0 1px var(--line2)}
 .vlist > .book-opt.sel + .book-opt{border-top:0; margin-top:2px}
 .book-opt .bname{font-size:14.5px}
 .book-opt input{margin-top:5px}
@@ -515,7 +533,7 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
 #library-list{columns:2; column-gap:30px}
 .lib-group{break-inside:avoid; margin:0 0 var(--space-lg); display:block}
 .lib-head{display:flex; align-items:center; gap:10px; font-size:12px; font-weight:750; letter-spacing:.12em; color:var(--muted); margin:2px 2px 6px; text-transform:uppercase}
-.lib-head::before{content:""; width:14px; height:2px; border-radius:99px; background:linear-gradient(90deg,var(--primary),var(--accent)); opacity:.8}
+.lib-head::before{content:""; width:14px; height:2px; border-radius:99px; background:var(--primary); opacity:.9}
 .lib-row{border:0; border-radius:0; background:transparent; box-shadow:none; padding:14px 10px; margin:0}
 .lib-row + .lib-row{border-top:1px solid var(--line)}
 .lib-row:hover{background:var(--panel2); box-shadow:none; border-radius:14px}
@@ -562,7 +580,7 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
 
 /* ---- 沉浸登录移动端适配 ---- */
 @media (max-width:720px){
-  .auth-card{box-shadow:0 0 0 1px var(--glass-line), 0 30px 70px -30px rgba(63,44,130,.5)}
+  .auth-card{box-shadow:0 0 0 1px var(--glass-line), 0 30px 70px -30px rgba(0,0,0,.42)}
   .auth-wrap::before{width:230px; height:230px; left:-60px; top:-40px}
   .auth-wrap::after{width:280px; height:280px; right:-90px; bottom:-100px}
 }
@@ -578,7 +596,7 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
 .card{background:transparent; border:0; box-shadow:none; border-radius:0; padding:0}
 .card + .card{margin-top:42px}
 .card-title{font-size:15px; letter-spacing:-.005em; margin-bottom:18px; color:var(--text)}
-.card-title .dot{width:22px; height:2px; border-radius:99px; background:linear-gradient(90deg,var(--primary),var(--accent))}
+.card-title .dot{width:22px; height:2px; border-radius:99px; background:var(--primary)}
 
 /* 主界面：开放指标带（不再是一格一格的盒子） */
 #page-dashboard .grid-4{gap:28px 40px}
@@ -671,8 +689,8 @@ html{scroll-behavior:auto}
 
 /* 登录光斑：用柔和渐变代替 46px 模糊滤镜（视觉一致，GPU 成本大幅下降） */
 .auth-wrap::before,.auth-wrap::after{filter:none}
-.auth-wrap::before{background:radial-gradient(circle at 38% 38%, rgba(150,120,255,.38), rgba(150,120,255,.12) 46%, transparent 70%)}
-.auth-wrap::after{background:radial-gradient(circle at 55% 45%, rgba(52,196,142,.36), rgba(52,196,142,.1) 48%, transparent 72%)}
+.auth-wrap::before{background:radial-gradient(circle at 38% 38%, rgba(150,150,155,.34), rgba(150,150,155,.10) 46%, transparent 70%)}
+.auth-wrap::after{background:radial-gradient(circle at 55% 45%, rgba(190,190,195,.30), rgba(190,190,195,.08) 48%, transparent 72%)}
 
 /* 静态展示的玻璃仍保留（登录卡、弹窗） */
 .auth-card,.modal{-webkit-backdrop-filter:blur(18px) saturate(1.3); backdrop-filter:blur(18px) saturate(1.3)}
@@ -699,7 +717,7 @@ li,td,th{text-wrap:normal}
 .fc-speak{width:46px; height:46px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
   color:var(--primary); background:var(--primary-soft); border:1px solid transparent;
   transition:background-color var(--dur) var(--ease), scale var(--dur) var(--ease)}
-.fc-speak:hover{background:var(--primary); color:#fff}
+.fc-speak:hover{background:var(--primary); color:var(--btn-fg)}
 .fc-speak:active{scale:.94}
 
 /* 数学角标与路线图 */
@@ -718,7 +736,7 @@ li,td,th{text-wrap:normal}
 
 /* 首启动引导 */
 .ob-mask{position:fixed; inset:0; z-index:950; display:flex; align-items:center; justify-content:center; padding:20px;
-  background:rgba(15,11,30,.42); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+  background:rgba(0,0,0,.42); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
   animation:fade-in .2s var(--ease)}
 @keyframes fade-in{from{opacity:0}to{opacity:1}}
 .ob-card{width:100%; max-width:520px; background:var(--glass-strong); border:1px solid var(--glass-line); border-radius:26px;
@@ -727,7 +745,7 @@ li,td,th{text-wrap:normal}
 .ob-brand{font-weight:800; letter-spacing:.22em; font-size:14px}
 .ob-dots{display:flex; gap:7px; margin-bottom:22px}
 .ob-dot{width:26px; height:5px; border-radius:99px; background:var(--line2); transition:background-color var(--dur) var(--ease)}
-.ob-dot.on{background:linear-gradient(90deg,var(--primary),var(--accent))}
+.ob-dot.on{background:var(--primary)}
 .ob-body h2{font-size:21px; letter-spacing:-.01em; margin-bottom:8px}
 .ob-sub{color:var(--muted); font-size:13px; line-height:1.7; margin-bottom:18px}
 .ob-opts{display:flex; flex-direction:column; gap:10px}
@@ -758,7 +776,7 @@ li,td,th{text-wrap:normal}
 .wk{display:flex; gap:12px; align-items:flex-end; margin:16px 0 12px; padding:18px 2px 0; border-top:1px dashed var(--line)}
 .wk-col{flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; min-width:0}
 .wk-bar{width:100%; max-width:34px; min-height:6px; border-radius:8px 8px 4px 4px;
-  background:linear-gradient(180deg,var(--primary),var(--accent)); opacity:.92; position:relative}
+  background:var(--primary); opacity:.92; position:relative}
 .wk-bar.off{background:var(--panel2); opacity:.75}
 .wk-bar i{position:absolute; left:0; right:0; top:-16px; text-align:center; font-style:normal; font-size:10.5px;
   color:var(--muted); font-variant-numeric:tabular-nums; line-height:1}
@@ -777,7 +795,7 @@ li,td,th{text-wrap:normal}
   #english-tabs{position:sticky; top:0; z-index:130; flex-wrap:nowrap; overflow-x:hidden;
     justify-content:stretch; border-radius:0 0 16px 16px; margin:-4px -15px 18px; padding:7px 8px;
     background:var(--glass-strong); border-left:0; border-right:0; border-top:0;
-    -webkit-backdrop-filter:none; backdrop-filter:none; box-shadow:0 6px 18px -10px rgba(34,27,56,.28)}
+    -webkit-backdrop-filter:none; backdrop-filter:none; box-shadow:0 6px 18px -10px rgba(0,0,0,.22)}
   #english-tabs button{flex:1 1 0; min-width:0; padding:9px 3px; font-size:12px; white-space:nowrap;
     overflow:hidden; text-overflow:ellipsis; border-radius:11px}
   #english-tabs button .ico-svg{width:14px; height:14px; flex-shrink:0}
@@ -814,7 +832,7 @@ li,td,th{text-wrap:normal}
 .set-cat.active{background:var(--primary-soft); color:var(--primary)}
 .set-panes{min-width:0}
 .set-pane{padding:2px 0 6px}
-.danger-zone{border-top:1px dashed rgba(194,54,54,.35); padding-top:4px; margin-top:8px}
+.danger-zone{border-top:1px dashed var(--line2); padding-top:4px; margin-top:8px}
 @media (max-width:860px){
   .set-layout{grid-template-columns:1fr; gap:16px}
   .set-nav{flex-direction:row; flex-wrap:wrap; position:static; gap:6px; padding:0}
@@ -854,13 +872,19 @@ li,td,th{text-wrap:normal}
 
 /* 术语说明按钮 / 背词提示 / 文本断行（v1.9.4 体验优化） */
 .tip{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--primary-soft);color:var(--primary);font-size:10.5px;font-weight:800;line-height:1;margin-left:4px;vertical-align:1px;cursor:pointer;user-select:none}
-.tip:hover{background:var(--primary);color:#fff}
-/* 内测标记 + 内测功能警示行（v2.5.2 配图默认关闭） */
+.tip:hover{background:var(--primary);color:var(--btn-fg)}
+/* 内测标记 + 内测功能警示行（v2.6.0 配图默认关闭） */
 .beta-tag{display:inline-block;margin-left:5px;padding:2px 7px;border-radius:999px;background:var(--warn-soft);color:var(--warn);font-size:10.5px;font-weight:800;letter-spacing:.02em;vertical-align:1px;white-space:nowrap}
 .set-warn{display:flex;flex-direction:column;gap:3px;margin:2px 0 4px;padding:9px 12px;border-radius:11px;
-  background:var(--warn-soft);border:1px solid rgba(189,114,9,.22);font-size:12px;line-height:1.55}
+  background:var(--warn-soft);border:1px solid var(--line2);font-size:12px;line-height:1.55}
 .set-warn b{color:var(--warn);font-size:12.5px}
 .set-warn span{color:var(--muted)}
+/* 偏好自动保存提示（v2.6.0 起没有「保存」按钮了） */
+.autosave-hint{margin-top:14px;padding:9px 12px;border-radius:11px;background:var(--panel2);
+  border:1px solid var(--line);font-size:12px;color:var(--muted);transition:color .2s var(--ease),background .2s var(--ease)}
+.autosave-hint b{color:var(--text)}
+.autosave-hint.saved{background:var(--primary-soft);color:var(--text);border-color:var(--line2)}
+#set-scale-val.pending{color:var(--muted);font-style:italic}
 .fc-preview{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
 .fc-preview-hint{font-size:13px;color:var(--muted);text-align:center}
 .un,.side-user .un,#dash-name{overflow-wrap:anywhere;word-break:break-word}
@@ -930,7 +954,7 @@ html.sl-has-session #view-auth{display:none}
 .en-cta{width:100%; min-height:58px; font-size:17px; font-weight:800; border-radius:16px}
 .en-cta2{width:100%; min-height:50px; font-size:15px; border-radius:14px}
 /* 「去复习旧单词」：同页第二入口的引导按钮，用复习侧的暖色与入口徽标呼应 */
-.en-to-review{background:var(--warn-soft); color:var(--warn); border:1px solid rgba(189,114,9,.26); font-weight:750}
+.en-to-review{background:var(--warn-soft); color:var(--text); border:1px solid var(--line2); font-weight:750}
 .en-to-review:hover{border-color:var(--warn); box-shadow:0 0 0 3px var(--warn-soft); color:var(--warn)}
 .en-batches{margin-top:2px}
 .en-done-hint{display:flex; align-items:center; justify-content:center; gap:8px; min-height:58px;
@@ -948,7 +972,7 @@ html.sl-has-session #view-auth{display:none}
 }
 
 /* v2.4：下滑式数量选择窗（学新词 / 开始复习 / 抽测共用） */
-.sheet-mask{position:fixed; inset:0; z-index:8000; background:rgba(20,16,40,.28); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px)}
+.sheet-mask{position:fixed; inset:0; z-index:8000; background:rgba(0,0,0,.28); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px)}
 .sheet{position:absolute; left:50%; top:0; transform:translate(-50%,0); width:min(460px,94vw);
   background:var(--panel); border:1px solid var(--line); border-radius:0 0 20px 20px;
   box-shadow:0 14px 40px rgba(0,0,0,.20); padding:18px 18px 20px;
@@ -1076,11 +1100,13 @@ html.sl-has-session #view-auth{display:none}
     <button class="nav-btn" data-page="english" onclick="AppUI.go('english')"><span class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>英语学习</button>
     <button class="nav-btn" data-page="settings" onclick="AppUI.go('settings')"><span class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>设置</button>
     <div class="nav-sep"></div>
-    <div class="side-user">
-      <div class="avatar" id="side-avatar">?</div>
-      <div style="min-width:0"><div class="un" id="side-name">—</div><div class="ut" id="side-role">—</div></div>
-    </div>
-    <div class="side-foot">版本 2.5.2 · 全在线词库<br>词库数据整理自公开教学资料</div>
+    <button class="side-user" id="side-user-btn" type="button" data-page="profile"
+            onclick="AppUI.go('profile')" title="用户中心：头像、昵称与个人信息">
+      <span class="avatar" id="side-avatar">?</span>
+      <span class="su-txt"><span class="un" id="side-name">—</span><span class="ut" id="side-role">用户中心</span></span>
+      <span class="su-chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
+    </button>
+    <div class="side-foot">版本 2.6.0 · 全在线词库<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -1196,20 +1222,17 @@ html.sl-has-session #view-auth{display:none}
               <span>配图会调用站外图片搜索，可能出现卡顿、图片与词义不符或页面异常；默认关闭，建议保持关闭。</span>
             </div>
             <div class="kv"><span class="kk">默认剔除衍生词 <button class="tip" onclick="termTip(&quot;deriv&quot;)" aria-label="什么是衍生词" title="什么是衍生词">?</button></span><span class="vv"><label class="switch"><input type="checkbox" id="set-deriv"><span class="sl"></span></label></span></div>
-            <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap">
-              <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存偏好</button>
-            </div>
+            <div class="autosave-hint" id="prefs-autosave-study">改动会自动保存</div>
           </section>
           <section class="set-pane" data-pane="appearance" hidden>
             <div class="card-title"><span class="dot"></span>外观与关于</div>
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
+            <div class="autosave-hint" id="prefs-autosave-scale">拖动时只预览数值，<b>松开后</b>才真正应用缩放</div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div>
-            <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap">
-              <button class="btn btn-sm btn-primary" data-icon="save" onclick="AppSettings.savePrefs()">保存外观</button>
-            </div>
+            <div class="autosave-hint" id="prefs-autosave-appearance">改动会自动保存</div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.5.2</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.6.0</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用在线优先设计（v2.0.0）：账号与学习进度保存在云端数据库，需要联网使用；词库数据同样在线加载并缓存在本机，不再内嵌于页面。仍建议定期「导出数据备份」。</div>
@@ -1238,6 +1261,49 @@ html.sl-has-session #view-auth{display:none}
         </div>
       </div>
     </section>
+
+    <!-- 用户中心（v2.6.0）：头像 / 昵称 / 个人信息，改动自动保存 -->
+    <section id="page-profile" hidden>
+      <div class="topbar"><div><h1>用户中心</h1><div class="sub">头像、昵称与个人信息；改动会自动保存到云端</div></div>
+        <button class="btn btn-sm" onclick="AppUI.go('settings')">偏好设置</button></div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>基本资料</div>
+        <div class="prof-head">
+          <div class="prof-avatar" id="prof-avatar">?</div>
+          <div class="prof-head-act">
+            <div class="row">
+              <button class="btn btn-sm btn-primary" onclick="AppProfile.pickAvatar()">更换头像</button>
+              <button class="btn btn-sm" onclick="AppProfile.clearAvatar()">恢复默认</button>
+            </div>
+            <div class="muted small">支持 JPG / PNG / WebP。会本机裁成正方形并压缩后存进你自己的账号数据，
+              图片不会上传到任何第三方服务。</div>
+          </div>
+        </div>
+        <div class="kv"><span class="kk">昵称</span><span class="vv"><input id="prof-nick" maxlength="20" placeholder="留空则显示账号名" style="width:min(260px,60vw)"></span></div>
+        <div class="kv"><span class="kk">一句话简介</span><span class="vv"><input id="prof-bio" maxlength="40" placeholder="例如：备考四级，每天 50 词" style="width:min(320px,70vw)"></span></div>
+        <div class="kv"><span class="kk">邮箱（选填）</span><span class="vv"><input id="prof-email" type="email" placeholder="you@example.com" style="width:min(260px,60vw)"></span></div>
+        <div class="autosave-hint" id="prof-autosave">改动会自动保存</div>
+        <input type="file" id="prof-avatar-file" accept="image/png,image/jpeg,image/webp" hidden onchange="AppProfile.onAvatarFile(this)">
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>账号</div>
+        <div class="kv"><span class="kk">账号名（登录用，不可改）</span><span class="vv" id="prof-user">—</span></div>
+        <div class="kv"><span class="kk">注册时间</span><span class="vv" id="prof-created">—</span></div>
+        <div class="kv"><span class="kk">最近更新</span><span class="vv" id="prof-updated">—</span></div>
+        <div class="kv"><span class="kk">云端同步</span><span class="vv" id="prof-sync">—</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>学习数据</div>
+        <div class="grid grid-4" id="prof-stats"></div>
+        <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-sm" onclick="AppData.export()">导出数据备份</button>
+          <button class="btn btn-sm" onclick="AppUI.go('english')">去背单词</button>
+        </div>
+      </div>
+    </section>
   </main>
 </div>
 
@@ -1245,6 +1311,7 @@ html.sl-has-session #view-auth{display:none}
   <button class="bnav-btn active" data-page="dashboard" onclick="AppUI.go('dashboard')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>概览</button>
   <button class="bnav-btn" data-page="english" onclick="AppUI.go('english')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>英语</button>
   <button class="bnav-btn" data-page="settings" onclick="AppUI.go('settings')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>设置</button>
+  <button class="bnav-btn" data-page="profile" onclick="AppUI.go('profile')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>我的</button>
 </nav>
 
 <div id="toast-wrap" role="status" aria-live="polite"></div>
@@ -1752,15 +1819,34 @@ const AppAuth = {
       filter: { target: 'cet4', bases: ['primary','middle','hs'], deriv: true, presetName: '' },
       presets: [],
       wordState: {},
+      profile: { nick: '', bio: '', email: '', avatar: '' },   // 用户中心资料（v2.6.0）
       stats: { created: now(), studyDays: 0, lastStudyDay: '', dayLog: {}, totalStudy: 0, totalKnown: 0, totalReview: 0, reviewDays: {}, _srs: 2 },
       meta: { updated: 0 },
       studySession: null
     };
   },
   current(){ return Store.get('session', null); },
+  /* 账号名：登录用，不可改。销毁账号时的二次确认也用它，所以不要拿昵称来替代。 */
   displayName(){
     const s = this.current();
     return s ? s.user : '';
+  },
+  /* 界面上显示的名字：优先昵称，其次账号名 */
+  displayLabel(){
+    const s = this.current();
+    if(!s) return '';
+    const p = this.profile();
+    return (p.nick && String(p.nick).trim()) || s.user;
+  },
+  profile(){
+    const d = this.data();
+    return (d && d.profile) || {};
+  },
+  saveProfile(patch){
+    const d = this.data();
+    d.profile = Object.assign({ nick:'', bio:'', email:'', avatar:'' }, d.profile || {}, patch || {});
+    this.save(d);
+    return d.profile;
   },
   data(){ const s = this.current(); return s ? Store.get('u.'+s.user, this.defaultData()) : this.defaultData(); },
   save(d, silent){
@@ -2962,7 +3048,7 @@ window.addEventListener('resize', () => { clearTimeout(_fitT); _fitT = setTimeou
    因此走 Supabase RPC `sl_image` 由数据库代发请求（RPC 本身允许跨域）。
    要求：取第一张、数秒内没结果就不显示、不落盘存储（仅当前会话内存复用）。
 
-   ⚠️ v2.5.2 起这是**内测功能，默认关闭**，必须在「设置 → 偏好」里显式开启（showImg === true）。
+   ⚠️ v2.6.0 起这是**内测功能，默认关闭**，必须在「设置 → 偏好」里显式开启（showImg === true）。
    旧账号里没有这个字段 → 视为关闭，与新用户一致。开启后会真的去请求外部搜索、
    带来说明书已标注的不稳定性（图床限流、抽象词搜不到、偶发网络重置）。 */
 function imgEnabled(){
@@ -3280,7 +3366,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.5.2', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.6.0', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -3309,7 +3395,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.5.2', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.6.0', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -3359,7 +3445,7 @@ const AppUI = {
   page: 'dashboard',
   etab: 'study',                                // 进英语页默认落在「背新单词」入口（没有词表时该页会引导去筛选）
 
-  /* ---- 侧栏折叠（v2.5.2，参考 ChatGPT）----
+  /* ---- 侧栏折叠（v2.6.0，参考 ChatGPT）----
      状态放在 <html> 的 class 上：解析期就能定，开页不会先展开再收起闪一下；
      同一份状态也存进本机 localStorage（这是设备偏好，不进云端同步）。 */
   sideCollapsed(){ return document.documentElement.classList.contains('side-collapsed'); },
@@ -3390,7 +3476,7 @@ const AppUI = {
       const raw = (typeof location !== 'undefined' && location.hash) ? location.hash : '';
       const h = raw.replace(/^#\/?/, '');
       if(h === 'library'){ AppSettings.catName = 'library'; AppSettings._keepCat = true; this.page = 'settings'; }
-      else if(['dashboard','english','settings'].indexOf(h) >= 0) this.page = h;
+      else if(['dashboard','english','settings','profile'].indexOf(h) >= 0) this.page = h;
     }catch(e){}
     const s = AppAuth.current();
     if(!s){ AppAuth.showAuth(); return; }
@@ -3409,10 +3495,11 @@ const AppUI = {
     this.applySide();          // 恢复侧栏折叠状态（含按钮 aria 与适配复核）
     applyTheme();
     applyScale();
-    $('#side-avatar').textContent = (AppAuth.displayName()[0]||'?').toUpperCase();
-    $('#side-name').textContent = AppAuth.displayName();
-    $('#side-role').textContent = '已登录账号';
+    $('#side-avatar').textContent = (AppAuth.displayLabel()[0]||'?').toUpperCase();
+    $('#side-name').textContent = AppAuth.displayLabel();
+    $('#side-role').textContent = '用户中心';
     $('#set-user').textContent = AppAuth.displayName();
+    AppProfile.paintAvatar();       // 侧栏头像：有上传过就显示图片（v2.6.0）
     $('#set-daily').value = AppAuth.data().settings.daily;
     $('#set-phon').checked = AppAuth.data().settings.phon;
     if($('#set-voice')) $('#set-voice').value = (AppAuth.data().settings.voice === 'en-GB') ? 'en-GB' : 'en-US';
@@ -3462,11 +3549,13 @@ const AppUI = {
     document.onkeydown = null;
     $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
     $$('.bnav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
-    ['dashboard','english','settings'].forEach(p => {
+    const su = $('#side-user-btn'); if(su) su.classList.toggle('active', page === 'profile');
+    ['dashboard','english','settings','profile'].forEach(p => {
       $('#page-'+p).hidden = p !== page;
     });
     if(page === 'dashboard') this.renderDashboard();
     if(page === 'english') this.renderEnglish();
+    if(page === 'profile') AppProfile.render();
     if(page === 'library') AppLibrary.render();
     if(page === 'settings') this.renderSettings();
     window.scrollTo({top:0});
@@ -3551,7 +3640,7 @@ const AppUI = {
   },
   renderDashboard(){
     const d = AppAuth.data();
-    $('#dash-name').textContent = AppAuth.displayName();
+    $('#dash-name').textContent = AppAuth.displayLabel();
     const streak = calcStreak(d.stats);
     $('#dash-date').textContent = todayStr().replace(/-/g,' / ') + ' · ' + fmtDate(now()) + (streak ? ' · 连续 ' + streak + ' 天' : '');
     if(!Store.get('welcomeSeen', false)){
@@ -3636,12 +3725,16 @@ const AppUI = {
     $('#set-study-fixed').value = s.studyFixed || 30;
     $('#set-study-order').value = s.studyOrder || 'random';
     $('#set-autoscale').checked = s.autoScale !== false;
-    $('#set-scale').oninput = () => {
-      const d = AppAuth.data();
-      d.settings.autoScale = false;
-      AppAuth.save(d);
-      $('#set-scale-val').textContent = $('#set-scale').value + '%';
-      applyScale(parseInt($('#set-scale').value, 10));
+    /* 界面缩放（v2.6.0）：拖动时只预览数字，**松开后才应用**。
+       拖动过程中反复改 zoom 会让整页反复重排（观感像在抖），而且每动一格都会写一次云端。 */
+    const scaleEl = $('#set-scale'), scaleLab = $('#set-scale-val');
+    scaleEl.oninput = () => {
+      scaleLab.textContent = scaleEl.value + '%';
+      scaleLab.classList.add('pending');
+    };
+    scaleEl.onchange = () => {
+      scaleLab.classList.remove('pending');
+      AppSettings.applyPrefs({ fromScale: true });
     };
     $('#set-autoscale').onchange = () => {
       const d = AppAuth.data();
@@ -3649,10 +3742,14 @@ const AppUI = {
       AppAuth.save(d);
       applyScale();
       syncScaleUI();
+      AppSettings.flashSaved('prefs-autosave-appearance');
     };
     syncScaleUI();
     $('#set-fixed-row').hidden = (s.studyMode || 'daily') !== 'fixed';
-    $('#set-study-mode').onchange = () => { $('#set-fixed-row').hidden = $('#set-study-mode').value !== 'fixed'; };
+    $('#set-study-mode').onchange = () => {
+      $('#set-fixed-row').hidden = $('#set-study-mode').value !== 'fixed';
+      AppSettings.applyPrefs();
+    };
     $('#set-phon').checked = s.phon;
     if($('#set-voice')) $('#set-voice').value = (s.voice === 'en-GB') ? 'en-GB' : 'en-US';
     if($('#set-autospeak')) $('#set-autospeak').checked = !!s.autoSpeak;
@@ -3660,6 +3757,7 @@ const AppUI = {
     if($('#set-autoonline')) $('#set-autoonline').checked = true;
     $('#set-deriv').checked = s.deriv;
     $('#set-theme').value = s.theme;
+    AppSettings.bindAutoSave();
     const bmEl = document.getElementById('auto-back-info');
     if(bmEl){
       const bm = AppData.backupMeta();
@@ -3912,7 +4010,7 @@ function applyTheme(){
   const dark = s === 'dark' || (s === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
   const meta = document.querySelector('meta[name="theme-color"]');
-  if(meta) meta.setAttribute('content', dark ? '#131020' : '#f6f4ff');
+  if(meta) meta.setAttribute('content', dark ? '#0f0f10' : '#f7f7f8');
 }
 function autoScaleValue(){
   const w = window.innerWidth || document.documentElement.clientWidth || 1280;
@@ -5021,13 +5119,53 @@ const AppSettings = {
     this.catName = name;
     if(AppUI && typeof AppUI.renderSettings === 'function') AppUI.renderSettings();
   },
-  savePrefs(){
+  /* ---- 偏好自动保存（v2.6.0）----
+     已删除「保存偏好 / 保存外观」按钮：所有开关、下拉、输入框改动即保存。
+     输入框用 change（失焦或回车才触发）而不是 input，避免每敲一个字符就写一次云端。 */
+  AUTO_SAVE_IDS: ['set-daily', 'set-study-fixed', 'set-study-order', 'set-phon', 'set-voice',
+                  'set-autospeak', 'set-showimg', 'set-deriv', 'set-theme'],
+  bindAutoSave(){
+    this.AUTO_SAVE_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if(!el || el._autoBound) return;
+      el._autoBound = true;
+      el.addEventListener('change', () => this.applyPrefs());
+    });
+    // 数字输入：回车立即生效（与 change 行为一致，但不等失焦）
+    ['set-daily', 'set-study-fixed'].forEach(id => {
+      const el = document.getElementById(id);
+      if(!el || el._autoEnter) return;
+      el._autoEnter = true;
+      el.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); el.blur(); } });
+    });
+  },
+  flashSaved(which){
+    const ids = which ? [which] : ['prefs-autosave-study', 'prefs-autosave-appearance', 'prefs-autosave-scale'];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      if(!el._origText) el._origText = el.innerHTML;
+      el.classList.add('saved');
+      el.innerHTML = '已自动保存';
+      clearTimeout(el._t);
+      el._t = setTimeout(() => { el.classList.remove('saved'); el.innerHTML = el._origText; }, 1400);
+    });
+  },
+  savePrefs(){ this.applyPrefs({ toast: true }); },
+  applyPrefs(opts){
+    const o = opts || {};
     const d = AppAuth.data();
     d.settings.daily = clamp(parseInt($('#set-daily').value) || 20, 5, 200);
     d.settings.studyMode = $('#set-study-mode').value;
     d.settings.studyFixed = clamp(parseInt($('#set-study-fixed').value) || 30, 1, 500);
     d.settings.studyOrder = $('#set-study-order').value;
-    d.settings.autoScale = $('#set-autoscale').checked;
+    if(o.fromScale){
+      // 手动拖了缩放条 → 关掉「自动适配屏幕」，否则手动值会被自动值覆盖
+      d.settings.autoScale = false;
+      $('#set-autoscale').checked = false;
+    } else if($('#set-autoscale')){
+      d.settings.autoScale = $('#set-autoscale').checked;
+    }
     d.settings.uiScale = clamp(parseInt($('#set-scale').value) || 100, 85, 150);
     d.settings.phon = $('#set-phon').checked;
     d.settings.voice = $('#set-voice').value === 'en-GB' ? 'en-GB' : 'en-US';
@@ -5046,9 +5184,12 @@ const AppSettings = {
     d.filter.deriv = d.settings.deriv;
     AppAuth.save(d);
     applyTheme();
-    applyScale();
+    applyScale(o.fromScale ? d.settings.uiScale : undefined);
     syncScaleUI();
-    toast('偏好已保存');
+    if(o.toast) toast('偏好已保存');
+    else this.flashSaved(o.fromScale ? 'prefs-autosave-scale'
+      : ($('#set-theme') && ['set-theme', 'set-autoscale', 'set-scale'].indexOf(document.activeElement && document.activeElement.id) >= 0
+         ? 'prefs-autosave-appearance' : null));
   },
   exportData(){ AppData.export(); },
   importData(){ $('#import-file').click(); },
@@ -5109,6 +5250,146 @@ const AppSettings = {
   }
 };
 
+/* ================= 用户中心（v2.6.0） =================
+   头像 / 昵称 / 简介 / 邮箱，改动自动保存并随账号数据一起上云。
+   头像在本机用 canvas 裁成正方形并压缩成 JPEG data URL 再存进 profile.avatar，
+   不依赖任何上传服务，也不会把图片发给第三方。 */
+const AppProfile = {
+  AVATAR_SIZE: 192,        // 存进数据的正方形边长（JPEG 压缩后通常 8–20KB）
+  form: [
+    { id: 'prof-nick',  key: 'nick',  max: 20 },
+    { id: 'prof-bio',   key: 'bio',   max: 40 },
+    { id: 'prof-email', key: 'email', max: 60 }
+  ],
+  render(){
+    const s = AppAuth.current();
+    if(!s) return;
+    const p = AppAuth.profile();
+    this.form.forEach(f => {
+      const el = document.getElementById(f.id);
+      if(el) el.value = p[f.key] || '';
+    });
+    this.bind();
+    this.paintAvatar();
+    const d = AppAuth.data();
+    const syncTxt = (typeof Supa !== 'undefined' && Supa.active())
+      ? (Supa.lastErr > (Supa.lastOk || 0) ? '同步失败，将自动重试' : '在线优先 · 已实时同步') : '未接入云端';
+    $('#prof-user').textContent = s.user;
+    $('#prof-created').textContent = (d.stats && d.stats.created) ? fmtDate(new Date(d.stats.created)) : '—';
+    $('#prof-updated').textContent = (d.meta && d.meta.updated) ? relTime(d.meta.updated) : '—';
+    $('#prof-sync').textContent = syncTxt;
+    this.renderStats();
+  },
+  renderStats(){
+    const d = AppAuth.data();
+    const st = d.wordState || {};
+    const keys = Object.keys(st);
+    let mastered = 0, learning = 0, due = 0;
+    keys.forEach(k => {
+      const v = st[k];
+      if(!v || typeof v !== 'object') return;
+      if(SRS.isMastered(v)) { mastered++; return; }
+      learning++;
+      if(SRS.isDue(v)) due++;
+    });
+    const todayN = (d.stats && d.stats.dayLog && typeof d.stats.dayLog[SRS.today()] === 'number')
+      ? d.stats.dayLog[SRS.today()] : 0;
+    const cells = [
+      { k: '词条总数', v: keys.length, d: '全部词表累计' },
+      { k: '已掌握', v: mastered, d: '走完全部 6 遍' },
+      { k: '学习中', v: learning, d: '今日需复习 ' + due + ' 个' },
+      { k: '连续学习', v: (calcStreak(d.stats) || 0), d: '累计 ' + (d.stats.studyDays || 0) + ' 天 · 今日 ' + todayN + ' 词' }
+    ];
+    const box = document.getElementById('prof-stats');
+    if(box) box.innerHTML = cells.map(c =>
+      '<div class="stat"><div class="stat-body"><span class="k">' + c.k + '</span><span class="v">' + c.v +
+      '</span><span class="d">' + c.d + '</span></div></div>').join('');
+  },
+  bind(){
+    this.form.forEach(f => {
+      const el = document.getElementById(f.id);
+      if(!el || el._profBound) return;
+      el._profBound = true;
+      el.addEventListener('change', () => this.save());
+      el.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); el.blur(); } });
+    });
+  },
+  save(patch, silent){
+    const data = {};
+    this.form.forEach(f => {
+      const el = document.getElementById(f.id);
+      if(el) data[f.key] = String(el.value || '').slice(0, f.max).trim();
+    });
+    const p = AppAuth.saveProfile(Object.assign(data, patch || {}));
+    // 昵称会影响侧栏与仪表盘的显示名
+    if($('#side-name')) $('#side-name').textContent = AppAuth.displayLabel();
+    if($('#dash-name')) $('#dash-name').textContent = AppAuth.displayLabel();
+    if(!silent) this.flash();
+    return p;
+  },
+  flash(){
+    const el = document.getElementById('prof-autosave');
+    if(!el) return;
+    if(!el._orig) el._orig = el.textContent;
+    el.classList.add('saved');
+    el.textContent = '已自动保存到云端';
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.classList.remove('saved'); el.textContent = el._orig; }, 1400);
+  },
+  /* ---- 头像：本机裁剪压缩后存进 profile.avatar ---- */
+  paintAvatar(){
+    const p = AppAuth.profile();
+    const letter = (AppAuth.displayLabel()[0] || '?').toUpperCase();
+    ['side-avatar', 'prof-avatar'].forEach(id => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      if(p.avatar){
+        el.innerHTML = '<img alt="头像" src="' + p.avatar + '">';
+      } else {
+        el.innerHTML = '';
+        el.textContent = letter;
+      }
+    });
+  },
+  pickAvatar(){ const f = document.getElementById('prof-avatar-file'); if(f) f.click(); },
+  clearAvatar(){
+    if(!AppAuth.profile().avatar) return toast('当前就是默认头像', 'ok');
+    this.save({ avatar: '' }, true);
+    this.paintAvatar();
+    toast('已恢复默认头像');
+  },
+  onAvatarFile(input){
+    const file = input.files && input.files[0];
+    input.value = '';
+    if(!file) return;
+    if(!/^image\//.test(file.type)) return toast('请选择图片文件（JPG / PNG / WebP）', 'warn');
+    if(file.size > 8 * 1024 * 1024) return toast('图片太大（超过 8MB），请换一张', 'warn');
+    const fr = new FileReader();
+    fr.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        try{
+          const size = this.AVATAR_SIZE;
+          const c = document.createElement('canvas');
+          c.width = c.height = size;
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = '#ffffff';                       // 透明 PNG 垫白底，免得转 JPEG 后发黑
+          ctx.fillRect(0, 0, size, size);
+          const side = Math.min(img.width, img.height);    // 居中裁成正方形
+          ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size);
+          this.save({ avatar: c.toDataURL('image/jpeg', 0.82) }, true);
+          this.paintAvatar();
+          toast('头像已更新');
+        }catch(e){ toast('头像处理失败：' + (e.message || e), 'err'); }
+      };
+      img.onerror = () => toast('这张图片读不出来，请换一张', 'warn');
+      img.src = fr.result;
+    };
+    fr.onerror = () => toast('读取文件失败', 'err');
+    fr.readAsDataURL(file);
+  }
+};
+
 /* ================= 错误提示（防止灰屏） ================= */
 function showFatal(msg){
   try{
@@ -5116,7 +5397,7 @@ function showFatal(msg){
     if(!box){
       box = document.createElement('div');
       box.id = 'fatal-box';
-      box.style.cssText = 'position:fixed;left:16px;right:16px;bottom:16px;z-index:99999;background:#fff3f3;border:2px solid #e05b5b;border-radius:12px;padding:14px 18px;font:13px/1.7 "Microsoft YaHei",sans-serif;color:#8a2b2b;box-shadow:0 8px 30px rgba(0,0,0,.3);max-height:45vh;overflow:auto;white-space:pre-wrap;text-align:left';
+      box.style.cssText = 'position:fixed;left:16px;right:16px;bottom:16px;z-index:99999;background:#f2f2f2;border:2px solid #111112;border-radius:12px;padding:14px 18px;font:13px/1.7 "Microsoft YaHei",sans-serif;color:#111112;box-shadow:0 8px 30px rgba(0,0,0,.3);max-height:45vh;overflow:auto;white-space:pre-wrap;text-align:left';
       document.body.appendChild(box);
     }
     box.textContent = '应用遇到问题：' + msg;
@@ -5166,7 +5447,7 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
       try{
         const h = location.hash.replace(/^#\/?/, '');
         if(h === 'library'){ AppSettings.catName = 'library'; AppSettings._keepCat = true; if(AppUI.page !== 'settings') AppUI.go('settings', true); }
-        else if(['dashboard','english','settings'].indexOf(h) >= 0 && h !== AppUI.page){
+        else if(['dashboard','english','settings','profile'].indexOf(h) >= 0 && h !== AppUI.page){
           AppUI.go(h, true);
         }
       }catch(e){}
