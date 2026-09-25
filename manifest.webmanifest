@@ -6,8 +6,8 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f6f4ff",
-  "theme_color": "#7c3aed",
+  "background_color": "#e8e8eb",
+  "theme_color": "#eeeef1",
   "icons": [
     {
       "src": "icon-192.png",
@@ -19,7 +19,13 @@
       "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
