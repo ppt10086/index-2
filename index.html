@@ -26,7 +26,8 @@
   --btn-solid:#55555f; --btn-solid-hover:#45454e; --btn-fg:#ffffff;
   --accent:#62626c; --accent-soft:#e8e8eb;
   --warn:#62626c; --warn-soft:#eaeaed;
-  --danger:#4d4d56; --danger-soft:#e8e8eb;
+  /* v2.7.2（需求 9）：危险操作与退出登录标红（此前跟着灰阶主题做成了灰） */
+  --danger:#bf2f22; --danger-soft:#fdecea;
   /* 需求：学习卡片的「不记得/记得」保留红与绿（语义色，不随主题色走） */
   --no:#b3261e; --no-soft:#fdecea;
   --yes:#1c7a4b; --yes-soft:#e7f5ed;
@@ -43,7 +44,7 @@
   --btn-solid:#c9c9d0; --btn-solid-hover:#d8d8de; --btn-fg:#22222a;
   --accent:#b4b4bd; --accent-soft:#292930;
   --warn:#b4b4bd; --warn-soft:#2b2b33;
-  --danger:#cdcdd3; --danger-soft:#2b2b33;
+  --danger:#f0918a; --danger-soft:#3a2222;
   --no:#f0918a; --no-soft:#3a2222;
   --yes:#7fd3a4; --yes-soft:#16311f;
   --shadow:0 0 0 1px rgba(255,255,255,.05), 0 2px 6px rgba(0,0,0,.30), 0 24px 48px -22px rgba(0,0,0,.6);
@@ -145,8 +146,11 @@ p,li,td,th{text-wrap:pretty}
 .btn-primary:active{opacity:.92}
 .btn-accent{background:var(--accent); color:var(--btn-fg); border:1px solid transparent; box-shadow:0 8px 18px -10px rgba(0,0,0,.35)}
 .btn-accent:hover{color:var(--btn-fg); opacity:.92}
-.btn-danger{background:var(--danger-soft); color:var(--danger); border:1px solid var(--line2)}
-.btn-danger:hover{border-color:var(--danger); box-shadow:0 0 0 3px var(--danger-soft)}
+.btn-danger{background:var(--danger-soft); color:var(--danger);
+  border:1px solid color-mix(in srgb, var(--danger) 32%, transparent)}
+.btn-danger:hover{background:color-mix(in srgb, var(--danger) 14%, transparent); color:var(--danger);
+  border-color:color-mix(in srgb, var(--danger) 55%, transparent); box-shadow:0 0 0 3px color-mix(in srgb, var(--danger) 14%, transparent)}
+.btn-danger:active{background:var(--danger); color:#fff; border-color:var(--danger)}
 .btn-ghost{background:transparent; border-color:transparent; color:var(--muted); box-shadow:none}
 .btn-ghost:hover{color:var(--primary); background:var(--primary-soft)}
 .btn-sm{padding:6px 13px; font-size:13px; border-radius:10px}
@@ -234,19 +238,26 @@ p,li,td,th{text-wrap:pretty}
 /* 侧栏（v2.6.2）：参考 ChatGPT 的可折叠样式。
    左上角只有一个三条杠按钮：点开/收起；收起后宽度归零、边框与内边距一并去掉，
    不留任何边。状态记在 html.side-collapsed 上（解析期就能定，避免开页闪一下）。 */
+/* v2.7.2（需求 1）：折叠/展开走同一条缓动曲线，侧栏宽度、内边距、内容一起动，不再瞬移 */
 .sidebar{width:var(--sidebar-w); flex-shrink:0; background:var(--panel); border-right:1px solid var(--line);
   padding:64px 14px 16px; display:flex; flex-direction:column; gap:4px; position:sticky; top:0;
   height:var(--vpu,100dvh); overflow-y:auto; overflow-x:hidden;
-  transition:width .22s var(--ease), padding .22s var(--ease), border-color .22s var(--ease)}
+  transition:width .3s var(--ease-side), padding .3s var(--ease-side), border-right-color .3s var(--ease-side)}
 html.side-collapsed .sidebar{width:0; padding:0; border-right-width:0; overflow:hidden; pointer-events:none; visibility:hidden;
-  transition:width .22s var(--ease), padding .22s var(--ease), border-right-width .22s var(--ease), visibility 0s linear .22s}
+  transition:width .3s var(--ease-side), padding .3s var(--ease-side), border-right-width .3s var(--ease-side),
+             visibility 0s linear .3s}
+/* 收起时侧栏内容先淡出并轻微左移，避免文字被硬生生裁掉。
+   用 html .sidebar>* 提一级特异性，压过 .nav-btn / .side-user 各自的 transition 声明 */
+html .sidebar>*{transition:opacity .17s var(--ease), transform .3s var(--ease-side),
+  background-color .16s var(--ease), color .16s var(--ease), border-color .16s var(--ease)}
+html.side-collapsed .sidebar>*{opacity:0; transform:translateX(-12px)}
 /* 收起后主区左移，给按钮让出位置（否则按钮会压住页面标题）。
    净效果：内容可用宽度反而更大（视口-64px > 视口-248px-34px）。 */
 html.side-collapsed .main{padding-left:64px}
 .side-toggle{position:fixed; left:18px; top:12px; z-index:900; width:40px; height:40px; padding:0;
   display:flex; align-items:center; justify-content:center; border-radius:11px;
   background:transparent; border:1px solid transparent; color:var(--muted); cursor:pointer;
-  transition:background .16s var(--ease), color .16s var(--ease), border-color .16s var(--ease)}
+  transition:left .3s var(--ease-side), background .16s var(--ease), color .16s var(--ease), border-color .16s var(--ease)}
 .side-toggle:hover{background:var(--panel2); color:var(--text); border-color:var(--line)}
 /* 折叠后按钮落在主区左上角，回到 12px 更贴边（展开时与导航图标的光学中心对齐） */
 html.side-collapsed .side-toggle{left:12px}
@@ -275,13 +286,23 @@ html.side-collapsed .side-toggle{left:12px}
 .prof-avatar img{width:100%; height:100%; object-fit:cover; display:block}
 .prof-head-act{display:flex; flex-direction:column; gap:8px; min-width:0}
 .prof-head-act .row{gap:8px; flex-wrap:wrap}
+/* v2.7.2（需求 5）：用户中心按钮默认浅色，鼠标悬停/按下才转深色，且用主题色 —— 与侧栏导航同一套语言 */
+#page-profile .btn{background:var(--panel); border:1px solid var(--line2); color:var(--text)}
+#page-profile .btn:hover{background:var(--primary-soft); border-color:var(--primary); color:var(--primary);
+  box-shadow:0 0 0 3px var(--primary-soft)}
+#page-profile .btn:active{background:var(--primary); border-color:var(--primary); color:var(--btn-fg); transform:scale(.97)}
+#page-profile .btn-primary{background:var(--primary-soft); color:var(--primary);
+  border:1px solid color-mix(in srgb, var(--primary) 35%, transparent)}
+#page-profile .btn-primary:hover{background:var(--primary); border-color:var(--primary); color:var(--btn-fg)}
+#page-profile .btn-primary:active{background:var(--primary2, var(--primary)); color:var(--btn-fg)}
 .side-user .avatar{width:34px; height:34px; border-radius:50%; background:var(--text); color:var(--bg); display:flex; align-items:center; justify-content:center; font-weight:750; font-size:14px; flex-shrink:0; box-shadow:0 4px 10px -4px rgba(0,0,0,.45); overflow:hidden}
 /* 头像图片必须被限制在框内：原来只有 #prof-avatar 有 img 的尺寸规则，
    侧栏那个 34px 的圆里塞进 192px 的原图就会溢出（v2.6.2 修） */
 .side-user .avatar img,.prof-avatar img{width:100%; height:100%; object-fit:cover; display:block; border-radius:inherit}
 .side-user .un{font-size:13px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .side-user .ut{font-size:11px; color:var(--muted)}
-.main{flex:1; padding:28px 34px 70px; max-width:1180px; margin:0 auto; width:100%}
+.main{flex:1; padding:28px 34px 70px; max-width:1180px; margin:0 auto; width:100%;
+  transition:padding-left .3s var(--ease-side)}
 #bottom-nav{display:none; position:fixed; left:0; right:0; bottom:0; z-index:800; background:var(--panel); border-top:1px solid var(--line); padding:4px 8px calc(4px + env(safe-area-inset-bottom, 0px)); backdrop-filter:blur(12px); background:color-mix(in srgb, var(--panel) 88%, transparent)}
 #bottom-nav .bnav-btn{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:7px 4px; min-height:56px; font-size:12px; font-weight:650; color:var(--muted); border-radius:12px; transition-property:background-color,color; transition-duration:140ms; transition-timing-function:ease-out}
 #bottom-nav .bnav-btn .ico{width:22px; height:22px; display:flex; align-items:center; justify-content:center}
@@ -349,6 +370,9 @@ html.side-collapsed .side-toggle{left:12px}
 .fc-def{font-size:15.5px; max-width:520px; color:var(--text); line-height:1.78; text-align:left; background:var(--panel2); padding:15px 19px; border-radius:14px; width:100%; border:1px solid var(--line)}
 .fc-phrases{font-size:13px; color:var(--muted); max-width:520px; text-align:left; background:var(--panel3); border:1px dashed var(--line2); padding:13px 17px; border-radius:14px; width:100%}
 .fc-phrases b{color:var(--primary)}
+/* v2.7.2（需求 2、3）：底部两键常驻同一份 DOM，只切类 —— 确认时「记得」向中间收拢消失、
+   「不记得」原地变宽并把「下一个」交叉淡入，读起来就是两键平滑融成一个。
+   同时两键改为半透明玻璃质感：语义色只作 8–14% 底色，文字仍是语义色（对比度红 5.3:1 / 绿 4.8:1）。 */
 .fc-btns{display:flex; gap:13px; margin-top:22px; justify-content:center; flex-wrap:wrap; position:relative}
 /* 页面内自绘的「返回」按钮：纯文字 + 描边胶囊，不用任何图标/遮罩 */
 .study-meta .sm-l{display:flex; align-items:center; gap:10px; min-width:0}
@@ -358,17 +382,42 @@ html.side-collapsed .side-toggle{left:12px}
 .study-back:hover{color:var(--text); border-color:var(--text); background:var(--panel2)}
 .study-back:active{transform:scale(.96)}
 .done-acts{display:flex; gap:10px; justify-content:center; margin-top:22px; flex-wrap:wrap}
-.fc-btns .btn{min-width:126px; padding:13px 18px; font-size:15px}
-/* 学习三键（v2.7.0）：按需求保留「不记得=红、记得=绿」；模糊用中性浅底 */
-.fc-btns .again{background:var(--no-soft); color:var(--no); border:1px solid color-mix(in srgb, var(--no) 30%, transparent)}
-.fc-btns .again:hover{background:var(--no-soft); box-shadow:0 0 0 3px var(--no-soft); color:var(--no)}
-.fc-btns .hard{background:var(--panel2); color:var(--text); border:1px solid var(--line)}
-.fc-btns .hard:hover{background:var(--panel3); box-shadow:0 0 0 3px var(--panel2); color:var(--text)}
-.fc-btns .good{background:var(--yes-soft); color:var(--yes); border:1px solid color-mix(in srgb, var(--yes) 30%, transparent)}
-.fc-btns .good:hover{background:var(--yes-soft); box-shadow:0 0 0 3px var(--yes-soft); color:var(--yes)}
-/* 「下一个」：确认态下唯一的动作，居中且更宽 */
-.fc-btns.pending .next{min-width:220px; background:var(--btn-solid); color:var(--btn-fg); border-color:transparent}
-.fc-btns.pending .next:hover{background:var(--btn-solid-hover); box-shadow:0 0 0 3px var(--primary-soft); color:var(--btn-fg)}
+.fc-btns .btn{min-width:126px; max-width:340px; flex:0 1 auto; padding:13px 18px; font-size:15px; overflow:hidden;
+  transition:flex-grow .34s var(--ease-side), flex-basis .34s var(--ease-side), max-width .34s var(--ease-side),
+             min-width .34s var(--ease-side), padding .34s var(--ease-side), opacity .2s var(--ease),
+             transform .34s var(--ease-side),
+             background-color .18s var(--ease), color .18s var(--ease), border-color .18s var(--ease), box-shadow .18s var(--ease)}
+/* 学习按钮（v2.7.0 保留红绿；v2.7.2 改半透明质感）：底色只取语义色的 10%，文字仍是语义色 */
+.fc-btns .again{background:color-mix(in srgb, var(--no) 10%, transparent); color:var(--no);
+  border:1px solid color-mix(in srgb, var(--no) 30%, transparent);
+  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px)}
+.fc-btns .again:hover{background:color-mix(in srgb, var(--no) 17%, transparent); color:var(--no);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--no) 12%, transparent)}
+.fc-btns .hard{background:color-mix(in srgb, var(--text) 7%, transparent); color:var(--text); border:1px solid var(--line)}
+.fc-btns .hard:hover{background:color-mix(in srgb, var(--text) 12%, transparent); box-shadow:0 0 0 3px var(--panel2); color:var(--text)}
+.fc-btns .good{background:color-mix(in srgb, var(--yes) 10%, transparent); color:var(--yes);
+  border:1px solid color-mix(in srgb, var(--yes) 32%, transparent);
+  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px)}
+.fc-btns .good:hover{background:color-mix(in srgb, var(--yes) 17%, transparent); color:var(--yes);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--yes) 12%, transparent)}
+/* 标签交叉淡入淡出：「不记得」上移淡出、「下一个」从下方淡入到同一位置 */
+.fc-btns .again{position:relative}
+.fc-btns .again .lb{display:flex; align-items:center; justify-content:center;
+  transition:opacity .22s var(--ease), transform .3s var(--ease-side)}
+.fc-btns .again .lb-n{position:absolute; inset:0; opacity:0; transform:translateY(12px)}
+/* 确认态：两键向中间融合成一个（「记得」塌缩 + 「不记得」展宽变实心）
+   flex-grow / flex-basis / max-width / min-width / padding 都是可插值的，才会看到连续动画 */
+.fc-btns.pending .good{flex:0 0 0; min-width:0; max-width:0; padding-left:0; padding-right:0;
+  opacity:0; transform:translateX(-14px) scale(.86); border-width:0; pointer-events:none}
+.fc-btns.pending .again{flex:1 1 220px; max-width:340px; min-width:220px;
+  background:color-mix(in srgb, var(--btn-solid) 92%, transparent); color:var(--btn-fg); border-color:transparent}
+.fc-btns.pending .again:hover{background:var(--btn-solid-hover); color:var(--btn-fg);
+  box-shadow:0 0 0 3px var(--primary-soft)}
+.fc-btns.pending .again .lb-a{opacity:0; transform:translateY(-12px)}
+.fc-btns.pending .again .lb-n{opacity:1; transform:translateY(0)}
+@media (prefers-reduced-motion: reduce){
+  .fc-btns .btn,.fc-btns .again .lb,.sidebar,.sidebar>*,.main,.side-toggle{transition-duration:.01ms !important}
+}
 .fc-hint{font-size:12px; color:var(--muted); margin-top:16px; text-align:center}
 .study-done{padding:56px 20px; text-align:center}
 .study-done .big{font-size:54px}
@@ -491,6 +540,7 @@ input[type="range"]:focus-visible{box-shadow:none; outline:2px solid var(--prima
    统一运动/玻璃/留白 token；分类改为 留白分区 + 列表 + 通栏色块 + 竖向分割线 */
 :root{
   --ease:cubic-bezier(.2,0,0,1);
+  --ease-side:cubic-bezier(.32,.72,0,1);   /* v2.7.2：侧栏折叠/按钮融合共用（必须写在 :root 里，写在顶层会被整条丢弃） */
   --ease-out:cubic-bezier(.22,1,.36,1);
   --dur:170ms; --dur-slow:340ms;
   --space-xs:6px; --space-sm:10px; --space-md:16px; --space-lg:26px; --space-xl:40px;
@@ -1315,7 +1365,7 @@ html.sl-has-session #view-auth{display:none}
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.7.1</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.7.2</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">自绘图标集（48 枚，24×24 网格 / 1.7 线宽）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用在线优先设计（v2.0.0）：账号与学习进度保存在云端数据库，需要联网使用；词库数据同样在线加载并缓存在本机，不再内嵌于页面。仍建议定期「导出数据备份」。</div>
@@ -1358,11 +1408,8 @@ html.sl-has-session #view-auth{display:none}
               <button class="btn btn-sm btn-primary" onclick="AppProfile.pickAvatar()">更换头像</button>
               <button class="btn btn-sm" onclick="AppProfile.clearAvatar()">恢复默认</button>
             </div>
-            <div class="muted small">支持 JPG / PNG / WebP。会本机裁成正方形并压缩后存进你自己的账号数据，
-              图片不会上传到任何第三方服务。</div>
           </div>
         </div>
-        <div class="kv"><span class="kk">一句话简介</span><span class="vv"><input id="prof-bio" maxlength="40" placeholder="例如：备考四级，每天 50 词" style="width:min(320px,70vw)"></span></div>
         <input type="file" id="prof-avatar-file" accept="image/png,image/jpeg,image/webp" hidden onchange="AppProfile.onAvatarFile(this)">
       <div class="avc-mask" id="avc-mask" hidden role="dialog" aria-modal="true" aria-label="裁剪头像">
         <div class="avc-card">
@@ -1388,7 +1435,6 @@ html.sl-has-session #view-auth{display:none}
       <div class="card">
         <div class="card-title"><span class="dot"></span>账号</div>
         <div class="kv"><span class="kk">账号名（登录用，不可改）</span><span class="vv" id="prof-user">—</span></div>
-        <div class="kv"><span class="kk">注册时间</span><span class="vv" id="prof-created">—</span></div>
       </div>
 
       <div class="card">
@@ -1501,6 +1547,26 @@ const ICONS = {
 function icon(name, size){
   const p = ICONS[name] || ICONS.info;
   return '<svg class="ico-svg" viewBox="0 0 24 24" width="'+(size||18)+'" height="'+(size||18)+'" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';
+}
+
+/* v2.7.2（需求 2）：学习/复习卡片底部按钮。
+   两键始终渲染同一份 DOM，确认态只切 .pending 类，所以「记得」的收拢与「下一个」的展开
+   都是真实的过渡动画（而不是重画后直接跳到终态）。 */
+function fcButtonsHtml(api, firstLabel){
+  return '<div class="fc-btns" id="fc-btns">' +
+    '<button class="btn again" onclick="' + api + '.first()">' +
+      '<span class="lb lb-a">' + firstLabel + '</span>' +
+      '<span class="lb lb-n" aria-hidden="true">下一个</span>' +
+    '</button>' +
+    '<button class="btn good" onclick="' + api + '.mark(\'good\')">记得</button>' +
+  '</div>';
+}
+/* 新节点先以「两键并排」的初始态落定，下一帧再加 .pending 触发过渡（否则同一帧内不会动） */
+function startBtnMerge(root){
+  const btns = root && root.querySelector ? root.querySelector('#fc-btns') : null;
+  if(!btns) return;
+  btns.getBoundingClientRect();                       // 强制重排，让初始态生效
+  requestAnimationFrame(() => btns.classList.add('pending'));
 }
 
 /* ================= 本地存储 ================= */
@@ -2877,6 +2943,41 @@ const SRS = {
     return true;
   },
 
+  /* ---- v2.7.2 迁移：把「按天数不可能已掌握」的词退回学习中（需求 8）----
+     背景：v1 的「已掌握」是按次数判定的，v1→v2 迁移时直接写成 n=6 并把 born 锚定到迁移当天，
+     于是出现「一共才学 12 天，却有 82 个已掌握」——而日级节点要求 1+2+4+7+15+21 共 21 天。
+     规则：born 到今天 >= 21 天（真的走完了）→ 保持已掌握；
+           不足 21 天 → n 退回到「已过去的天数真正走到的节点数」，due 重排到下一个节点。
+     幂等：用 stats._srsV3 标记，只跑一次。 */
+  migrateV3(d){
+    if(!d || !d.wordState) return false;
+    d.stats = d.stats || {};
+    if(d.stats._srsV3) return false;
+    const today = this.today();
+    const FULL = this.NODES[this.ROUNDS - 1];      // 21 天
+    let fixed = 0;
+    for(const k in d.wordState){
+      const c = d.wordState[k];
+      if(!c || typeof c !== 'object' || c.s !== 'known') continue;
+      const born = c.born || c.d0 || today;
+      const elapsed = this.dayDiff(born, today);
+      if(elapsed >= FULL) continue;                // 走满了 21 天，合法
+      let n = 0;
+      for(let i = 0; i < this.NODES.length; i++) if(elapsed >= this.NODES[i]) n = i + 1;
+      if(n >= this.ROUNDS) n = this.ROUNDS - 1;
+      c.s = 'learning';
+      c.n = n;
+      c.born = born;
+      c.d0 = c.d0 || born;
+      c.due = this.dayAdd(c.d0, this.NODES[n]);
+      fixed++;
+    }
+    d.stats._srsV3 = 1;
+    d.stats.totalKnown = this.countKnown(d);
+    if(fixed) console.log('[SRS] v2.7.2 迁移：' + fixed + ' 个「按天数还不可能已掌握」的词退回学习中');
+    return true;
+  },
+
   /* ---- 手动重来：把该词退回学习起点（记为遗忘） ---- */
   reset(listId, w, when){
     const d = AppAuth.data();
@@ -3468,7 +3569,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.1', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.2', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -3497,7 +3598,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.1', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.2', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -3587,6 +3688,7 @@ const AppUI = {
       const _md = AppAuth.data();
       let _ch = false;
       if(typeof SRS !== 'undefined' && SRS.migrate(_md)) _ch = true;
+      if(typeof SRS !== 'undefined' && SRS.migrateV3 && SRS.migrateV3(_md)) _ch = true;
       if(typeof WL !== 'undefined' && WL.migrateListIds && WL.migrateListIds(_md)) _ch = true;
       if(_ch) AppAuth.save(_md);
     }catch(e){}
@@ -3659,6 +3761,7 @@ const AppUI = {
     if(page === 'english') this.renderEnglish();
     if(page === 'profile') AppProfile.render();
     if(page === 'library') AppLibrary.render();
+    else AppLibrary._autoRan = false;                     // 离开词库中心 → 允许下次进入再自动更新
     if(page === 'settings') this.renderSettings();
     window.scrollTo({top:0});
     if(!fromHash){
@@ -4693,17 +4796,13 @@ const AppStudy = {
       passNote(curState) +
       '<div class="fc-img" id="fc-img"'+(imgEnabled() ? '' : ' hidden')+'></div>' +
       '<div id="fc-body" style="width:100%">'+(s.revealed ? '<div class="reveal-in">'+cardBody(e)+'</div>' : (s.idx < 3 ? '<div class="fc-preview"><div class="fc-preview-hint">先回忆它的意思与发音，再点下方按钮核对</div><button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示释义</button></div>' : '<button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示释义</button>'))+'</div></div>' +
-      '<div class="fc-btns'+(s.againPending ? ' pending' : '')+'">' +
-      (s.againPending
-        ? '<button class="btn again next" onclick="AppStudy.next()">下一个</button>'
-        : '<button class="btn again" onclick="AppStudy.mark(\'again\')">不记得</button>' +
-          '<button class="btn good" onclick="AppStudy.mark(\'good\')">记得</button>') +
-      '</div>' +
+      fcButtonsHtml('AppStudy', '不记得') +
       '<div class="fc-hint">' + (s.againPending
-        ? '<span class="kbd">空格</span> 下一个 · <span class="kbd">Esc</span> 结束本轮'
+        ? '<span class="kbd">1</span> 下一个 · <span class="kbd">Esc</span> 结束本轮'
         : '<span class="kbd">空格</span> 显示释义 · <span class="kbd">·</span> 发音 · <span class="kbd">1</span> 不记得 · <span class="kbd">2</span> 记得 · <span class="kbd">Esc</span> 结束本轮') + '</div>' +
       '</div>';
     fillPh(e);
+    if(s.againPending) startBtnMerge(box);          // v2.7.2：确认态的两键融合动画
     const fdEl = document.getElementById('fc-def');
     if(fdEl) Dict.fillDef(e, fdEl);
     this.bindKeys();
@@ -4733,8 +4832,15 @@ const AppStudy = {
     // （原来两者都写记录，于是「一次都没认出」的词反而跑进了复习，逻辑说不通）
     if(s.mode !== 'quiz' && level === 'good'){
       const cur = AppAuth.data().wordState[SRS.key(targetId, e.w)];
-      if(cur && !SRS.isMastered(cur)) SRS.completeRound(targetId, e.w);
-      else SRS.learn(targetId, e.w);
+      // v2.7.2（需求 8）：只有「今天到期」的复习才算完成一遍。
+      // 对还没到期的词点记得（例如固定词表模式天天复习同一批）不能推进节点，否则会在
+      // 6 天内把词刷成「已掌握」——那就绕过了 21 天的日级节奏。
+      if(cur && !SRS.isMastered(cur)){
+        if(SRS.isDue(cur)) SRS.completeRound(targetId, e.w);
+        else SRS.learn(targetId, e.w);            // 未到期：只更新时间，不动节点
+      } else {
+        SRS.learn(targetId, e.w);
+      }
     }
     if(level === 'again'){
       // 两步：先给答案（显示释义、隐藏「记得」，按钮变成居中的「下一个」），
@@ -4751,6 +4857,14 @@ const AppStudy = {
     // 学/复习一个词后，两个入口上的数字要跟着变
     try{ AppUI.refreshEntryCounts(); }catch(err){}
     if(level === 'good') burstFx(document.querySelector('#tab-study .fc-btns .good'), 8);
+  },
+  /* v2.7.2：第一个按钮的统一入口 —— 普通态＝不记得（两步确认），确认态＝下一个。
+     DOM 不重建，动画才能连贯；键盘 1 也走这里（需求 4）。 */
+  first(){
+    const s = this.state;
+    if(!s) return;
+    if(s.againPending) return this.next();
+    return this.mark('again');
   },
   /* 「下一个」：把忘记的词混回本轮尚未列出的词里（随机位置），然后前进 */
   next(){
@@ -4801,14 +4915,14 @@ const AppStudy = {
   },
   bindKeys(){
     AppUI._keyHandler = e => {
+      // v2.7.2（需求 4）：空格只负责「显示释义」；第一个按钮（不记得 / 下一个）统一用 1
       if(e.key === ' '){
         e.preventDefault();
         if(!this.state) return;
-        if(this.state.againPending){ this.next(); return; }      // 确认态：空格 = 下一个
         if(!this.state.revealed) this.reveal();
       }
       else if(isSpeakKey(e)){ e.preventDefault(); this.speak(); }
-      else if(e.key === '1') this.mark('again');
+      else if(e.key === '1') this.first();
       else if(e.key === '2'){ if(this.state && this.state.againPending) return; this.mark('good'); }
       // v2.7.0：Esc 不再跳去词表筛选，而是结束本轮、回到「本轮结束」页
       else if(e.key === 'Escape'){ this.finish(); }
@@ -4994,16 +5108,12 @@ const AppReview = {
       passNote(c) +
       '<div class="fc-img" id="fc-img"'+(imgEnabled() ? '' : ' hidden')+'></div>' +
       '<div id="fc-body" style="width:100%">'+(s.revealed ? cardBody(e) : '<button class="btn btn-primary btn-lg" onclick="AppReview.reveal()">显示释义</button>')+'</div></div>' +
-      '<div class="fc-btns'+(s.againPending ? ' pending' : '')+'">' +
-      (s.againPending
-        ? '<button class="btn again next" onclick="AppReview.next()">下一个</button>'
-        : '<button class="btn again" onclick="AppReview.mark(\'again\')">忘了</button>' +
-          '<button class="btn good" onclick="AppReview.mark(\'good\')">记得</button>') +
-      '</div>' +
+      fcButtonsHtml('AppReview', '忘了') +
       '<div class="fc-hint">' + (s.againPending
-        ? '<span class="kbd">空格</span> 下一个 · <span class="kbd">Esc</span> 结束本轮'
+        ? '<span class="kbd">1</span> 下一个 · <span class="kbd">Esc</span> 结束本轮'
         : '<span class="kbd">空格</span> 显示释义 · <span class="kbd">·</span> 发音 · <span class="kbd">1</span> 忘了 · <span class="kbd">2</span> 记得 · <span class="kbd">Esc</span> 结束本轮') + '</div></div>';
     fillPh(e);
+    if(s.againPending) startBtnMerge(box);          // v2.7.2：确认态的两键融合动画
     const fdEl = document.getElementById('fc-def');
     if(fdEl) Dict.fillDef(e, fdEl);
     fitNow(box);
@@ -5016,20 +5126,26 @@ const AppReview = {
       setTimeout(() => { if(AppReview.state && AppReview.state.idx === curIdx && !AppReview.state.revealed) AppReview.speak(); }, 180);
     }
     document.onkeydown = e2 => {
+      // v2.7.2（需求 4）：空格只显示释义；第一个按钮（忘了 / 下一个）统一用 1
       if(e2.key === ' '){
         e2.preventDefault();
         if(!this.state) return;
-        if(this.state.againPending){ this.next(); return; }       // 确认态：空格 = 下一个
         if(!this.state.revealed) this.reveal();
       }
       else if(isSpeakKey(e2)){ e2.preventDefault(); this.speak(); }
-      else if(e2.key === 'Spacebar') this.next();
-      else if(e2.key === '1') this.mark('again');
+      else if(e2.key === '1') this.first();
       else if(e2.key === '2'){ if(this.state && this.state.againPending) return; this.mark('good'); }
       else if(e2.key === 'Escape') this.finish();
     };
   },
   reveal(){ if(this.state){ this.state.revealed = true; this.renderCard(); } },
+  /* v2.7.2：第一个按钮的统一入口 —— 普通态＝忘了（两步确认），确认态＝下一个 */
+  first(){
+    const s = this.state;
+    if(!s) return;
+    if(s.againPending) return this.next();
+    return this.mark('again');
+  },
   speak(){
     const s = this.state;
     if(!s || !s.deck[s.idx]) return;
@@ -5041,7 +5157,11 @@ const AppReview = {
     const e = s.deck[s.idx];
     if(s.marks) s.marks[level] = (s.marks[level] || 0) + 1;
     // 复习一趟算一遍（认得/不认得都不改变艾宾浩斯节点安排）
-    SRS.completeRound(s.targetId, e.w);
+    // v2.7.2（需求 8）：复习清单里的词本来都是今天到期的；这里再兜一层，
+    // 防止异常数据（例如跨天未刷新）把没到期的词推进节点。
+    const _cur = AppAuth.data().wordState[SRS.key(s.targetId, e.w)];
+    if(_cur && !SRS.isDue(_cur)) SRS.learn(s.targetId, e.w);
+    else SRS.completeRound(s.targetId, e.w);
     if(level === 'again'){
       // 两步：先给答案（显示释义、隐藏「记得」，按钮变成居中的「下一个」）
       if(!s.revealed){ s.againPending = true; s.revealed = true; this.renderCard(); return; }
@@ -5309,20 +5429,27 @@ const AppBrowse = {
 /* ================= 词库中心 ================= */
 const AppLibrary = {
   syncing: false,
+  _autoRan: false,          // v2.7.2（需求 10）：进入词库中心自动执行一次「全部更新」
+  background: false,        // 静默更新中（不盖内容）
+
   async render(){
+    this.autoUpdateOnce();                            // 进入即自动更新一次
     const box = $('#library-list');
     const status = $('#library-status');
     const d = AppAuth.data();
-    if(this.syncing){
+    if(this.syncing && !this.background){
+      // 用户手动点「全部更新」：走骨架屏（明确在等他）
       status.innerHTML = '<div class="banner info">'+icon('cloud')+' <span>正在更新词库…</span></div>';
       box.innerHTML = '<div class="skel-list">'+Array.from({length:4}, () => '<div class="skeleton skel-row"></div>').join('')+'</div>';
       return;
     } else {
       const total = WL.cache.size ? Array.from(WL.cache.values()).reduce((s,v)=>s+(v.entries?v.entries.length:0),0) : 0;
       const live = WL.registry.filter(x => (WL.status.get(x.id) || '') === 'ready').length;
+      // v2.7.2：进入词库中心是「后台静默更新」——内容照常显示，只在状态条上加一个更新中标签
       status.innerHTML = '<div class="banner info" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
         + icon('cloud')
         + '<span class="tag tag-green" style="flex-shrink:0">✓ 正在使用在线词库</span>'
+        + (this.syncing ? '<span class="tag tag-orange" style="flex-shrink:0">正在后台更新…</span>' : '')
         + '<span>全部 '+WL.registry.length+' 个词库均来自在线源（多镜像自动切换），本机仅作缓存加速。已加载 <b>'+(live?live:0)+'</b> 个词库、<b>'+fmtN(total)+'</b> 个词条。</span></div>';
     }
     const groups = [['primary','小学'],['middle','初中'],['hs','高中'],['target','四六级目标']];
@@ -5350,12 +5477,22 @@ const AppLibrary = {
     }
     this.render();
   },
-  async refreshAll(){
+  /* v2.7.2（需求 10）：进入词库中心就自动跑一次「全部更新」，与点按钮完全同一套流程；
+     每次进入只跑一次（离开时复位），不重复刷网络。 */
+  autoUpdateOnce(){
+    if(this._autoRan || this.syncing) return;
+    this._autoRan = true;
+    this.refreshAll({ silent: true });        // 静默：不盖内容、不弹骨架，进度显示在状态条上
+  },
+  async refreshAll(opts){
+    const o = opts || {};
     if(this.syncing) return;
     this.syncing = true;
+    this.background = !!o.silent;             // 静默模式：保留列表内容
     this.render();
-    await WL.syncAll();
+    await WL.syncAll(() => { if(this.background) this.render(); });
     this.syncing = false;
+    this.background = false;
     toast('全部词库同步完成');
     this.render();
     AppUI.renderDashboard();
@@ -5367,6 +5504,7 @@ const AppSettings = {
   catName: 'account',
   cat(name){
     this.catName = name;
+    if(name !== 'library') AppLibrary._autoRan = false;   // 离开词库中心 → 允许下次进入再自动更新
     if(AppUI && typeof AppUI.renderSettings === 'function') AppUI.renderSettings();
   },
   /* ---- 偏好自动保存（v2.6.2）----
@@ -5635,9 +5773,7 @@ const AvatarCrop = {
 
 const AppProfile = {
   AVATAR_SIZE: 192,        // 存进数据的正方形边长（JPEG 压缩后通常 8–20KB）
-  form: [
-    { id: 'prof-bio',   key: 'bio',   max: 40 }
-  ],
+  form: [],                // v2.7.2：昵称 / 邮箱 / 一句话简介都已按需求删除，用户中心没有文本字段
   render(){
     const s = AppAuth.current();
     if(!s) return;
@@ -5652,7 +5788,6 @@ const AppProfile = {
     // 这些元素可能已被删除（需求：去掉云端同步/最近更新的过程显示），一律判空
     const set = (id, txt) => { const el = document.getElementById(id); if(el) el.textContent = txt; };
     set('prof-user', s.user);
-    set('prof-created', (d.stats && d.stats.created) ? fmtDate(new Date(d.stats.created)) : '—');
     set('prof-updated', (d.meta && d.meta.updated) ? relTime(d.meta.updated) : '—');
     set('prof-sync', '');
     this.renderStats();
