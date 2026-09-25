@@ -1,4 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
-  <rect width="96" height="96" rx="21.5" fill="#e8e8eb"/>
-  <g transform="translate(3 -3)"><path d="M36 20H38Q46 20 51.656 25.656L70.344 44.344Q76 50 76 58V60A16 16 0 0 1 60 76H36A16 16 0 0 1 20 60V36A16 16 0 0 1 36 20Z" fill="#2f2f38"/></g>
+  <style>
+    .f{fill:#e8e8eb} .m{fill:#2f2f38}
+    @media (prefers-color-scheme: dark){ .f{fill:#3a3a42} .m{fill:#e8e8eb} }
+  </style>
+  <rect class="f" width="96" height="96" rx="21.5"/>
+  <g transform="translate(3 -3)"><path d="M36 20H38Q46 20 51.656 25.656L70.344 44.344Q76 50 76 58V60A16 16 0 0 1 60 76H36A16 16 0 0 1 20 60V36A16 16 0 0 1 36 20Z" class="m"/></g>
 </svg>
