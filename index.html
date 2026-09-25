@@ -1092,6 +1092,71 @@ html.sl-has-session #view-auth{display:none}
 .en-num span{font-size:12px; color:var(--muted); white-space:nowrap; word-break:keep-all}
 .en-cta{width:100%; min-height:58px; font-size:17px; font-weight:800; border-radius:16px}
 .en-cta2{width:100%; min-height:50px; font-size:15px; border-radius:14px}
+
+/* ===== v2.7.3「开始学习」流带（呼吸右移 → 点击加速 → 平滑滑入学习界面）=====
+   不是一块实心按钮，而是一条可交互的区域：淡底 + 1px 语义描边 + 呼吸光斑，右侧三枚 >>> 缓慢右移并呼吸。 */
+.flow-band{position:relative; display:flex; align-items:center; justify-content:space-between; gap:14px;
+  width:100%; min-height:64px; padding:0 18px; border-radius:18px; cursor:pointer; overflow:hidden;
+  background:color-mix(in srgb, var(--primary) 7%, transparent);
+  border:1px solid color-mix(in srgb, var(--primary) 28%, transparent); color:var(--text);
+  font:inherit; text-align:left; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  transition:border-color .24s var(--ease), background-color .24s var(--ease),
+             transform .24s var(--ease-side), box-shadow .24s var(--ease), color .24s var(--ease)}
+.flow-band::before{content:''; position:absolute; inset:-40% -10%; pointer-events:none;
+  background:radial-gradient(140px 76px at 20% 50%, color-mix(in srgb, var(--primary) 24%, transparent), transparent 70%);
+  animation:fbBreath 3.6s var(--ease) infinite}
+.flow-band::after{content:''; position:absolute; top:0; bottom:0; left:-46%; width:46%; pointer-events:none; opacity:0;
+  background:linear-gradient(90deg, transparent, color-mix(in srgb, var(--btn-fg) 34%, transparent), transparent)}
+.flow-band:hover{border-color:color-mix(in srgb, var(--primary) 48%, transparent);
+  background:color-mix(in srgb, var(--primary) 9%, transparent);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 10%, transparent)}
+.flow-band:active{transform:scale(.995)}
+.flow-band:focus-visible{outline:2px solid var(--primary); outline-offset:2px}
+.fb-txt{display:flex; flex-direction:column; gap:2px; min-width:0}
+.fb-main{font-size:18px; font-weight:800; letter-spacing:-.01em}
+.fb-sub{font-size:12.5px; color:var(--muted)}
+.fb-arrows{display:flex; align-items:center; flex:none; color:var(--primary)}
+.fb-arrows .ico-svg{width:22px; height:22px; stroke-width:2.6}
+.fb-arrows .arw{display:flex; opacity:.32; animation:fbFlow 2.8s cubic-bezier(.45,.05,.55,.95) infinite}
+.fb-arrows .arw:nth-child(2){animation-delay:.26s}
+.fb-arrows .arw:nth-child(3){animation-delay:.52s}
+@keyframes fbFlow{
+  0%{opacity:.30; transform:translateX(-3px) scale(.96)}
+  45%{opacity:1; transform:translateX(4px) scale(1)}
+  75%{opacity:.55; transform:translateX(9px) scale(.98)}
+  100%{opacity:.30; transform:translateX(13px) scale(.96)}
+}
+@keyframes fbBreath{0%,100%{opacity:.4; transform:scale(1)} 50%{opacity:.85; transform:scale(1.06)}}
+/* 点击：整条变实心（承诺）+ 一道光扫过 + >>> 切成快波（突然变快，但仍是同一条曲线，过渡不跳） */
+.flow-band.go{background:var(--btn-solid); border-color:transparent; color:var(--btn-fg)}
+.flow-band.go .fb-sub{color:color-mix(in srgb, var(--btn-fg) 74%, transparent)}
+.flow-band.go .fb-arrows{color:var(--btn-fg)}
+.flow-band.go .arw{animation:fbRush .34s cubic-bezier(.22,.61,.36,1) infinite}
+.flow-band.go::before{animation-duration:1.2s}
+.flow-band.go::after{animation:fbSweep .52s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes fbRush{0%{opacity:.35; transform:translateX(-8px)} 55%{opacity:1; transform:translateX(7px)} 100%{opacity:.3; transform:translateX(15px)}}
+@keyframes fbSweep{0%{opacity:0; left:-46%} 18%{opacity:1} 100%{opacity:0; left:100%}}
+/* 入口页左滑淡出 → 学习卡从右侧平滑滑入 */
+.en-hero.setup-out,.card.setup-out{animation:setupOut .3s cubic-bezier(.4,0,1,1) forwards; pointer-events:none}
+@keyframes setupOut{to{opacity:0; transform:translateX(-22px) scale(.996)}}
+.study-wrap.enter-right{animation:cardIn .46s cubic-bezier(.22,.61,.36,1) both}
+@keyframes cardIn{from{opacity:0; transform:translateX(34px) scale(.994)} to{opacity:1; transform:none}}
+/* 没有新词时的静态态 */
+.flow-band.is-empty{cursor:default; background:transparent; border-color:var(--line)}
+.flow-band.is-empty::before{animation:none; opacity:.25}
+.flow-band.is-empty .fb-main{color:var(--muted)}
+.flow-band.is-empty .fb-arrows{color:var(--muted)}
+.flow-band.is-empty .arw{animation:none; opacity:.3}
+.fb-alt{margin-top:-2px; text-align:center}
+.fb-alt button{font:inherit; font-size:12.5px; color:var(--muted); background:none; border:none; cursor:pointer;
+  padding:6px 10px; border-radius:10px; transition:color .16s var(--ease), background .16s var(--ease)}
+.fb-alt button:hover{color:var(--primary); background:var(--primary-soft)}
+@media (prefers-reduced-motion: reduce){
+  .flow-band::before,.flow-band::after,.fb-arrows .arw{animation:none !important}
+  .fb-arrows .arw{opacity:.9; transform:none}
+  .study-wrap.enter-right{animation-duration:.01ms}
+  .en-hero.setup-out,.card.setup-out{animation-duration:.01ms}
+}
 /* 「去复习旧单词」：同页第二入口的引导按钮，用复习侧的暖色与入口徽标呼应 */
 .en-to-review{background:var(--warn-soft); color:var(--text); border:1px solid var(--line2); font-weight:750}
 .en-to-review:hover{border-color:var(--warn); box-shadow:0 0 0 3px var(--warn-soft); color:var(--warn)}
@@ -1365,7 +1430,7 @@ html.sl-has-session #view-auth{display:none}
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.7.2</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.7.3</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">自绘图标集（48 枚，24×24 网格 / 1.7 线宽）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用在线优先设计（v2.0.0）：账号与学习进度保存在云端数据库，需要联网使用；词库数据同样在线加载并缓存在本机，不再内嵌于页面。仍建议定期「导出数据备份」。</div>
@@ -3569,7 +3634,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.2', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.3', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -3598,7 +3663,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.2', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.3', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -4515,9 +4580,13 @@ const AppStudy = {
         '<div style="margin-bottom:10px">'+icon('refresh', 40)+'</div>' +
         '<h3 style="font-size:19px;margin-bottom:6px">继续上次的学习进度</h3>' +
         '<div class="muted" style="margin-bottom:18px">上次进行到 第 <b>'+(ss.idx+1)+' / '+ss.words.length+'</b> 个'+(match?'（'+r.targetName+'）':'')+'。进度已保存，可随时接着学。</div>' +
-        '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">' +
-        '<button class="btn btn-primary" onclick="AppStudy.resume()">'+icon('play')+' 继续学习</button>' +
-        '<button class="btn" onclick="AppStudy.restartFresh()">重新开始</button></div>' +
+        '<button class="flow-band" type="button" onclick="AppStudy.startFlow(this,{resume:true})" aria-label="继续学习">' +
+        '<span class="fb-txt"><span class="fb-main">继续学习</span>' +
+        '<span class="fb-sub">从第 '+(ss.idx+1)+' 个接着背</span></span>' +
+        '<span class="fb-arrows" aria-hidden="true"><span class="arw">'+icon('chevRight')+'</span>' +
+        '<span class="arw">'+icon('chevRight')+'</span><span class="arw">'+icon('chevRight')+'</span></span></button>' +
+        '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:4px">' +
+        '<button class="btn btn-sm" onclick="AppStudy.restartFresh()">重新开始</button></div>' +
         '<div class="fc-hint">学习进度会持续保存到云端，退出后回来仍可继续。</div></div>';
       return;
     }
@@ -4558,8 +4627,17 @@ const AppStudy = {
           '<div class="en-num"><b>'+masteredN+'</b><span>已掌握</span></div>' +
         '</div>' +
         (newN
-          ? '<button class="btn btn-primary en-cta" onclick="AppStudy.askCount(\'new\','+newN+')">'+icon('play')+' 学新词 · 还剩 '+newN+' 词</button>'
-          : '<button class="btn btn-primary en-cta" disabled>词表里的新词已学完</button>') +
+          ? '<button class="flow-band" type="button" data-max="'+newN+'" onclick="AppStudy.startFlow(this)"'
+            + ' aria-label="开始学习，还剩 '+newN+' 个新词">'
+            + '<span class="fb-txt"><span class="fb-main">开始学习</span>'
+            + '<span class="fb-sub">还剩 '+newN+' 个新词 · 每轮 '+modeLabel+'</span></span>'
+            + '<span class="fb-arrows" aria-hidden="true"><span class="arw">'+icon('chevRight')+'</span>'
+            + '<span class="arw">'+icon('chevRight')+'</span><span class="arw">'+icon('chevRight')+'</span></span></button>'
+            + '<div class="fb-alt"><button type="button" onclick="AppStudy.askCount(\'new\','+newN+')">想自己定数量？点这里</button></div>'
+          : '<div class="flow-band is-empty"><span class="fb-txt"><span class="fb-main">词表里的新词已学完</span>'
+            + '<span class="fb-sub">去复习旧单词，或换一个词表继续</span></span>'
+            + '<span class="fb-arrows" aria-hidden="true"><span class="arw">'+icon('chevRight')+'</span>'
+            + '<span class="arw">'+icon('chevRight')+'</span><span class="arw">'+icon('chevRight')+'</span></span></div>') +
         (dueN
           ? '<button class="btn en-cta2 en-to-review" onclick="AppUI.englishTab(\'review\')">'+icon('refresh')+' 去复习旧单词 · 今日 '+dueN+' 词需复习</button>'
           : '<div class="en-done-hint">'+icon('checkCircle')+' 今天没有到期的复习，专心背新词即可</div>') +
@@ -4585,6 +4663,33 @@ const AppStudy = {
       max: max,
       onPick: n => { this.quickStart(mode, n); }
     });
+  },
+  /* v2.7.3：「开始学习」流带 —— 点击后 >>> 突然加速、带子变实心、入口页左滑淡出，
+     随后用「偏好数量」直接开始，让学习卡从右侧平滑滑入（数量小窗降级为带子下方的小字入口）。
+     全流程只用一条 --ease-side 曲线，速度变化但不跳位。 */
+  startFlow(el, opts){
+    if(this._flowing) return;
+    const o = opts || {};
+    if(el && el.classList.contains('is-empty')) return;
+    this._flowing = true;
+    const box = $('#tab-study');
+    const hero = box && box.querySelector('.en-hero, .card');
+    if(el) el.classList.add('go');
+    setTimeout(() => { if(hero) hero.classList.add('setup-out'); }, 360);
+    setTimeout(() => {
+      this._flowing = false;
+      if(o.resume){
+        this.resume();
+      } else {
+        const s = AppAuth.data().settings;
+        const max = parseInt((el && el.dataset.max) || '0', 10) || 1;
+        const prefer = s.studyMode === 'fixed' ? (s.studyFixed || 30) : (s.daily || 20);
+        this.quickStart('new', Math.max(1, Math.min(max, prefer)));
+      }
+      const wrap = document.querySelector('#tab-study .study-wrap');
+      // 下一帧再加类：先让 fitStudyViewport 按未位移的真实布局量一次，避免把入场位移算成溢出
+      if(wrap) requestAnimationFrame(() => wrap.classList.add('enter-right'));
+    }, 600);
   },
   /* 直接开始（带指定数量） */
   quickStart(mode, count){
