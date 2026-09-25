@@ -8,8 +8,10 @@
 <meta name="theme-color" content="#f7f7f8">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/plus-jakarta-sans@5/index.css" media="print" onload="this.media='all'">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2096%2096%22%20width%3D%2296%22%20height%3D%2296%22%20role%3D%22img%22%20aria-label%3D%22StudyLens%20minimal%20book%22%3E%0A%20%20%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%2288%22%20height%3D%2288%22%20rx%3D%2224%22%20fill%3D%22%23f6f4ff%22%2F%3E%0A%20%20%3Crect%20x%3D%224.75%22%20y%3D%224.75%22%20width%3D%2286.5%22%20height%3D%2286.5%22%20rx%3D%2223.25%22%20fill%3D%22none%22%20stroke%3D%22%23e7e0f8%22%20stroke-width%3D%221.5%22%2F%3E%0A%20%20%3C%21--%20%E8%B4%9F%E7%A9%BA%E9%97%B4%E5%AD%97%E6%AF%8D%20e%20%E4%B8%8E%E4%B9%A6%E9%A1%B5%20--%3E%0A%20%20%3Cpath%20d%3D%22M17%2042%20Q31%2031%2047%2040%20V72%20Q31%2063%2017%2074%20Z%22%20fill%3D%22none%22%20stroke%3D%22%231e1b4b%22%20stroke-width%3D%225.6%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M79%2042%20Q65%2031%2049%2040%20V72%20Q65%2063%2079%2074%20Z%22%20fill%3D%22none%22%20stroke%3D%22%231e1b4b%22%20stroke-width%3D%225.6%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2247%22%20cy%3D%2238%22%20r%3D%224%22%20fill%3D%22%231e1b4b%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M58%2056%20H68%20M58%2062%20H66%22%20stroke%3D%22%231e1b4b%22%20stroke-width%3D%224%22%20stroke-linecap%3D%22round%22%2F%3E%0A%20%20%3Ctext%20x%3D%2264%22%20y%3D%2255%22%20font-family%3D%22ui-rounded%2C%27Segoe%20UI%27%2Csystem-ui%2CArial%2Csans-serif%22%20font-size%3D%2214%22%20font-weight%3D%22800%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22central%22%20fill%3D%22%231e1b4b%22%3Ee%3C%2Ftext%3E%0A%20%20%3Ccircle%20cx%3D%2275%22%20cy%3D%2222%22%20r%3D%225.5%22%20fill%3D%22%237c3aed%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2220%22%20cy%3D%2280%22%20r%3D%224%22%20fill%3D%22%237c3aed%22%20fill-opacity%3D%22.55%22%2F%3E%0A%3C%2Fsvg%3E%0A">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 96 96%22 width=%2296%22 height=%2296%22%3E %3Crect width=%2296%22 height=%2296%22 rx=%2221.5%22 fill=%22%23e8e8eb%22/%3E %3Cg transform=%22translate(3 -3)%22%3E%3Cpath d=%22M36 20H38Q46 20 51.656 25.656L70.344 44.344Q76 50 76 58V60A16 16 0 0 1 60 76H36A16 16 0 0 1 20 60V36A16 16 0 0 1 36 20Z%22 fill=%22%232f2f38%22/%3E%3C/g%3E %3C/svg%3E">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1313,7 +1315,7 @@ html.sl-has-session #view-auth{display:none}
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.7.0</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.7.1</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">自绘图标集（48 枚，24×24 网格 / 1.7 线宽）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用在线优先设计（v2.0.0）：账号与学习进度保存在云端数据库，需要联网使用；词库数据同样在线加载并缓存在本机，不再内嵌于页面。仍建议定期「导出数据备份」。</div>
@@ -3466,7 +3468,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.0', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.1', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -3495,7 +3497,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.0', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.1', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
