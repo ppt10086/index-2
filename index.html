@@ -25,6 +25,9 @@
   --accent:#62626c; --accent-soft:#e8e8eb;
   --warn:#62626c; --warn-soft:#eaeaed;
   --danger:#4d4d56; --danger-soft:#e8e8eb;
+  /* 需求：学习卡片的「不记得/记得」保留红与绿（语义色，不随主题色走） */
+  --no:#b3261e; --no-soft:#fdecea;
+  --yes:#1c7a4b; --yes-soft:#e7f5ed;
   --radius:18px; --radius-sm:11px; --radius-lg:24px;
   --shadow:0 0 0 1px rgba(0,0,0,.05), 0 2px 6px rgba(0,0,0,.05), 0 22px 46px -22px rgba(0,0,0,.20);
   --shadow-sm:0 0 0 1px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.04), 0 8px 22px -14px rgba(0,0,0,.16);
@@ -39,10 +42,73 @@
   --accent:#b4b4bd; --accent-soft:#292930;
   --warn:#b4b4bd; --warn-soft:#2b2b33;
   --danger:#cdcdd3; --danger-soft:#2b2b33;
+  --no:#f0918a; --no-soft:#3a2222;
+  --yes:#7fd3a4; --yes-soft:#16311f;
   --shadow:0 0 0 1px rgba(255,255,255,.05), 0 2px 6px rgba(0,0,0,.30), 0 24px 48px -22px rgba(0,0,0,.6);
   --shadow-sm:0 0 0 1px rgba(255,255,255,.04), 0 1px 2px rgba(0,0,0,.28), 0 10px 26px -16px rgba(0,0,0,.6);
   color-scheme:dark;
 }
+
+/* ===== 主题色（v2.7.0，需求「设置一个主题颜色，有限度地在应用中使用」）=====
+   只覆盖强调色相关 token；底色/面板/文字/描边恒为中性灰。graphite = 默认中性色，无需规则。*/
+html[data-accent="indigo"] {--primary:#4a54c8; --primary2:#3b45ad; --primary-soft:#e9eafb; --btn-solid:#4f5ad0; --btn-solid-hover:#414bb8; --btn-fg:#ffffff; --accent:#5b64d6; --accent-soft:#e9eafb;}
+html[data-accent="blue"] {--primary:#2563c9; --primary2:#1d51a8; --primary-soft:#e6eefb; --btn-solid:#2a6ad4; --btn-solid-hover:#2159b6; --btn-fg:#ffffff; --accent:#2f6fd8; --accent-soft:#e6eefb;}
+html[data-accent="green"] {--primary:#1f7a52; --primary2:#186444; --primary-soft:#e4f3ec; --btn-solid:#22855a; --btn-solid-hover:#1b6e49; --btn-fg:#ffffff; --accent:#27795a; --accent-soft:#e4f3ec;}
+html[data-accent="amber"] {--primary:#8f5410; --primary2:#7a4710; --primary-soft:#faf0e0; --btn-solid:#9a5c14; --btn-solid-hover:#834d10; --btn-fg:#ffffff; --accent:#96601a; --accent-soft:#faf0e0;}
+html[data-accent="rose"] {--primary:#ab3d61; --primary2:#913253; --primary-soft:#fbe9ef; --btn-solid:#b8476c; --btn-solid-hover:#9d3c5c; --btn-fg:#ffffff; --accent:#b0456a; --accent-soft:#fbe9ef;}
+html[data-accent="violet"] {--primary:#7a4bc0; --primary2:#663fa3; --primary-soft:#f0eafb; --btn-solid:#8253c9; --btn-solid-hover:#6f46ac; --btn-fg:#ffffff; --accent:#8153c4; --accent-soft:#f0eafb;}
+html[data-theme="dark"][data-accent="indigo"] {--primary:#a8b0f4; --primary2:#c2c8fa; --primary-soft:#2a2c44; --btn-solid:#8e97ec; --btn-solid-hover:#a2aaf3; --btn-fg:#191a2c; --accent:#a2aaf3; --accent-soft:#2a2c44;}
+html[data-theme="dark"][data-accent="blue"] {--primary:#8fb9f5; --primary2:#aacdfa; --primary-soft:#1f2c3d; --btn-solid:#7aa9ee; --btn-solid-hover:#96bdf5; --btn-fg:#101a28; --accent:#96bdf5; --accent-soft:#1f2c3d;}
+html[data-theme="dark"][data-accent="green"] {--primary:#79cfa4; --primary2:#9bdcbb; --primary-soft:#17301f; --btn-solid:#6cc396; --btn-solid-hover:#85d3ab; --btn-fg:#0d1f14; --accent:#85d3ab; --accent-soft:#17301f;}
+html[data-theme="dark"][data-accent="amber"] {--primary:#e6b366; --primary2:#f0c98c; --primary-soft:#382a16; --btn-solid:#dcab5e; --btn-solid-hover:#e8ba75; --btn-fg:#2a1e0d; --accent:#e8ba75; --accent-soft:#382a16;}
+html[data-theme="dark"][data-accent="rose"] {--primary:#f09cb6; --primary2:#f5b8cb; --primary-soft:#3c2230; --btn-solid:#e690ac; --btn-solid-hover:#f2a6be; --btn-fg:#2d1620; --accent:#f2a6be; --accent-soft:#3c2230;}
+html[data-theme="dark"][data-accent="violet"] {--primary:#bda0ec; --primary2:#cfb8f4; --primary-soft:#302544; --btn-solid:#b195e6; --btn-solid-hover:#c3acef; --btn-fg:#221737; --accent:#c3acef; --accent-soft:#302544;}
+
+/* ===== 头像裁剪（v2.7.0）===== */
+.avc-mask{position:fixed; inset:0; z-index:1150; background:rgba(14,14,18,.72);
+  -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px); display:flex; align-items:center; justify-content:center;
+  padding:20px; animation:avcIn .16s var(--ease)}
+@keyframes avcIn{from{opacity:0} to{opacity:1}}
+.avc-card{width:100%; max-width:398px; background:var(--panel); border-radius:22px; box-shadow:var(--shadow);
+  padding:17px 17px 13px; display:flex; flex-direction:column; gap:11px}
+.avc-title{font-size:15px; font-weight:750; display:flex; align-items:center; gap:8px}
+.avc-title .ico{display:flex; color:var(--primary)}
+.avc-stage{position:relative; width:100%; aspect-ratio:1 / 1; overflow:hidden; border-radius:16px; background:#0f0f13;
+  touch-action:none; cursor:grab; user-select:none; -webkit-user-select:none}
+.avc-stage.drag{cursor:grabbing}
+.avc-stage img{position:absolute; left:50%; top:50%; max-width:none; transform-origin:center center;
+  pointer-events:none; -webkit-user-drag:none; user-drag:none}
+.avc-ring{position:absolute; left:50%; top:50%; border-radius:50%; pointer-events:none;
+  box-shadow:0 0 0 9999px rgba(0,0,0,.55); border:1.5px solid rgba(255,255,255,.9)}
+.avc-hint{font-size:12.5px; color:var(--muted); text-align:center; margin-top:-2px}
+.avc-zoom{display:flex; align-items:center; gap:10px}
+.avc-zoom .ico{display:flex; color:var(--muted); flex:none}
+.avc-zoom input[type=range]{flex:1; min-width:0}
+.avc-zoom b{font-size:12px; color:var(--muted); min-width:40px; text-align:right; font-variant-numeric:tabular-nums}
+.avc-acts{display:flex; gap:10px; justify-content:flex-end; margin-top:1px}
+
+/* 主题色选择器：色板圆点用 currentColor 同时决定填充与选中环 */
+.acc-row{display:flex; align-items:center; gap:9px; flex-wrap:wrap}
+.acc-sw{width:25px; height:25px; padding:0; border-radius:50%; border:1px solid var(--line2); background:transparent;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  transition:transform .15s var(--ease), box-shadow .15s var(--ease), border-color .15s var(--ease)}
+.acc-sw i{display:block; width:15px; height:15px; border-radius:50%; background:currentColor}
+.acc-sw:hover{transform:scale(1.1); border-color:currentColor}
+.acc-sw:active{transform:scale(.95)}
+.acc-sw.on{border-color:currentColor; box-shadow:0 0 0 2px var(--panel), 0 0 0 3.5px currentColor}
+.acc-name{font-size:12.5px; color:var(--muted); min-width:54px}
+.acc-sw[data-accent="graphite"]{color:#4a4a52} .acc-sw[data-accent="indigo"]{color:#4a54c8}
+.acc-sw[data-accent="blue"]{color:#2563c9} .acc-sw[data-accent="green"]{color:#1f7a52}
+.acc-sw[data-accent="amber"]{color:#8f5410} .acc-sw[data-accent="rose"]{color:#ab3d61}
+.acc-sw[data-accent="violet"]{color:#7a4bc0}
+[data-theme="dark"] .acc-sw[data-accent="graphite"]{color:#cdcdd3}
+[data-theme="dark"] .acc-sw[data-accent="indigo"]{color:#a8b0f4}
+[data-theme="dark"] .acc-sw[data-accent="blue"]{color:#8fb9f5}
+[data-theme="dark"] .acc-sw[data-accent="green"]{color:#79cfa4}
+[data-theme="dark"] .acc-sw[data-accent="amber"]{color:#e6b366}
+[data-theme="dark"] .acc-sw[data-accent="rose"]{color:#f09cb6}
+[data-theme="dark"] .acc-sw[data-accent="violet"]{color:#bda0ec}
+
 *{box-sizing:border-box; margin:0; padding:0}
 html{scroll-behavior:smooth; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale}
 body{font-family:"Plus Jakarta Sans Variable","Plus Jakarta Sans","Segoe UI","PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif; background:var(--bg); color:var(--text); font-size:15px; line-height:1.62; overflow-x:hidden; -webkit-tap-highlight-color:transparent}
@@ -175,15 +241,20 @@ html.side-collapsed .sidebar{width:0; padding:0; border-right-width:0; overflow:
 /* 收起后主区左移，给按钮让出位置（否则按钮会压住页面标题）。
    净效果：内容可用宽度反而更大（视口-64px > 视口-248px-34px）。 */
 html.side-collapsed .main{padding-left:64px}
-.side-toggle{position:fixed; left:12px; top:12px; z-index:900; width:40px; height:40px; padding:0;
+.side-toggle{position:fixed; left:18px; top:12px; z-index:900; width:40px; height:40px; padding:0;
   display:flex; align-items:center; justify-content:center; border-radius:11px;
   background:transparent; border:1px solid transparent; color:var(--muted); cursor:pointer;
   transition:background .16s var(--ease), color .16s var(--ease), border-color .16s var(--ease)}
 .side-toggle:hover{background:var(--panel2); color:var(--text); border-color:var(--line)}
+/* 折叠后按钮落在主区左上角，回到 12px 更贴边（展开时与导航图标的光学中心对齐） */
+html.side-collapsed .side-toggle{left:12px}
 .side-toggle:active{transform:scale(.96)}
 .side-toggle:focus-visible{outline:2px solid var(--primary); outline-offset:2px}
 .nav-btn{display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:12px; font-size:14px; font-weight:650; color:var(--muted); transition-property:background-color,color; transition-duration:140ms; transition-timing-function:ease-out; text-align:left; width:100%}
-.nav-btn .ico{font-size:17px; width:21px; text-align:center}
+.nav-btn .ico{width:21px; display:flex; align-items:center; justify-content:center}
+.nav-btn .ico .ico-svg{width:19px; height:19px}
+.side-toggle .ico .ico-svg{width:20px; height:20px}
+.side-user .su-chev .ico-svg{width:15px; height:15px}
 .nav-btn:hover{background:var(--panel2); color:var(--text)}
 .nav-btn.active{background:var(--primary-soft); color:var(--primary); font-weight:700}
 .nav-sep{height:1px; background:var(--line); margin:12px 8px}
@@ -211,7 +282,8 @@ html.side-collapsed .main{padding-left:64px}
 .main{flex:1; padding:28px 34px 70px; max-width:1180px; margin:0 auto; width:100%}
 #bottom-nav{display:none; position:fixed; left:0; right:0; bottom:0; z-index:800; background:var(--panel); border-top:1px solid var(--line); padding:4px 8px calc(4px + env(safe-area-inset-bottom, 0px)); backdrop-filter:blur(12px); background:color-mix(in srgb, var(--panel) 88%, transparent)}
 #bottom-nav .bnav-btn{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:7px 4px; min-height:56px; font-size:12px; font-weight:650; color:var(--muted); border-radius:12px; transition-property:background-color,color; transition-duration:140ms; transition-timing-function:ease-out}
-#bottom-nav .bnav-btn .ico{width:22px; height:22px}
+#bottom-nav .bnav-btn .ico{width:22px; height:22px; display:flex; align-items:center; justify-content:center}
+#bottom-nav .bnav-btn .ico .ico-svg{width:22px; height:22px}
 #bottom-nav .bnav-btn.active{color:var(--primary); background:var(--primary-soft)}
 @media (max-width:860px){
   .shell{flex-direction:column}
@@ -276,13 +348,25 @@ html.side-collapsed .main{padding-left:64px}
 .fc-phrases{font-size:13px; color:var(--muted); max-width:520px; text-align:left; background:var(--panel3); border:1px dashed var(--line2); padding:13px 17px; border-radius:14px; width:100%}
 .fc-phrases b{color:var(--primary)}
 .fc-btns{display:flex; gap:13px; margin-top:22px; justify-content:center; flex-wrap:wrap; position:relative}
+/* 页面内自绘的「返回」按钮：纯文字 + 描边胶囊，不用任何图标/遮罩 */
+.study-meta .sm-l{display:flex; align-items:center; gap:10px; min-width:0}
+.study-back{font:inherit; font-size:12.5px; font-weight:650; color:var(--muted); background:transparent;
+  border:1px solid var(--line2); border-radius:999px; padding:5px 14px; cursor:pointer;
+  transition:color .16s var(--ease), border-color .16s var(--ease), background .16s var(--ease)}
+.study-back:hover{color:var(--text); border-color:var(--text); background:var(--panel2)}
+.study-back:active{transform:scale(.96)}
+.done-acts{display:flex; gap:10px; justify-content:center; margin-top:22px; flex-wrap:wrap}
 .fc-btns .btn{min-width:126px; padding:13px 18px; font-size:15px}
-.fc-btns .again{background:transparent; color:var(--text); border:1px solid var(--line2)}
-.fc-btns .again:hover{background:var(--panel2); box-shadow:0 0 0 3px var(--panel2); color:var(--text)}
+/* 学习三键（v2.7.0）：按需求保留「不记得=红、记得=绿」；模糊用中性浅底 */
+.fc-btns .again{background:var(--no-soft); color:var(--no); border:1px solid color-mix(in srgb, var(--no) 30%, transparent)}
+.fc-btns .again:hover{background:var(--no-soft); box-shadow:0 0 0 3px var(--no-soft); color:var(--no)}
 .fc-btns .hard{background:var(--panel2); color:var(--text); border:1px solid var(--line)}
 .fc-btns .hard:hover{background:var(--panel3); box-shadow:0 0 0 3px var(--panel2); color:var(--text)}
-.fc-btns .good{background:var(--btn-solid); color:var(--btn-fg); border:1px solid transparent}
-.fc-btns .good:hover{background:var(--btn-solid-hover); box-shadow:0 0 0 3px var(--primary-soft); color:var(--btn-fg)}
+.fc-btns .good{background:var(--yes-soft); color:var(--yes); border:1px solid color-mix(in srgb, var(--yes) 30%, transparent)}
+.fc-btns .good:hover{background:var(--yes-soft); box-shadow:0 0 0 3px var(--yes-soft); color:var(--yes)}
+/* 「下一个」：确认态下唯一的动作，居中且更宽 */
+.fc-btns.pending .next{min-width:220px; background:var(--btn-solid); color:var(--btn-fg); border-color:transparent}
+.fc-btns.pending .next:hover{background:var(--btn-solid-hover); box-shadow:0 0 0 3px var(--primary-soft); color:var(--btn-fg)}
 .fc-hint{font-size:12px; color:var(--muted); margin-top:16px; text-align:center}
 .study-done{padding:56px 20px; text-align:center}
 .study-done .big{font-size:54px}
@@ -1095,21 +1179,19 @@ html.sl-has-session #view-auth{display:none}
   <!-- 侧栏折叠开关：固定在左上角（ChatGPT 风格）。展开时它落在侧栏顶部，收起后落在主区左上 -->
   <button id="side-toggle" class="side-toggle" type="button" aria-controls="side-nav" aria-expanded="true"
           aria-label="收起侧边栏" title="收起/展开侧边栏（Ctrl+B）" onclick="AppUI.toggleSide()">
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
-         stroke-linecap="round" aria-hidden="true"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg>
+    <span class="ico" data-icon="menu"></span>
   </button>
   <aside class="sidebar" id="side-nav">
-    <button class="nav-btn active" data-page="dashboard" onclick="AppUI.go('dashboard')"><span class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>概览</button>
-    <button class="nav-btn" data-page="english" onclick="AppUI.go('english')"><span class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>英语学习</button>
-    <button class="nav-btn" data-page="settings" onclick="AppUI.go('settings')"><span class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>设置</button>
+    <button class="nav-btn active" data-page="dashboard" onclick="AppUI.go('dashboard')"><span class="ico" data-icon="grid"></span>概览</button>
+    <button class="nav-btn" data-page="english" onclick="AppUI.go('english')"><span class="ico" data-icon="bookOpen"></span>英语学习</button>
+    <button class="nav-btn" data-page="settings" onclick="AppUI.go('settings')"><span class="ico" data-icon="settings"></span>设置</button>
     <div class="nav-sep"></div>
     <button class="side-user" id="side-user-btn" type="button" data-page="profile"
             onclick="AppUI.go('profile')" title="用户中心：头像、昵称与个人信息">
       <span class="avatar" id="side-avatar">?</span>
       <span class="su-txt"><span class="un" id="side-name">—</span><span class="ut" id="side-role">用户中心</span></span>
-      <span class="su-chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
+      <span class="su-chev" aria-hidden="true" data-icon="chevRight"></span>
     </button>
-    <div class="side-foot">版本 2.6.2 · 全在线词库<br>词库数据整理自公开教学资料</div>
   </aside>
 
   <main class="main" id="main-area">
@@ -1205,7 +1287,6 @@ html.sl-has-session #view-auth{display:none}
           <section class="set-pane" data-pane="account">
             <div class="card-title"><span class="dot"></span>账户</div>
             <div class="kv"><span class="kk">当前账号</span><span class="vv" id="set-user">—</span></div>
-            <div class="kv"><span class="kk">云端实时同步</span><span class="vv" id="sync-status">自动实时上传中</span></div>
             <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap">
               <button class="btn btn-sm btn-danger" data-icon="logout" onclick="AppAuth.logout()">退出登录</button>
             </div>
@@ -1225,19 +1306,16 @@ html.sl-has-session #view-auth{display:none}
               <span>配图会调用站外图片搜索，可能出现卡顿、图片与词义不符或页面异常；默认关闭，建议保持关闭。</span>
             </div>
             <div class="kv"><span class="kk">默认剔除衍生词 <button class="tip" onclick="termTip(&quot;deriv&quot;)" aria-label="什么是衍生词" title="什么是衍生词">?</button></span><span class="vv"><label class="switch"><input type="checkbox" id="set-deriv"><span class="sl"></span></label></span></div>
-            <div class="autosave-hint" id="prefs-autosave-study">改动会自动保存</div>
           </section>
           <section class="set-pane" data-pane="appearance" hidden>
             <div class="card-title"><span class="dot"></span>外观与关于</div>
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
-            <div class="autosave-hint" id="prefs-autosave-scale">拖动时只预览数值，<b>松开后</b>才真正应用缩放</div>
-            <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div>
-            <div class="autosave-hint" id="prefs-autosave-appearance">改动会自动保存</div>
+            <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.6.2</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.7.0</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
-            <div class="kv"><span class="kk">图标</span><span class="vv">Lucide（开源 ISC 许可）</span></div>
+            <div class="kv"><span class="kk">图标</span><span class="vv">自绘图标集（48 枚，24×24 网格 / 1.7 线宽）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用在线优先设计（v2.0.0）：账号与学习进度保存在云端数据库，需要联网使用；词库数据同样在线加载并缓存在本机，不再内嵌于页面。仍建议定期「导出数据备份」。</div>
           </section>
           <section class="set-pane" data-pane="data" hidden>
@@ -1267,8 +1345,7 @@ html.sl-has-session #view-auth{display:none}
 
     <!-- 用户中心（v2.6.2）：头像 / 昵称 / 个人信息，改动自动保存 -->
     <section id="page-profile" hidden>
-      <div class="topbar"><div><h1>用户中心</h1><div class="sub">头像、昵称与个人信息；改动会自动保存到云端</div></div>
-        <button class="btn btn-sm" onclick="AppUI.go('settings')">偏好设置</button></div>
+      <div class="topbar"><div><h1>用户中心</h1><div class="sub">头像与个人信息</div></div></div>
 
       <div class="card">
         <div class="card-title"><span class="dot"></span>基本资料</div>
@@ -1283,19 +1360,33 @@ html.sl-has-session #view-auth{display:none}
               图片不会上传到任何第三方服务。</div>
           </div>
         </div>
-        <div class="kv"><span class="kk">昵称</span><span class="vv"><input id="prof-nick" maxlength="20" placeholder="留空则显示账号名" style="width:min(260px,60vw)"></span></div>
         <div class="kv"><span class="kk">一句话简介</span><span class="vv"><input id="prof-bio" maxlength="40" placeholder="例如：备考四级，每天 50 词" style="width:min(320px,70vw)"></span></div>
-        <div class="kv"><span class="kk">邮箱（选填）</span><span class="vv"><input id="prof-email" type="email" placeholder="you@example.com" style="width:min(260px,60vw)"></span></div>
-        <div class="autosave-hint" id="prof-autosave">改动会自动保存</div>
         <input type="file" id="prof-avatar-file" accept="image/png,image/jpeg,image/webp" hidden onchange="AppProfile.onAvatarFile(this)">
+      <div class="avc-mask" id="avc-mask" hidden role="dialog" aria-modal="true" aria-label="裁剪头像">
+        <div class="avc-card">
+          <div class="avc-title"><span class="ico" data-icon="crop"></span>调整头像</div>
+          <div class="avc-stage" id="avc-stage">
+            <img id="avc-img" alt="待裁剪的头像">
+            <div class="avc-ring" id="avc-ring"></div>
+          </div>
+          <div class="avc-hint">按住图片拖动调整位置，滚轮或下方滑杆缩放</div>
+          <div class="avc-zoom">
+            <span class="ico" data-icon="zoomIn"></span>
+            <input type="range" id="avc-zoom" min="100" max="320" step="1" value="100" aria-label="缩放">
+            <b id="avc-zoom-val">100%</b>
+          </div>
+          <div class="avc-acts">
+            <button class="btn" type="button" id="avc-cancel">取消</button>
+            <button class="btn btn-primary" type="button" id="avc-ok">使用这张</button>
+          </div>
+        </div>
+      </div>
       </div>
 
       <div class="card">
         <div class="card-title"><span class="dot"></span>账号</div>
         <div class="kv"><span class="kk">账号名（登录用，不可改）</span><span class="vv" id="prof-user">—</span></div>
         <div class="kv"><span class="kk">注册时间</span><span class="vv" id="prof-created">—</span></div>
-        <div class="kv"><span class="kk">最近更新</span><span class="vv" id="prof-updated">—</span></div>
-        <div class="kv"><span class="kk">云端同步</span><span class="vv" id="prof-sync">—</span></div>
       </div>
 
       <div class="card">
@@ -1311,10 +1402,10 @@ html.sl-has-session #view-auth{display:none}
 </div>
 
 <nav id="bottom-nav">
-  <button class="bnav-btn active" data-page="dashboard" onclick="AppUI.go('dashboard')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>概览</button>
-  <button class="bnav-btn" data-page="english" onclick="AppUI.go('english')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>英语</button>
-  <button class="bnav-btn" data-page="settings" onclick="AppUI.go('settings')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>设置</button>
-  <button class="bnav-btn" data-page="profile" onclick="AppUI.go('profile')"><span class="ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>我的</button>
+  <button class="bnav-btn active" data-page="dashboard" onclick="AppUI.go('dashboard')"><span class="ico" data-icon="grid"></span>概览</button>
+  <button class="bnav-btn" data-page="english" onclick="AppUI.go('english')"><span class="ico" data-icon="bookOpen"></span>英语</button>
+  <button class="bnav-btn" data-page="settings" onclick="AppUI.go('settings')"><span class="ico" data-icon="settings"></span>设置</button>
+  <button class="bnav-btn" data-page="profile" onclick="AppUI.go('profile')"><span class="ico" data-icon="user"></span>我的</button>
 </nav>
 
 <div id="toast-wrap" role="status" aria-live="polite"></div>
@@ -1356,52 +1447,58 @@ function download(name, content, type){
 
 /* ================= 图标库（开源 Feather/Lucide 风格，MIT 许可） ================= */
 const ICONS = {
-  bookOpen:'<path d="M12 5v16" /> <path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z" />',
-  calculator:'<rect width="16" height="20" x="4" y="2" rx="2" /> <line x1="8" x2="16" y1="6" y2="6" /> <line x1="16" x2="16" y1="14" y2="18" /> <path d="M16 10h.01" /> <path d="M12 10h.01" /> <path d="M8 10h.01" /> <path d="M12 14h.01" /> <path d="M8 14h.01" /> <path d="M12 18h.01" /> <path d="M8 18h.01" />',
-  archive:'<rect width="20" height="5" x="2" y="3" rx="1" /> <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" /> <path d="M10 12h4" />',
-  settings:'<path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /> <circle cx="12" cy="12" r="3" />',
-  user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /> <circle cx="12" cy="7" r="4" />',
-  search:'<path d="m21 21-4.34-4.34" /> <circle cx="11" cy="11" r="8" />',
-  refresh:'<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /> <path d="M21 3v5h-5" /> <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /> <path d="M8 16H3v5" />',
-  download:'<path d="M12 15V3" /> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /> <path d="m7 10 5 5 5-5" />',
-  upload:'<path d="M12 3v12" /> <path d="m17 8-5-5-5 5" /> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />',
-  trash:'<path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />',
-  save:'<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" /> <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" /> <path d="M7 3v4a1 1 0 0 0 1 1h7" />',
-  check:'<path d="M20 6 9 17l-5-5" />',
-  checkCircle:'<circle cx="12" cy="12" r="10" /> <path d="m9 12 2 2 4-4" />',
-  alert:'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" />',
-  info:'<circle cx="12" cy="12" r="10" /> <path d="M12 16v-4" /> <path d="M12 8h.01" />',
-  eye:'<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /> <circle cx="12" cy="12" r="3" />',
-  play:'<path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />',
-  target:'<circle cx="12" cy="12" r="10" /> <circle cx="12" cy="12" r="6" /> <circle cx="12" cy="12" r="2" />',
-  layers:'<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" /> <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" /> <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />',
-  edit:'<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" />',
-  clock:'<circle cx="12" cy="12" r="10" /> <path d="M12 6v6l4 2" />',
-  flame:'<path d="M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4" />',
-  volume2:'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /> <path d="M15.54 8.46a5 5 0 0 1 0 7.07" /> <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />',
-  trend:'<path d="M16 7h6v6" /> <path d="m22 7-8.5 8.5-5-5L2 17" />',
-  chevLeft:'<path d="m15 18-6-6 6-6" />',
-  chevRight:'<path d="m9 18 6-6-6-6" />',
-  external:'<path d="M15 3h6v6" /> <path d="M10 14 21 3" /> <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />',
-  list:'<path d="M3 5h.01" /> <path d="M3 12h.01" /> <path d="M3 19h.01" /> <path d="M8 5h13" /> <path d="M8 12h13" /> <path d="M8 19h13" />',
-  file:'<path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /> <path d="M14 2v5a1 1 0 0 0 1 1h5" /> <path d="M10 9H8" /> <path d="M16 13H8" /> <path d="M16 17H8" />',
-  cloud:'<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />',
-  grad:'<path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" /> <path d="M22 10v6" /> <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />',
-  logout:'<path d="m16 17 5-5-5-5" /> <path d="M21 12H9" /> <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />',
-  share:'<circle cx="18" cy="5" r="3" /> <circle cx="6" cy="12" r="3" /> <circle cx="18" cy="19" r="3" /> <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" /> <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />',
-  x:'<path d="M18 6 6 18" /> <path d="m6 6 12 12" />',
-  sparkles:'<path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/>',
-  penLine:'<path d="M13 21h8" /> <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />',
-  database:'<ellipse cx="12" cy="5" rx="9" ry="3" /> <path d="M3 5V19A9 3 0 0 0 21 19V5" /> <path d="M3 12A9 3 0 0 0 21 12" />',
-  minusCircle:'<circle cx="12" cy="12" r="10" /> <path d="M8 12h8" />',
-  grid:'<rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M3 9h18" /> <path d="M3 15h18" /> <path d="M9 3v18" /> <path d="M15 3v18" />',
-  book:'<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20" />',
-  filter:'<path d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z" />',
-  sliders:'<path d="M10 5H3" /> <path d="M12 19H3" /> <path d="M14 3v4" /> <path d="M16 17v4" /> <path d="M21 12h-9" /> <path d="M21 19h-5" /> <path d="M21 5h-7" /> <path d="M8 10v4" /> <path d="M8 12H3" />',
+  menu:'<path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/>',
+  grid:'<rect x="3.4" y="3.4" width="7.4" height="7.4" rx="2.4"/><rect x="13.2" y="3.4" width="7.4" height="7.4" rx="2.4"/><rect x="3.4" y="13.2" width="7.4" height="7.4" rx="2.4"/><rect x="13.2" y="13.2" width="7.4" height="7.4" rx="2.4"/>',
+  bookOpen:'<path d="M12 7.2C10.3 5.7 8.2 5 6 5a1 1 0 0 0-1 1v11.6a1 1 0 0 0 1 1c2.2 0 4.3.7 6 2.2"/><path d="M12 7.2C13.7 5.7 15.8 5 18 5a1 1 0 0 1 1 1v11.6a1 1 0 0 1-1 1c-2.2 0-4.3.7-6 2.2"/><path d="M12 7.2v13.6"/>',
+  book:'<rect x="5" y="3.6" width="14" height="16.8" rx="2.6"/><path d="M9.4 3.6v16.8"/>',
+  file:'<path d="M13.6 3.6H7.6a2 2 0 0 0-2 2v12.8a2 2 0 0 0 2 2h8.8a2 2 0 0 0 2-2V8.4z"/><path d="M13.6 3.6v4.8h4.8"/>',
+  settings:'<path d="M21.13 10.23 A9.3 9.3 0 0 1 21.13 13.77 L19.11 13.64 A7.3 7.3 0 0 1 18.19 15.87L19.71 17.2 A9.3 9.3 0 0 1 17.2 19.71 L15.87 18.19 A7.3 7.3 0 0 1 13.64 19.11L13.77 21.13 A9.3 9.3 0 0 1 10.23 21.13 L10.36 19.11 A7.3 7.3 0 0 1 8.13 18.19L6.8 19.71 A9.3 9.3 0 0 1 4.29 17.2 L5.81 15.87 A7.3 7.3 0 0 1 4.89 13.64L2.87 13.77 A9.3 9.3 0 0 1 2.87 10.23 L4.89 10.36 A7.3 7.3 0 0 1 5.81 8.13L4.29 6.8 A9.3 9.3 0 0 1 6.8 4.29 L8.13 5.81 A7.3 7.3 0 0 1 10.36 4.89L10.23 2.87 A9.3 9.3 0 0 1 13.77 2.87 L13.64 4.89 A7.3 7.3 0 0 1 15.87 5.81L17.2 4.29 A9.3 9.3 0 0 1 19.71 6.8 L18.19 8.13 A7.3 7.3 0 0 1 19.11 10.36 Z"/><circle cx="12" cy="12" r="3.4"/>',
+  user:'<circle cx="12" cy="8.6" r="3.9"/><path d="M4.8 20.2a7.4 7.4 0 0 1 14.4 0"/>',
+  logout:'<path d="M14.6 5.6h2.6a2 2 0 0 1 2 2v8.8a2 2 0 0 1-2 2h-2.6"/><path d="M10.4 8.8 7 12l3.4 3.2"/><path d="M7 12h8.4"/>',
+  chevLeft:'<path d="M14.4 6 8.4 12l6 6"/>',
+  chevRight:'<path d="M9.6 6l6 6-6 6"/>',
+  chevDown:'<path d="M6 9.6l6 6 6-6"/>',
+  x:'<path d="M6.4 6.4 17.6 17.6"/><path d="M17.6 6.4 6.4 17.6"/>',
+  play:'<path d="M8.2 5.6a1 1 0 0 1 1.5-.9l8.6 6.4a1 1 0 0 1 0 1.8l-8.6 6.4a1 1 0 0 1-1.5-.9z" fill="currentColor" stroke-linejoin="round"/>',
+  refresh:'<path d="M19.6 12a7.6 7.6 0 1 1-2.2-5.4"/><path d="M19.6 4.6v5h-5"/>',
+  check:'<path d="M5.2 12.6 9.6 17l9.2-10"/>',
+  checkCircle:'<circle cx="12" cy="12" r="8.3"/><path d="M8.3 12.2l2.6 2.6 4.8-5.4"/>',
+  minusCircle:'<circle cx="12" cy="12" r="8.3"/><path d="M8.4 12h7.2"/>',
+  volume2:'<path d="M11.2 5.2 6.8 9H3.9a.9.9 0 0 0-.9.9v4.2a.9.9 0 0 0 .9.9h2.9l4.4 3.8z"/><path d="M15.4 9.4a3.7 3.7 0 0 1 0 5.2"/><path d="M18.2 6.9a7.4 7.4 0 0 1 0 10.2"/>',
+  search:'<circle cx="11" cy="11" r="6.1"/><path d="M15.6 15.6 20 20"/>',
+  eye:'<path d="M3.6 12S6.8 6.8 12 6.8 20.4 12 20.4 12 17.2 17.2 12 17.2 3.6 12 3.6 12z"/><circle cx="12" cy="12" r="2.7"/>',
+  target:'<circle cx="12" cy="12" r="8.2"/><circle cx="12" cy="12" r="3.5"/>',
+  sliders:'<path d="M8 4.8v3"/><path d="M8 11.4v7.8"/><circle cx="8" cy="9.2" r="1.9"/><path d="M16 4.8v7.8"/><path d="M16 17.4v1.8"/><circle cx="16" cy="14.6" r="1.9"/>',
+  filter:'<path d="M4.4 5.8h15.2l-5.9 7.1v4.9l-3.4 2.3v-7.2z"/>',
+  list:'<path d="M9 7.2h10.4"/><path d="M9 12h10.4"/><path d="M9 16.8h10.4"/><circle cx="5" cy="7.2" r="1.1" fill="currentColor" stroke="none"/><circle cx="5" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="5" cy="16.8" r="1.1" fill="currentColor" stroke="none"/>',
+  download:'<path d="M12 4.4v10.8"/><path d="M7.9 11.4 12 15.5l4.1-4.1"/><path d="M4.6 19.4h14.8"/>',
+  upload:'<path d="M12 19.6V8.8"/><path d="M7.9 12.7 12 8.6l4.1 4.1"/><path d="M4.6 4.6h14.8"/>',
+  save:'<path d="M6.4 4.6h8.6l4.4 4.4v9.4a1.6 1.6 0 0 1-1.6 1.6H6.4a1.6 1.6 0 0 1-1.6-1.6V6.2a1.6 1.6 0 0 1 1.6-1.6z"/><path d="M8.6 4.6v4.6h6.8"/>',
+  trash:'<path d="M4.8 7.2h14.4"/><path d="M9.6 7.2V4.9h4.8v2.3"/><path d="M6.6 7.2l.8 11.9a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5l.8-11.9"/><path d="M10.4 11v6"/><path d="M13.6 11v6"/>',
+  database:'<ellipse cx="12" cy="6.6" rx="7.4" ry="3.1"/><path d="M4.6 6.6v10.8c0 1.7 3.3 3.1 7.4 3.1s7.4-1.4 7.4-3.1V6.6"/><path d="M4.6 12c0 1.7 3.3 3.1 7.4 3.1s7.4-1.4 7.4-3.1"/>',
+  cloud:'<path d="M7.2 18.4h9.6a3.8 3.8 0 0 0 .4-7.6 5.6 5.6 0 0 0-10.7-1 4.4 4.4 0 0 0 .7 8.6z"/>',
+  share:'<path d="M12 15.4V4.6"/><path d="M8.2 8.4 12 4.6l3.8 3.8"/><path d="M5.6 13.6v4.8a1.6 1.6 0 0 0 1.6 1.6h9.6a1.6 1.6 0 0 0 1.6-1.6v-4.8"/>',
+  alert:'<path d="M10.7 4.9a1.5 1.5 0 0 1 2.6 0l7.2 12.6a1.5 1.5 0 0 1-1.3 2.2H4.8a1.5 1.5 0 0 1-1.3-2.2z"/><path d="M12 9.2v4.4"/><circle cx="12" cy="16.6" r="1.05" fill="currentColor" stroke="none"/>',
+  info:'<circle cx="12" cy="12" r="8.3"/><path d="M12 11.2v5"/><circle cx="12" cy="8.2" r="1" fill="currentColor" stroke="none"/>',
+  sparkles:'<path d="M11.6 4.4l1.7 4.3 4.3 1.7-4.3 1.7-1.7 4.3-1.7-4.3L5.6 10.4l4.3-1.7z"/><path d="M18.2 15.4l.7 1.7 1.7.7-1.7.7-.7 1.7-.7-1.7-1.7-.7 1.7-.7z"/>',
+  clock:'<circle cx="12" cy="12" r="8.2"/><path d="M12 7.7V12l3 1.9"/>',
+  flame:'<path d="M12 3.8c3.4 3 5.6 5.3 5.6 8.6a5.6 5.6 0 0 1-11.2 0c0-1.6.6-2.9 1.7-4.2.5 1 1.2 1.6 2 1.8-.4-2.3-.1-4.3 1.9-6.2z"/>',
+  trend:'<path d="M4.6 15.8l4.6-4.6 3.2 3.2 6-6"/><path d="M14.8 8.4h3.6v3.6"/>',
+  grad:'<path d="M3.2 8.8 12 4.4l8.8 4.4L12 13.2z"/><path d="M6.6 11v4.3c0 1.4 2.4 2.5 5.4 2.5s5.4-1.1 5.4-2.5V11"/><path d="M20.8 8.8v5.4"/>',
+  edit:'<path d="M16.9 3.3a1.24 1.24 0 0 1 2.47 2.47L9.26 16.28 6.29 13.91z"/><path d="M14.78 5.42 17.25 7.89"/>',
+  penLine:'<path d="M14.2 5.6a1.24 1.24 0 0 1 2.47 2.47L7.48 17.26 5 14.78z"/><path d="M12.08 7.72 14.55 10.19"/><path d="M4.8 20.4h14.4"/>',
+  layers:'<path d="M12 3.8 3.8 8.4 12 13l8.2-4.6z"/><path d="M3.8 12.6 12 17.2l8.2-4.6"/><path d="M3.8 16.4 12 21l8.2-4.6"/>',
+  archive:'<rect x="3.6" y="4.6" width="16.8" height="4.4" rx="1.6"/><path d="M5.2 9v9.2a1.6 1.6 0 0 0 1.6 1.6h10.4a1.6 1.6 0 0 0 1.6-1.6V9"/><path d="M10 13h4"/>',
+  calculator:'<rect x="4.8" y="3.4" width="14.4" height="17.2" rx="2.6"/><rect x="7.6" y="6" width="9.2" height="3.4" rx="1.2"/><circle cx="8.6" cy="13" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="13" r="1" fill="currentColor" stroke="none"/><circle cx="15.4" cy="13" r="1" fill="currentColor" stroke="none"/><circle cx="8.6" cy="17" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="17" r="1" fill="currentColor" stroke="none"/><circle cx="15.4" cy="17" r="1" fill="currentColor" stroke="none"/>',
+  external:'<path d="M14 4.6h5.4V10"/><path d="M19.4 4.6 11 13"/><path d="M17.8 14.4v3.4a2 2 0 0 1-2 2H6.4a2 2 0 0 1-2-2V8.4a2 2 0 0 1 2-2h3.4"/>',
+  camera:'<path d="M4.6 8.8h2.8l1.4-2.2h6.4l1.4 2.2h2.8a1.6 1.6 0 0 1 1.6 1.6v7.4a1.6 1.6 0 0 1-1.6 1.6H4.6A1.6 1.6 0 0 1 3 17.8v-7.4a1.6 1.6 0 0 1 1.6-1.6z"/><circle cx="12" cy="13.4" r="3.1"/>',
+  crop:'<path d="M7.2 3.4v13a1.6 1.6 0 0 0 1.6 1.6h13"/><path d="M3.4 7.2h13A1.6 1.6 0 0 1 18 8.8v13"/>',
+  zoomIn:'<circle cx="11" cy="11" r="6.1"/><path d="M15.6 15.6 20 20"/><path d="M11 8.4v5.2"/><path d="M8.4 11h5.2"/>',
+  image:'<rect x="3.4" y="4.6" width="17.2" height="14.8" rx="2.6"/><circle cx="8.8" cy="10" r="1.7"/><path d="M4.4 17.4l4.6-4.2 3.4 3 3-2.6 4.2 3.8"/>',
 };
 function icon(name, size){
   const p = ICONS[name] || ICONS.info;
-  return '<svg class="ico-svg" viewBox="0 0 24 24" width="'+(size||16)+'" height="'+(size||16)+'" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';
+  return '<svg class="ico-svg" viewBox="0 0 24 24" width="'+(size||18)+'" height="'+(size||18)+'" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';
 }
 
 /* ================= 本地存储 ================= */
@@ -3369,7 +3466,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.6.2', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.0', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -3398,7 +3495,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.6.2', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.0', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -4008,10 +4105,37 @@ const Onboarding = {
   }
 };
 
+/* 主题色预设表（v2.7.0）：键名即 data-accent 值；graphite 为默认中性主题 */
+const ACCENTS = { graphite:'石墨', indigo:'靛蓝', blue:'湖蓝', green:'松绿', amber:'琥珀', rose:'玫红', violet:'紫罗兰' };
 function applyTheme(){
-  const s = AppAuth.data().settings.theme;
-  const dark = s === 'dark' || (s === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const st = AppAuth.data().settings;
+  const th = st.theme;
+  const dark = th === 'dark' || (th === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  const acc = ACCENTS[st.accent] ? st.accent : 'graphite';
+  document.documentElement.dataset.accent = acc;
+  const grp = document.getElementById('set-accent');
+  if(grp){
+    if(!grp.children.length){
+      grp.innerHTML = Object.keys(ACCENTS).map(k =>
+        '<button class="acc-sw" type="button" role="radio" aria-checked="false" data-accent="' + k +
+        '" title="' + ACCENTS[k] + '" aria-label="主题色：' + ACCENTS[k] + '"><i></i></button>').join('');
+    }
+    Array.prototype.forEach.call(grp.children, b => {
+      const on = b.dataset.accent === acc;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-checked', on ? 'true' : 'false');
+      b.onclick = () => {
+        const d = AppAuth.data();
+        d.settings.accent = b.dataset.accent;
+        AppAuth.save(d);
+        applyTheme();
+        toast(ACCENTS[b.dataset.accent] + '主题色已应用');
+      };
+    });
+  }
+  const nm = document.getElementById('acc-name');
+  if(nm) nm.textContent = ACCENTS[acc];
   const meta = document.querySelector('meta[name="theme-color"]');
   if(meta) meta.setAttribute('content', dark ? '#1b1b21' : '#eeeef1');
 }
@@ -4520,10 +4644,15 @@ const AppStudy = {
     const deck = [];
     const seen = new Set();
     const cur = (ss.idx < ss.words.length) ? Morph.norm(ss.words[ss.idx]) : null;
+    const st = AppAuth.data().wordState;
     for(const w of ss.words){
       const n = Morph.norm(w);
       if(seen.has(n)) continue; // 旧会话可能含去重前的重复词，恢复时剔除
       seen.add(n);
+      // v2.7.0：「学新词」只排范围内**全新**的词。
+      // 旧会话里已经点过「记得」的词已经有记录了，续学时不该再当新词出现
+      // （原来会把它们重新排进新词队列，看起来就是「学新词里混进了学过的词」）。
+      if(st[SRS.key(r.targetId, w)]) continue;
       const e = src.find(x => Morph.norm(x.w) === n) || r.kept.find(x => Morph.norm(x.w) === n);
       if(e) deck.push(e);
     }
@@ -4544,36 +4673,33 @@ const AppStudy = {
   render(){
     const box = $('#tab-study');
     const s = this.state;
-    if(s.idx >= s.deck.length){
-      this.clearSession();
-      AppData.autoBackup();
-      if(!Store.get('backupTipShown', false)){ Store.set('backupTipShown', true);
-        setTimeout(()=>{ try{ toast('本轮完成，进度已自动备份。建议到「设置 → 数据与备份」导出文件，换设备也不丢。','ok'); }catch(e){} }, 900); }
-      const isQuiz = s.mode === 'quiz';
-      box.innerHTML = '<div class="study-done"><div class="big">'+icon('checkCircle', 44)+'</div><h3>'+(isQuiz ? '抽测完成' : '本轮学习完成')+'</h3>' +
-      '<p class="muted" role="status">本轮共过 '+s.deck.length+' 个单词'+(s.requested && s.requested > s.deck.length ? '（申请 '+s.requested+' 个，可用仅 '+s.deck.length+' 个）' : '')+'：记得 '+s.marks.good+' 词，模糊 '+(s.marks.hard||0)+' 词，不记得 '+s.marks.again+' 词。'
-        + (isQuiz ? '抽测只作自测，不计入学习记录与任何词汇数量。' : '这些词已进入「学习中」，明天开始第 1 遍复习。') + '</p>' +
-      '<div style="display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap"><button class="btn btn-primary" onclick="AppStudy.start()">再来一轮</button><button class="btn" onclick="AppUI.englishTab(\'record\')">查看学习记录</button><button class="btn" onclick="AppUI.englishTab(\'review\')">去复习旧单词</button></div></div>';
-      burstFx(box.querySelector('.study-done'), 10);
-      return;
-    }
+    if(!s) return;
+    if(s.idx >= s.deck.length){ return this.finish({ done:true }); }
     const e = s.deck[s.idx];
     const total = s.deck.length;
     const curState = AppAuth.data().wordState[SRS.key(AppFilter.result.targetId, e.w)];
     const stage = SRS.stageOf(curState);
     box.innerHTML =
       '<div class="study-wrap">' +
-      '<div class="study-meta"><span>第 '+(s.idx+1)+' / '+total+' 个</span><span class="tag '+stage.cls+'">'+stage.txt+'</span></div>' +
+      '<div class="study-meta">' +
+        '<span class="sm-l"><button class="study-back" type="button" onclick="AppStudy.finish()" title="结束本轮并返回">返回</button>' +
+        '<span>第 '+(s.idx+1)+' / '+total+' 个</span></span>' +
+        '<span class="tag '+stage.cls+'">'+stage.txt+'</span></div>' +
       '<div class="bar" style="margin-bottom:16px" role="progressbar" aria-valuemin="0" aria-valuemax="'+total+'" aria-valuenow="'+(s.idx+1)+'" aria-label="学习进度"><i style="width:'+Math.round(s.idx/total*100)+'%"></i></div>' +
       '<div class="flashcard"><div class="fc-word-wrap"><span class="fc-word" data-fit data-fit-nowrap data-fit-max="'+fcFontSize(e.w)+'">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppStudy.speak()" aria-label="朗读 '+esc(e.w)+'（快捷键 ·）" title="朗读（快捷键 ·）">'+icon('volume2', 20)+'</button></div>' +
       '<div class="fc-ph" id="fc-ph"></div>' +
       passNote(curState) +
       '<div class="fc-img" id="fc-img"'+(imgEnabled() ? '' : ' hidden')+'></div>' +
       '<div id="fc-body" style="width:100%">'+(s.revealed ? '<div class="reveal-in">'+cardBody(e)+'</div>' : (s.idx < 3 ? '<div class="fc-preview"><div class="fc-preview-hint">先回忆它的意思与发音，再点下方按钮核对</div><button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示释义</button></div>' : '<button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示释义</button>'))+'</div></div>' +
-      '<div class="fc-btns">' +
-      '<button class="btn again" onclick="AppStudy.mark(\'again\')">不记得</button>' +
-      '<button class="btn good" onclick="AppStudy.mark(\'good\')">记得</button></div>' +
-      '<div class="fc-hint"><span class="kbd">空格</span> 显示释义 · <span class="kbd">·</span> 发音 · <span class="kbd">1</span> 不记得 · <span class="kbd">2</span> 记得 · <span class="kbd">Esc</span> 退出</div>' +
+      '<div class="fc-btns'+(s.againPending ? ' pending' : '')+'">' +
+      (s.againPending
+        ? '<button class="btn again next" onclick="AppStudy.next()">下一个</button>'
+        : '<button class="btn again" onclick="AppStudy.mark(\'again\')">不记得</button>' +
+          '<button class="btn good" onclick="AppStudy.mark(\'good\')">记得</button>') +
+      '</div>' +
+      '<div class="fc-hint">' + (s.againPending
+        ? '<span class="kbd">空格</span> 下一个 · <span class="kbd">Esc</span> 结束本轮'
+        : '<span class="kbd">空格</span> 显示释义 · <span class="kbd">·</span> 发音 · <span class="kbd">1</span> 不记得 · <span class="kbd">2</span> 记得 · <span class="kbd">Esc</span> 结束本轮') + '</div>' +
       '</div>';
     fillPh(e);
     const fdEl = document.getElementById('fc-def');
@@ -4599,22 +4725,23 @@ const AppStudy = {
     if(!s) return;
     const e = s.deck[s.idx];
     const targetId = AppFilter.result.targetId;
-    // v2.4：抽测只作自测——不写 wordState、不计入 totalStudy/dayLog/任何词汇数量
-    if(s.mode !== 'quiz'){
-      // 已接触过的词（复习）走「完成一遍复习」；全新词走「首次学习」。
-      // 这样「复习」并入背单词后仍按艾宾浩斯日期推进，不会被当成新词重置进度。
+    if(s.marks){ s.marks[level] = (s.marks[level] || 0) + 1; }
+    // v2.7.0：只有点过「记得/认识」才算学过。
+    // 只点过「不记得」的词当作没出现过：不写记录、不进复习计划、留在新词池里。
+    // （原来两者都写记录，于是「一次都没认出」的词反而跑进了复习，逻辑说不通）
+    if(s.mode !== 'quiz' && level === 'good'){
       const cur = AppAuth.data().wordState[SRS.key(targetId, e.w)];
       if(cur && !SRS.isMastered(cur)) SRS.completeRound(targetId, e.w);
       else SRS.learn(targetId, e.w);
     }
-    if(s.marks){ s.marks[level] = (s.marks[level] || 0) + 1; }
     if(level === 'again'){
-      // 10 个词之后再出现一次
-      const again = s.deck.splice(s.idx, 1)[0];
-      s.deck.splice(Math.min(s.idx + 8, s.deck.length), 0, again);
-    } else {
-      s.idx++;
+      // 两步：先给答案（显示释义、隐藏「记得」，按钮变成居中的「下一个」），
+      // 再点「下一个」才真正前进，并把这个词混回本轮尚未列出的词里
+      if(!s.revealed){ s.againPending = true; s.revealed = true; this.render(); return; }
+      return this.next();
     }
+    s.againPending = false;
+    s.idx++;
     s.revealed = false;
     s.round++;
     this.saveSession();
@@ -4623,6 +4750,48 @@ const AppStudy = {
     try{ AppUI.refreshEntryCounts(); }catch(err){}
     if(level === 'good') burstFx(document.querySelector('#tab-study .fc-btns .good'), 8);
   },
+  /* 「下一个」：把忘记的词混回本轮尚未列出的词里（随机位置），然后前进 */
+  next(){
+    const s = this.state;
+    if(!s) return;
+    if(!s.againPending){ s.revealed = false; s.idx++; this.render(); return; }
+    const again = s.deck.splice(s.idx, 1)[0];
+    s.deck.splice(this.requeueAt(s), 0, again);
+    s.againPending = false;
+    s.revealed = false;
+    s.round++;
+    this.saveSession();
+    this.render();
+    if(s.idx >= s.deck.length) return;
+    try{ AppUI.refreshEntryCounts(); }catch(err){}
+  },
+  /* 忘记的词要放回的插入位置：本轮「还没列出来」的那一段里随机取一个
+     （严格排在当前位置之后，保证中间至少还隔着一个词，不会立刻重复出现） */
+  requeueAt(s){
+    const from = Math.min(s.deck.length, Math.max(0, s.idx) + 1);
+    const to = Math.max(from, s.deck.length);
+    return from + Math.floor(Math.random() * (to - from + 1));
+  },
+  /* 结束本轮：回到「本轮结束」页（Esc、页面上的「返回」都走这里） */
+  finish(opts){
+    const s = this.state;
+    const done = !!(opts && opts.done);
+    const marks = (s && s.marks) || { good:0, hard:0, again:0 };
+    const total = s ? s.idx : 0;
+    const mode = s ? s.mode : 'study';
+    this.state = null;
+    AppUI._keyHandler = null;
+    document.onkeydown = null;
+    this.clearSession();
+    WordImg.clear();
+    AppData.autoBackup();
+    const box = $('#tab-study');
+    if(box){
+      box.innerHTML = doneHtml({ mode, total, marks, early: !done });
+      if(!done) burstFx(box.querySelector('.study-done'), 8);
+    }
+    try{ AppUI.refreshEntryCounts(); }catch(err){}
+  },
   speak(){
     const s = this.state;
     if(!s || !s.deck[s.idx]) return;
@@ -4630,15 +4799,53 @@ const AppStudy = {
   },
   bindKeys(){
     AppUI._keyHandler = e => {
-      if(e.key === ' '){ e.preventDefault(); if(this.state && !this.state.revealed) this.reveal(); }
+      if(e.key === ' '){
+        e.preventDefault();
+        if(!this.state) return;
+        if(this.state.againPending){ this.next(); return; }      // 确认态：空格 = 下一个
+        if(!this.state.revealed) this.reveal();
+      }
       else if(isSpeakKey(e)){ e.preventDefault(); this.speak(); }
       else if(e.key === '1') this.mark('again');
-      else if(e.key === '2') this.mark('good');
-      else if(e.key === 'Escape'){ AppUI._keyHandler = null; AppUI.englishTab('filter'); }
+      else if(e.key === '2'){ if(this.state && this.state.againPending) return; this.mark('good'); }
+      // v2.7.0：Esc 不再跳去词表筛选，而是结束本轮、回到「本轮结束」页
+      else if(e.key === 'Escape'){ this.finish(); }
     };
     document.onkeydown = AppUI._keyHandler;
   }
 };
+
+/* ================= 本轮结束页（学习/复习/抽测共用，v2.7.0） =================
+   需求：Esc 退出要回到「一开始那个界面」（一圈图标 + 一行字说明过了几个词），
+   复习端原来缺这个界面，这里统一。 */
+function doneHtml(o){
+  const c = o || {};
+  const marks = c.marks || {};
+  const total = c.total || 0;
+  const isQuiz = c.mode === 'quiz';
+  const isReview = c.mode === 'review';
+  const early = !!c.early;                       // 中途退出（Esc / 返回）
+  const title = isQuiz ? '抽测完成' : (isReview ? (early ? '本轮复习结束' : '本轮复习完成') : (early ? '本轮学习结束' : '本轮学习完成'));
+  const stat = isReview
+    ? '本轮复习了 <b>' + total + '</b> 个单词：记得 ' + (marks.good || 0) + ' 词，忘了 ' + (marks.again || 0) + ' 词。'
+    : '本轮过了 <b>' + total + '</b> 个单词：记得 ' + (marks.good || 0) + ' 词，模糊 ' + (marks.hard || 0) + ' 词，不记得 ' + (marks.again || 0) + ' 词。';
+  const tail = isQuiz
+    ? '抽测只作自测，不计入学习记录与任何词汇数量。'
+    : (isReview
+        ? '复习进度已按艾宾浩斯日期记入；走完全部 6 遍的词会自动变成「已掌握」。'
+        : '点过「记得」的词才进入「学习中」，明天开始第 1 遍复习；只点过「不记得」的词会留在新词里。');
+  const acts = isReview
+    ? '<button class="btn btn-primary" onclick="AppReview.again()">再复习一轮</button>' +
+      '<button class="btn" onclick="AppUI.englishTab(\'record\')">查看学习记录</button>' +
+      '<button class="btn" onclick="AppUI.englishTab(\'study\')">去背新单词</button>'
+    : '<button class="btn btn-primary" onclick="AppStudy.start()">再来一轮</button>' +
+      '<button class="btn" onclick="AppUI.englishTab(\'record\')">查看学习记录</button>' +
+      '<button class="btn" onclick="AppUI.englishTab(\'review\')">去复习旧单词</button>';
+  return '<div class="study-done"><div class="big">' + icon('checkCircle', 46) + '</div>' +
+    '<h3>' + title + '</h3>' +
+    '<p class="muted" role="status">' + stat + tail + '</p>' +
+    '<div class="done-acts">' + acts + '</div></div>';
+}
 
 function cardBody(e){
   let defHtml = '';
@@ -4768,35 +4975,32 @@ const AppReview = {
     const box = $('#tab-review');
     const s = this.state;
     if(!s) return this.render();
-    if(s.idx >= s.deck.length){
-      const d = AppAuth.data();
-      const achieved = (d.stats.reviewDays && d.stats.reviewDays[SRS.today()]) || 0;
-      box.innerHTML = '<div class="card empty"><div class="big">'+icon('checkCircle', 40)+'</div><h3 style="margin-bottom:6px">本次复习完成</h3>'
-        + '<p>本轮 '+s.deck.length+' 个单词已过了一遍，已记入复习计划。今天累计复习 '+achieved+' 词。</p>'
-        + '<div class="muted small" style="margin-top:8px">走完全部 6 遍的词已自动变为「已掌握」。</div>'
-        + '<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">'
-        + '<button class="btn btn-primary" onclick="AppReview.wantCount=0;AppReview.state=null;AppReview.render()">返回复习清单</button>'
-        + '<button class="btn" onclick="AppUI.englishTab(\'record\')">查看学习记录</button>'
-        + '<button class="btn" onclick="AppUI.englishTab(\'study\')">学习新词</button></div></div>';
-      return;
-    }
+    if(s.idx >= s.deck.length){ return this.finish({ done:true }); }
     const e = s.deck[s.idx];
     const total = s.deck.length;
     const c = AppAuth.data().wordState[SRS.key(s.targetId, e.w)];
     const stage = SRS.stageOf(c);
     box.innerHTML =
       '<div class="study-wrap">' +
-      '<div class="study-meta"><span>复习 '+(s.idx+1)+' / '+total+'</span><span class="tag '+stage.cls+'">第 '+Math.min((c && c.n || 0) + 1, SRS.ROUNDS)+' 遍</span><button class="btn btn-sm btn-ghost" onclick="AppReview.stop()">结束复习</button></div>' +
+      '<div class="study-meta">' +
+        '<span class="sm-l"><button class="study-back" type="button" onclick="AppReview.finish()" title="结束本轮复习并返回">返回</button>' +
+        '<span>复习 '+(s.idx+1)+' / '+total+'</span></span>' +
+        '<span class="tag '+stage.cls+'">第 '+Math.min((c && c.n || 0) + 1, SRS.ROUNDS)+' 遍</span></div>' +
       '<div class="bar" style="margin-bottom:16px" role="progressbar" aria-valuemin="0" aria-valuemax="'+total+'" aria-valuenow="'+(s.idx+1)+'" aria-label="复习进度"><i style="width:'+Math.round(s.idx/total*100)+'%"></i></div>' +
       '<div class="flashcard"><div class="fc-word-wrap"><span class="fc-word" data-fit data-fit-nowrap data-fit-max="'+fcFontSize(e.w)+'">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppReview.speak()" aria-label="朗读 '+esc(e.w)+'（快捷键 ·）" title="朗读（快捷键 ·）">'+icon('volume2', 20)+'</button></div>' +
       '<div class="fc-ph" id="fc-ph"></div>' +
       passNote(c) +
       '<div class="fc-img" id="fc-img"'+(imgEnabled() ? '' : ' hidden')+'></div>' +
       '<div id="fc-body" style="width:100%">'+(s.revealed ? cardBody(e) : '<button class="btn btn-primary btn-lg" onclick="AppReview.reveal()">显示释义</button>')+'</div></div>' +
-      '<div class="fc-btns">' +
-      '<button class="btn again" onclick="AppReview.mark(\'again\')">忘了</button>' +
-      '<button class="btn good" onclick="AppReview.mark(\'good\')">记得</button></div>' +
-      '<div class="fc-hint"><span class="kbd">空格</span> 显示释义 · <span class="kbd">·</span> 发音 · <span class="kbd">1</span> 忘了 · <span class="kbd">2</span> 记得 · <span class="kbd">Esc</span> 结束</div></div>';
+      '<div class="fc-btns'+(s.againPending ? ' pending' : '')+'">' +
+      (s.againPending
+        ? '<button class="btn again next" onclick="AppReview.next()">下一个</button>'
+        : '<button class="btn again" onclick="AppReview.mark(\'again\')">忘了</button>' +
+          '<button class="btn good" onclick="AppReview.mark(\'good\')">记得</button>') +
+      '</div>' +
+      '<div class="fc-hint">' + (s.againPending
+        ? '<span class="kbd">空格</span> 下一个 · <span class="kbd">Esc</span> 结束本轮'
+        : '<span class="kbd">空格</span> 显示释义 · <span class="kbd">·</span> 发音 · <span class="kbd">1</span> 忘了 · <span class="kbd">2</span> 记得 · <span class="kbd">Esc</span> 结束本轮') + '</div></div>';
     fillPh(e);
     const fdEl = document.getElementById('fc-def');
     if(fdEl) Dict.fillDef(e, fdEl);
@@ -4810,11 +5014,17 @@ const AppReview = {
       setTimeout(() => { if(AppReview.state && AppReview.state.idx === curIdx && !AppReview.state.revealed) AppReview.speak(); }, 180);
     }
     document.onkeydown = e2 => {
-      if(e2.key === ' '){ e2.preventDefault(); if(this.state && !this.state.revealed) this.reveal(); }
+      if(e2.key === ' '){
+        e2.preventDefault();
+        if(!this.state) return;
+        if(this.state.againPending){ this.next(); return; }       // 确认态：空格 = 下一个
+        if(!this.state.revealed) this.reveal();
+      }
       else if(isSpeakKey(e2)){ e2.preventDefault(); this.speak(); }
+      else if(e2.key === 'Spacebar') this.next();
       else if(e2.key === '1') this.mark('again');
-      else if(e2.key === '2') this.mark('good');
-      else if(e2.key === 'Escape') this.stop();
+      else if(e2.key === '2'){ if(this.state && this.state.againPending) return; this.mark('good'); }
+      else if(e2.key === 'Escape') this.finish();
     };
   },
   reveal(){ if(this.state){ this.state.revealed = true; this.renderCard(); } },
@@ -4827,19 +5037,54 @@ const AppReview = {
   mark(level){
     const s = this.state; if(!s) return;
     const e = s.deck[s.idx];
+    if(s.marks) s.marks[level] = (s.marks[level] || 0) + 1;
+    // 复习一趟算一遍（认得/不认得都不改变艾宾浩斯节点安排）
     SRS.completeRound(s.targetId, e.w);
-    if(level === 'good') burstFx(document.querySelector('#tab-review .fc-btns .good'), 8);
     if(level === 'again'){
-      // 本次会话内再出现一次（不影响复习计划）
-      const again = s.deck.splice(s.idx, 1)[0];
-      s.deck.splice(s.deck.length, 0, again);
-    } else s.idx++;
+      // 两步：先给答案（显示释义、隐藏「记得」，按钮变成居中的「下一个」）
+      if(!s.revealed){ s.againPending = true; s.revealed = true; this.renderCard(); return; }
+      return this.next();
+    }
+    s.againPending = false;
+    s.idx++;
     s.revealed = false;
     this.renderCard();
-    // 复习一个词后，两个入口上的数字要跟着变
+    // v2.7.0 修：点击特效必须在 renderCard() **之后**再放。
+    // 原来放在之前，renderCard 会把按钮所在的 DOM 整块换掉，特效元素当场被销毁 → 复习端看不到点击效果
+    if(level === 'good') burstFx(document.querySelector('#tab-review .fc-btns .good'), 8);
     try{ AppUI.refreshEntryCounts(); }catch(err){}
   },
-  stop(){ this.state = null; document.onkeydown = null; WordImg.clear(); AppUI.englishTab('review'); }
+  /* 「下一个」：忘了的词混回本轮尚未列出的词里（随机位置），然后前进 */
+  next(){
+    const s = this.state; if(!s) return;
+    if(!s.againPending){ s.revealed = false; s.idx++; this.renderCard(); return; }
+    const again = s.deck.splice(s.idx, 1)[0];
+    const from = Math.max(0, s.idx), to = Math.max(from, s.deck.length);
+    s.deck.splice(from + Math.floor(Math.random() * Math.max(1, to - from + 1)), 0, again);
+    s.againPending = false;
+    s.revealed = false;
+    this.renderCard();
+    try{ AppUI.refreshEntryCounts(); }catch(err){}
+  },
+  /* 结束本轮复习（Esc / 「返回」）：回到「本轮结束」页，而不是直接跳回清单 */
+  finish(opts){
+    const s = this.state;
+    const done = !!(opts && opts.done);
+    const marks = (s && s.marks) || { good:0, again:0 };
+    const total = s ? s.idx : 0;
+    this.state = null;
+    document.onkeydown = null;
+    WordImg.clear();
+    const box = $('#tab-review');
+    if(box){
+      box.innerHTML = doneHtml({ mode:'review', total, marks, early: !done });
+      if(!done) burstFx(box.querySelector('.study-done'), 8);
+    }
+    try{ AppUI.refreshEntryCounts(); }catch(err){}
+  },
+  /* 结束页上的「再复习一轮」：回到清单并保持数量选择 */
+  again(){ this.state = null; this.wantCount = 0; this.render(); },
+  stop(){ this.finish(); }
 };
 
 /* ================= 学习记录 ================= */
@@ -5257,12 +5502,139 @@ const AppSettings = {
    头像 / 昵称 / 简介 / 邮箱，改动自动保存并随账号数据一起上云。
    头像在本机用 canvas 裁成正方形并压缩成 JPEG data URL 再存进 profile.avatar，
    不依赖任何上传服务，也不会把图片发给第三方。 */
+/* ================= 头像裁剪器（v2.7.0）=================
+   圆形取景框内拖动 / 缩放，确认后输出 192×192 JPEG。 */
+const AvatarCrop = {
+  RING_RATIO: 0.84,        // 取景圆直径 / 舞台边长
+  OUT: 192,                // 输出边长
+  open(src){
+    const mask = $('#avc-mask'), img = $('#avc-img'), stage = $('#avc-stage'), ring = $('#avc-ring');
+    if(!mask || !img || !stage || !ring) return;
+    this.mask = mask; this.img = img; this.stage = stage; this.ring = ring;
+    this.tx = 0; this.ty = 0; this.zoom = 1; this.ok = false;
+    const zr = $('#avc-zoom'); if(zr) zr.value = '100';
+    const zv = $('#avc-zoom-val'); if(zv) zv.textContent = '100%';
+    // 打开期间接管键盘：Esc 取消、Enter 确认；关闭时还原（不干扰学习页快捷键）
+    this.prevKeys = document.onkeydown;
+    document.onkeydown = e => {
+      if(e.key === 'Escape'){ e.preventDefault(); this.close(); }
+      else if(e.key === 'Enter'){ e.preventDefault(); this.confirm(); }
+    };
+    img.onload = () => {
+      if(!img.naturalWidth || !img.naturalHeight){ toast('这张图片读不出来，请换一张', 'warn'); this.close(); return; }
+      const side = stage.clientWidth || 320;
+      const D = Math.round(side * this.RING_RATIO);
+      this.D = D;
+      ring.style.width = ring.style.height = D + 'px';
+      ring.style.margin = (-D / 2) + 'px 0 0 ' + (-D / 2) + 'px';
+      // 基准显示尺寸：图片刚好覆盖取景圆（cover），缩放系数 1 即此状态
+      this.k = Math.max(D / img.naturalWidth, D / img.naturalHeight);
+      this.bw = img.naturalWidth * this.k;
+      this.bh = img.naturalHeight * this.k;
+      img.style.width = this.bw + 'px';
+      img.style.height = this.bh + 'px';
+      this.apply();
+    };
+    img.onerror = () => { toast('这张图片读不出来，请换一张', 'warn'); this.close(); };
+    img.src = src;
+    mask.hidden = false;
+    this.bind();
+    const okBtn = $('#avc-ok');
+    if(okBtn) setTimeout(() => okBtn.focus(), 30);
+  },
+  bind(){
+    const st = this.stage;
+    if(st._avcBound) return;                 // 只绑一次（舞台是常驻 DOM）
+    st._avcBound = true;
+    st.addEventListener('pointerdown', e => {
+      if(this.mask.hidden) return;
+      e.preventDefault();
+      this.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, tx: this.tx, ty: this.ty };
+      if(st.setPointerCapture) try{ st.setPointerCapture(e.pointerId); }catch(err){}
+      st.classList.add('drag');
+    });
+    st.addEventListener('pointermove', e => {
+      if(!this.drag || this.drag.id !== e.pointerId) return;
+      e.preventDefault();
+      this.tx = this.drag.tx + (e.clientX - this.drag.x);
+      this.ty = this.drag.ty + (e.clientY - this.drag.y);
+      this.apply();
+    });
+    const end = e => {
+      if(!this.drag || this.drag.id !== e.pointerId) return;
+      this.drag = null;
+      if(st.releasePointerCapture) try{ st.releasePointerCapture(e.pointerId); }catch(err){}
+      st.classList.remove('drag');
+    };
+    st.addEventListener('pointerup', end);
+    st.addEventListener('pointercancel', end);
+    st.addEventListener('wheel', e => {
+      if(this.mask.hidden) return;
+      e.preventDefault();
+      this.setZoom(this.zoom * (e.deltaY < 0 ? 1.09 : 0.917));
+    }, { passive: false });
+    const zr = $('#avc-zoom');
+    if(zr) zr.oninput = () => this.setZoom(zr.value / 100);
+    const c = $('#avc-cancel'); if(c) c.onclick = () => this.close();
+    const o = $('#avc-ok'); if(o) o.onclick = () => this.confirm();
+    // 点遮罩空白处 = 取消（点卡片内部不关闭）
+    this.mask.addEventListener('click', e => { if(e.target === this.mask) this.close(); });
+  },
+  setZoom(z){
+    this.zoom = clamp(z, 1, 3.2);
+    const zr = $('#avc-zoom');
+    if(zr) zr.value = String(Math.round(this.zoom * 100));
+    const zv = $('#avc-zoom-val');
+    if(zv) zv.textContent = Math.round(this.zoom * 100) + '%';
+    this.apply();
+  },
+  /* 位移钳制：保证图片始终完整覆盖取景圆 */
+  apply(){
+    if(!this.bw) return;
+    const z = this.zoom;
+    const mx = Math.max(0, (this.bw * z - this.D) / 2);
+    const my = Math.max(0, (this.bh * z - this.D) / 2);
+    this.tx = clamp(this.tx, -mx, mx);
+    this.ty = clamp(this.ty, -my, my);
+    this.img.style.transform = 'translate(-50%,-50%) translate(' + this.tx + 'px,' + this.ty + 'px) scale(' + z + ')';
+  },
+  close(){
+    if(!this.mask) return;
+    this.mask.hidden = true;
+    this.drag = null;
+    document.onkeydown = this.prevKeys || null;
+    if(this.img) this.img.removeAttribute('src');
+  },
+  confirm(){
+    try{
+      if(!this.bw || !this.D) return;
+      const z = this.zoom, k = this.k, D = this.D;
+      // 取景圆 -> 原图 source rect
+      const sw = D / (k * z);
+      const sx = ((this.bw * z - D) / 2 - this.tx) / (k * z);
+      const sy = ((this.bh * z - D) / 2 - this.ty) / (k * z);
+      const size = this.OUT;
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#ffffff';                     // 透明 PNG 垫白底，免得转 JPEG 后发黑
+      ctx.fillRect(0, 0, size, size);
+      ctx.drawImage(this.img, sx, sy, sw, sw, 0, 0, size, size);
+      AppProfile.save({ avatar: c.toDataURL('image/jpeg', 0.82) }, true);
+      AppProfile.paintAvatar();
+      this.close();
+      toast('头像已更新');
+    }catch(e){
+      toast('头像处理失败：' + (e.message || e), 'err');
+      this.close();
+    }
+  }
+};
+
 const AppProfile = {
   AVATAR_SIZE: 192,        // 存进数据的正方形边长（JPEG 压缩后通常 8–20KB）
   form: [
-    { id: 'prof-nick',  key: 'nick',  max: 20 },
-    { id: 'prof-bio',   key: 'bio',   max: 40 },
-    { id: 'prof-email', key: 'email', max: 60 }
+    { id: 'prof-bio',   key: 'bio',   max: 40 }
   ],
   render(){
     const s = AppAuth.current();
@@ -5275,12 +5647,12 @@ const AppProfile = {
     this.bind();
     this.paintAvatar();
     const d = AppAuth.data();
-    const syncTxt = (typeof Supa !== 'undefined' && Supa.active())
-      ? (Supa.lastErr > (Supa.lastOk || 0) ? '同步失败，将自动重试' : '在线优先 · 已实时同步') : '未接入云端';
-    $('#prof-user').textContent = s.user;
-    $('#prof-created').textContent = (d.stats && d.stats.created) ? fmtDate(new Date(d.stats.created)) : '—';
-    $('#prof-updated').textContent = (d.meta && d.meta.updated) ? relTime(d.meta.updated) : '—';
-    $('#prof-sync').textContent = syncTxt;
+    // 这些元素可能已被删除（需求：去掉云端同步/最近更新的过程显示），一律判空
+    const set = (id, txt) => { const el = document.getElementById(id); if(el) el.textContent = txt; };
+    set('prof-user', s.user);
+    set('prof-created', (d.stats && d.stats.created) ? fmtDate(new Date(d.stats.created)) : '—');
+    set('prof-updated', (d.meta && d.meta.updated) ? relTime(d.meta.updated) : '—');
+    set('prof-sync', '');
     this.renderStats();
   },
   renderStats(){
@@ -5368,26 +5740,8 @@ const AppProfile = {
     if(!/^image\//.test(file.type)) return toast('请选择图片文件（JPG / PNG / WebP）', 'warn');
     if(file.size > 8 * 1024 * 1024) return toast('图片太大（超过 8MB），请换一张', 'warn');
     const fr = new FileReader();
-    fr.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        try{
-          const size = this.AVATAR_SIZE;
-          const c = document.createElement('canvas');
-          c.width = c.height = size;
-          const ctx = c.getContext('2d');
-          ctx.fillStyle = '#ffffff';                       // 透明 PNG 垫白底，免得转 JPEG 后发黑
-          ctx.fillRect(0, 0, size, size);
-          const side = Math.min(img.width, img.height);    // 居中裁成正方形
-          ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size);
-          this.save({ avatar: c.toDataURL('image/jpeg', 0.82) }, true);
-          this.paintAvatar();
-          toast('头像已更新');
-        }catch(e){ toast('头像处理失败：' + (e.message || e), 'err'); }
-      };
-      img.onerror = () => toast('这张图片读不出来，请换一张', 'warn');
-      img.src = fr.result;
-    };
+    // v2.7.0：不再自动居中裁剪，改为弹出圆形裁剪框，用户自己拖放与缩放
+    fr.onload = () => AvatarCrop.open(fr.result);
     fr.onerror = () => toast('读取文件失败', 'err');
     fr.readAsDataURL(file);
   }
