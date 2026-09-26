@@ -1165,6 +1165,24 @@ html.sl-has-session #view-auth{display:none}
 .fb-alt button{font:inherit; font-size:12.5px; color:var(--muted); background:none; border:none; cursor:pointer;
   padding:6px 10px; border-radius:10px; transition:color .16s var(--ease), background .16s var(--ease)}
 .fb-alt button:hover{color:var(--primary); background:var(--primary-soft)}
+/* v2.7.6：mini 流带 —— 概览页「下一步建议」里三个入口用（保留各自图标 + >>>，中性灰） */
+.fb-row{display:flex; gap:10px; flex-wrap:wrap}
+.flow-band.mini{width:auto; min-height:44px; padding:0 8px 0 12px; border-radius:13px; gap:8px;
+  background:var(--panel2); border-color:var(--line); color:var(--text); flex:0 1 auto}
+.flow-band.mini .fb-ic{display:flex; align-items:center; color:var(--muted)}
+.flow-band.mini .fb-ic .ico-svg{width:17px; height:17px}
+.flow-band.mini .fb-main{font-size:14px; font-weight:700}
+.flow-band.mini .fb-arrows{color:var(--muted); padding-right:2px}
+.flow-band.mini .fb-arrows .ico-svg{width:16px; height:16px; stroke-width:2.2}
+.flow-band.mini::before{background:radial-gradient(110px 60px at 20% 50%, color-mix(in srgb, var(--text) 8%, transparent), transparent 70%)}
+.flow-band.mini:hover{background:var(--panel3); border-color:var(--line2); box-shadow:0 0 0 3px color-mix(in srgb, var(--text) 6%, transparent)}
+.flow-band.mini:hover .fb-ic{color:var(--primary)}
+.flow-band.mini.go{background:var(--btn-solid); color:var(--btn-fg)}
+.flow-band.mini.go .fb-ic,.flow-band.mini.go .fb-arrows{color:var(--btn-fg)}
+
+/* 复习入口那条流带：与「开始学习」同款，图标放在文字块左侧 */
+.flow-band .fb-ic{display:flex; align-items:center; color:var(--primary)}
+
 /* 概览页用的紧凑版（放在页头右侧，不占整行）
    v2.7.5：按需求「概览的开始不要有颜色」—— 这一条改成纯中性灰，连箭头也不吃主题色；
    学习入口那条（.flow-band 非 compact）保留主题色，作为「主行动」的识别。 */
@@ -1181,7 +1199,81 @@ html.sl-has-session #view-auth{display:none}
 @keyframes fbBreathSm{0%,100%{opacity:.4; transform:scale(1)} 50%{opacity:.8; transform:scale(1.04)}}
 .flow-band.compact::before{animation-name:fbBreathSm}
 
-/* ===== v2.7.4 视图迁移原语：两层同时平移（新层提前渲染好再入场）→ 无缝衔接 =====
+/* ===== v2.7.6 错位式排版（需求：尝试对 UI 界面进行错位式排版，彰显特色）=====
+   思路：不做「一切居中/等距」的模板化排布，而是建立一条左侧纵轴，
+   让内容沿着它做有节奏的错位 —— 统计卡逐级下沉、卡片左右交替缩进、
+   标题块两行之间再错开一档。整套只用 data-layout="offset" 控制，关掉即完全回到原来的整齐排布。 */
+/* 注意：只给页面 section 开 position:relative（纵轴伪元素需要它）。
+   千万不要在这里给 .card 也加 position:relative —— 它的特异性会盖掉迁移层的
+   `.view-layer{position:absolute}`，让整段平移失效（v2.7.6 踩过一次）。 */
+[data-layout="offset"] #page-dashboard,
+[data-layout="offset"] #page-english{ position:relative }
+
+/* ① 错位档位：--off 是这一块相对轴的缩进（每档 +18px 的递进阶梯），
+   每个区块还在轴上有一个节点刻度，读起来是「挂在一条轴上的节奏」而不是随手缩进。 */
+[data-layout="offset"] [data-off="1"]{ --off:18px }
+[data-layout="offset"] [data-off="2"]{ --off:36px }
+[data-layout="offset"] [data-off="3"]{ --off:54px }
+[data-layout="offset"] #page-dashboard>[data-off],
+[data-layout="offset"] #page-english>[data-off]{ position:relative;
+  margin-left:var(--off, 0); width:calc(100% - var(--off, 0px)) }
+/* 节点刻度：从纵轴（left:13px）拉到区块左边界的一小段横线 + 一个圆点 */
+[data-layout="offset"] #page-dashboard>[data-off]::before,
+[data-layout="offset"] #page-english>[data-off]::before{
+  content:''; position:absolute; left:calc(-1 * var(--off, 0px)); top:26px; width:var(--off, 0px); height:1px;
+  background:var(--line2); opacity:.85}
+[data-layout="offset"] #page-dashboard>[data-off]::after,
+[data-layout="offset"] #page-english>[data-off]::after{
+  content:''; position:absolute; left:calc(-1 * var(--off, 0px) - 2.5px); top:23.5px; width:6px; height:6px;
+  border-radius:50%; background:var(--panel); border:1px solid var(--line2)}
+
+/* ① 纵向轴：一条很淡的竖线，所有错位都挂在它上面 */
+[data-layout="offset"] #page-dashboard::before,
+[data-layout="offset"] #page-english::before{
+  content:''; position:absolute; left:11px; top:6px; bottom:34px; width:1px;
+  background:linear-gradient(180deg, transparent, var(--line2) 12%, var(--line2) 88%, transparent); opacity:.7}
+
+/* ② 标题块：主标题贴轴，副标题再退一档 */
+[data-layout="offset"] .topbar{ margin-left:26px }
+[data-layout="offset"] .topbar>div>.sub,
+[data-layout="offset"] .topbar>div>h1+.sub{ margin-left:22px }
+
+/* ③ 统计卡：逐级下沉成阶梯（错位但不乱，第 4 张回到基线） */
+[data-layout="offset"] #dash-stats{ padding-left:26px }
+[data-layout="offset"] #dash-stats .stat:nth-child(1){ margin-top:0 }
+[data-layout="offset"] #dash-stats .stat:nth-child(2){ margin-top:9px }
+[data-layout="offset"] #dash-stats .stat:nth-child(3){ margin-top:18px }
+[data-layout="offset"] #dash-stats .stat:nth-child(4){ margin-top:27px }
+
+/* ④ 卡片：改由上面的 data-off 阶梯统一控制（不再按奇偶交替，避免与阶梯互相打架） */
+[data-layout="offset"] #page-english>#tab-study>.card{ width:calc(100% - 20px); margin-left:20px }
+
+/* ⑤ 背单词入口页的数字行也逐级下沉（与统计卡同一套语言） */
+[data-layout="offset"] .en-hero-nums{ padding-left:14px }
+[data-layout="offset"] .en-hero-nums .en-num:nth-child(2){ margin-top:8px }
+[data-layout="offset"] .en-hero-nums .en-num:nth-child(3){ margin-top:16px }
+[data-layout="offset"] .en-hero>.flow-band{ margin-left:14px; width:calc(100% - 14px) }
+
+/* ⑥ 小屏（≤860px）把错位幅度减半，别挤掉内容宽度 */
+@media (max-width: 860px){
+  [data-layout="offset"] .topbar{ margin-left:14px }
+  [data-layout="offset"] #dash-stats{ padding-left:14px }
+  [data-layout="offset"] #dash-stats .stat:nth-child(n){ margin-top:0 }
+  [data-layout="offset"] #page-dashboard>.card,
+  [data-layout="offset"] #page-english>.card,
+  [data-layout="offset"] #page-english>#tab-study>.card{ width:100%; margin-left:0 }
+  [data-layout="offset"] [data-off="1"]{ --off:8px }
+  [data-layout="offset"] [data-off="2"]{ --off:14px }
+  [data-layout="offset"] [data-off="3"]{ --off:20px }
+  [data-layout="offset"] #page-dashboard>[data-off]::before,
+  [data-layout="offset"] #page-dashboard>[data-off]::after,
+  [data-layout="offset"] #page-english>[data-off]::before,
+  [data-layout="offset"] #page-english>[data-off]::after{ display:none }
+  [data-layout="offset"] #page-dashboard::before,
+  [data-layout="offset"] #page-english::before{ display:none }
+}
+
+/* ===== v2.7.4 视图迁移原语
    前进 fwd ：当前层向右退出、新层自左侧滑入（与 >>> 的方向一致）
    返回 back：当前层向左退出、新层自右侧滑入
    关键点：两层都是 absolute 且同时存在，容器锁住高度 —— 全程没有任何空窗，所以看不到接缝。 */
@@ -1394,7 +1486,7 @@ html.sl-has-session #view-auth{display:none}
   </button>
   <aside class="sidebar" id="side-nav">
     <button class="nav-btn active" data-page="dashboard" onclick="AppUI.go('dashboard')"><span class="ico" data-icon="grid"></span>概览</button>
-    <button class="nav-btn" data-page="english" onclick="AppUI.go('english')"><span class="ico" data-icon="bookOpen"></span>英语学习</button>
+    <button class="nav-btn" data-page="english" onclick="AppUI.go('english')"><span class="ico" data-icon="bookOpen"></span>词汇背诵</button>
     <button class="nav-btn" data-page="settings" onclick="AppUI.go('settings')"><span class="ico" data-icon="settings"></span>设置</button>
     <div class="nav-sep"></div>
     <button class="side-user" id="side-user-btn" type="button" data-page="profile"
@@ -1409,33 +1501,46 @@ html.sl-has-session #view-auth{display:none}
     <!-- 仪表盘 -->
     <section id="page-dashboard">
       <div class="topbar"><div><h1>你好，<span id="dash-name">同学</span></h1><div class="sub" id="dash-date"></div></div>
-        <button class="flow-band compact" type="button" onclick="AppUI.startFlowTo(this,'english')" aria-label="开始学习，进入英语学习">
-          <span class="fb-txt"><span class="fb-main">开始学习</span><span class="fb-sub">进入英语学习</span></span>
+        <button class="flow-band compact" type="button" onclick="AppUI.startFlowTo(this,'english')" aria-label="开始学习，进入词汇背诵">
+          <span class="fb-txt"><span class="fb-main">开始学习</span><span class="fb-sub">进入词汇背诵</span></span>
           <span class="fb-arrows" aria-hidden="true"><span class="arw" data-icon="chevRight"></span><span class="arw" data-icon="chevRight"></span><span class="arw" data-icon="chevRight"></span></span>
         </button></div>
       <div id="dash-banner"></div>
-      <div class="grid grid-4" id="dash-stats"></div>
-      <div class="card" style="margin-top:16px">
+      <div class="grid grid-4" id="dash-stats" data-off="1"></div>
+      <div class="card" style="margin-top:16px" data-off="2">
         <div class="card-title"><span class="dot"></span>今日学习进度</div>
         <div id="dash-progress"></div>
       </div>
-      <div class="card" style="margin-top:16px">
-        <div class="card-title"><span class="dot" style="background:var(--accent)"></span>英语 · 下一步建议</div>
-        <div id="dash-english-tip" class="muted" style="font-size:13.5px"></div>
-        <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap">
-          <button class="btn btn-sm btn-primary" data-icon="sliders" onclick="AppUI.go('english');AppUI.englishTab('filter')">调整词表</button>
-          <button class="btn btn-sm" data-icon="refresh" onclick="AppUI.go('english');AppUI.englishTab('review')">开始复习</button>
-          <button class="btn btn-sm" data-icon="cloud" onclick="AppUI.go('library')">更新词库</button>
+      <!-- v2.7.6：去掉「英语 · 下一步建议」标题；当前词表说明移到底部；
+           三个入口改成与「开始学习」同一条流带（保留各自图标 + >>>） -->
+      <div class="card" style="margin-top:16px" data-off="3">
+        <div class="fb-row">
+          <button class="flow-band mini" type="button" onclick="AppUI.startFlowTo(this,'english','filter')" aria-label="调整词表">
+            <span class="fb-ic" data-icon="sliders"></span>
+            <span class="fb-main">调整词表</span>
+            <span class="fb-arrows" aria-hidden="true"><span class="arw" data-icon="chevRight"></span><span class="arw" data-icon="chevRight"></span><span class="arw" data-icon="chevRight"></span></span>
+          </button>
+          <button class="flow-band mini" type="button" onclick="AppUI.startFlowTo(this,'english','review')" aria-label="开始复习">
+            <span class="fb-ic" data-icon="refresh"></span>
+            <span class="fb-main">开始复习</span>
+            <span class="fb-arrows" aria-hidden="true"><span class="arw" data-icon="chevRight"></span><span class="arw" data-icon="chevRight"></span><span class="arw" data-icon="chevRight"></span></span>
+          </button>
+          <button class="flow-band mini" type="button" onclick="AppUI.startFlowTo(this,'library')" aria-label="更新词库">
+            <span class="fb-ic" data-icon="cloud"></span>
+            <span class="fb-main">更新词库</span>
+            <span class="fb-arrows" aria-hidden="true"><span class="arw" data-icon="chevRight"></span><span class="arw" data-icon="chevRight"></span><span class="arw" data-icon="chevRight"></span></span>
+          </button>
         </div>
+        <div id="dash-english-tip" class="muted" style="font-size:12.5px;margin-top:12px"></div>
       </div>
     </section>
 
     <!-- 英语 -->
     <section id="page-english" hidden>
       <div class="topbar">
-        <div><h1 id="en-title">背新单词</h1><div class="sub" id="en-sub">今天要背的新词已经排好，直接开始即可</div></div>
+        <div><h1 id="en-title">背新单词</h1><div class="sub" id="en-sub"></div></div>
         <!-- 两个独立入口：常驻可见（含会话进行中），随时可在新词/复习之间切换 -->
-        <div id="en-switch" role="tablist" aria-label="英语学习入口">
+        <div id="en-switch" role="tablist" aria-label="词汇背诵入口">
           <button class="en-sw active" role="tab" data-tab="study" aria-selected="true" onclick="AppUI.englishTab('study')">
             <span class="en-sw-t">背新单词</span><span class="en-sw-n" id="en-sw-new">0</span>
           </button>
@@ -1526,8 +1631,10 @@ html.sl-has-session #view-auth{display:none}
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
+            <div class="kv"><span class="kk">错位式排版</span><span class="vv"><label class="switch"><input type="checkbox" id="set-offset"><span class="sl"></span></label></span></div>
+            <div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">错位排布：标题沿一条纵轴挂靠、统计卡逐级下沉、卡片左右交替缩进。关闭后回到完全整齐的等距排布。</div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.7.5</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.7.6</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">自绘图标集（48 枚，24×24 网格 / 1.7 线宽）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用在线优先设计（v2.0.0）：账号与学习进度保存在云端数据库，需要联网使用；词库数据同样在线加载并缓存在本机，不再内嵌于页面。仍建议定期「导出数据备份」。</div>
@@ -1613,7 +1720,7 @@ html.sl-has-session #view-auth{display:none}
 
 <nav id="bottom-nav">
   <button class="bnav-btn active" data-page="dashboard" onclick="AppUI.go('dashboard')"><span class="ico" data-icon="grid"></span>概览</button>
-  <button class="bnav-btn" data-page="english" onclick="AppUI.go('english')"><span class="ico" data-icon="bookOpen"></span>英语</button>
+  <button class="bnav-btn" data-page="english" onclick="AppUI.go('english')"><span class="ico" data-icon="bookOpen"></span>背词</button>
   <button class="bnav-btn" data-page="settings" onclick="AppUI.go('settings')"><span class="ico" data-icon="settings"></span>设置</button>
   <button class="bnav-btn" data-page="profile" onclick="AppUI.go('profile')"><span class="ico" data-icon="user"></span>我的</button>
 </nav>
@@ -1724,6 +1831,20 @@ function fcButtonsHtml(api, firstLabel){
     '</button>' +
     '<button class="btn good" onclick="' + api + '.mark(\'good\')">记得</button>' +
   '</div>';
+}
+/* v2.7.6：带图标/自动宽度的流带（复习入口与概览页三个按钮复用同一条视觉语言）
+   iconName 可选：给了就在最左侧放图标；不传就是纯文字 */
+function fcButtonsBandHtml(api, main, sub, max, iconName){
+  return '<button class="flow-band" type="button"' + (max ? ' data-max="' + max + '"' : '') +
+    ' onclick="' + api + '.startFlow(this)" aria-label="' + main + (sub ? '，' + sub : '') + '">' +
+    '<span class="fb-txt">' +
+      (iconName ? '<span class="fb-ic">' + icon(iconName, 18) + '</span>' : '') +
+      '<span class="fb-main">' + main + '</span>' +
+      (sub ? '<span class="fb-sub">' + sub + '</span>' : '') +
+    '</span>' +
+    '<span class="fb-arrows" aria-hidden="true"><span class="arw">' + icon('chevRight') + '</span>' +
+    '<span class="arw">' + icon('chevRight') + '</span><span class="arw">' + icon('chevRight') + '</span></span>' +
+  '</button>';
 }
 /* 新节点先以「两键并排」的初始态落定，下一帧再加 .pending 触发过渡（否则同一帧内不会动） */
 function startBtnMerge(root){
@@ -2190,7 +2311,7 @@ const AppAuth = {
   defaultData(){
     const deployed = typeof location !== 'undefined' && location.protocol === 'https:';
     return {
-      settings: { daily: 20, phon: true, deriv: true, theme: 'auto', useOnline: true, autoOnline: true, studyMode: 'daily', studyFixed: 30, studyOrder: 'random', uiScale: 100, autoScale: true, onboarded: false, voice: 'en-US', autoSpeak: false, studyModeChoice: 'new', showImg: false, cloud: { enabled: deployed, lastSync: 0, endpoint: '' } },
+      settings: { daily: 20, phon: true, deriv: true, theme: 'auto', useOnline: true, autoOnline: true, studyMode: 'daily', studyFixed: 30, studyOrder: 'random', uiScale: 100, autoScale: true, onboarded: false, voice: 'en-US', autoSpeak: false, studyModeChoice: 'new', showImg: false, offsetLayout: true, cloud: { enabled: deployed, lastSync: 0, endpoint: '' } },
       filter: { target: 'cet4', bases: ['primary','middle','hs'], deriv: true, presetName: '' },
       presets: [],
       wordState: {},
@@ -3776,7 +3897,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.5', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.6', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -3805,7 +3926,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.5', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.6', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -3957,6 +4078,7 @@ const AppUI = {
     if(page === 'settings' && !AppSettings._keepCat) AppSettings.catName = 'account';
     AppSettings._keepCat = false;
     this.page = page;
+    this.clearBandGo();                                   // v2.7.6：任何切页都顺手清掉加速态残留
     document.onkeydown = null;
     $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
     $$('.bnav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
@@ -3982,17 +4104,27 @@ const AppUI = {
       }catch(e){}
     }
   },
-  /* v2.7.4：概览页的「开始学习」流带 —— 加速后把英语页提前渲染好，再整页双向平移过去 */
-  startFlowTo(el, page){
+  /* v2.7.6：清掉所有流带残留的加速态。
+     之前概览页的流带是静态 HTML（切页不重建），点完 .go 一直挂着 —— 第二次回到概览就会看到
+     「>>> 一直在快波 + 整条常驻实心（主题色偏蓝）」，也就是用户说的鬼畜。 */
+  clearBandGo(){ $$('.flow-band.go').forEach(b => b.classList.remove('go')); },
+  /* v2.7.4：概览页的「开始学习」流带 —— 加速后把目标页提前渲染好，再整页双向平移过去。
+     page：目标页；tab：可选，进入后再切到该子入口（filter / review / browse / record）。 */
+  startFlowTo(el, page, tab){
     if(this._flowing) return;
     this._flowing = true;
     if(el) el.classList.add('go');
-    setTimeout(() => { this._flowing = false; this.goFlow(page); }, 240);
+    setTimeout(() => {
+      this._flowing = false;
+      this.clearBandGo();                                 // 先收拾干净再切页
+      this.goFlow(page, 'fwd', tab);
+    }, 240);
   },
-  goFlow(page, dir){
+  goFlow(page, dir, tab){
     const cur = document.querySelector('#main-area > section:not([hidden])');   // 页面区是 #main-area 下的 <section id=page-*>
     const target = document.getElementById('page-' + page);
     this.go(page);                                        // 先把目标页渲染好（提前渲染）
+    if(tab && page === 'english') this.englishTab(tab);
     if(!cur || !target || cur === target || !target.parentElement) return;
     cur.hidden = false;                                   // 把上一页放回来，两层一起做动画
     slideLayers(target.parentElement, cur, target, dir || 'fwd', null, { keepCur: true });
@@ -4018,7 +4150,7 @@ const AppUI = {
       b.setAttribute('aria-selected', on ? 'true' : 'false');
     });
     const META = {
-      study:  ['背新单词', '今天要背的新词已经排好，直接开始即可'],
+      study: ['背新单词', ''],          // v2.7.6：按需求删掉这句提示
       review: ['复习旧单词', '今日复习清单：先看清单，再开始复习'],
       filter: ['词表筛选', '设置主词库与次词库，生成专属词表'],
       browse: ['词表浏览', '查看词库全部词条'],
@@ -4081,7 +4213,7 @@ const AppUI = {
         '· <b>背单词</b>：今天要背的内容已经排好，直接开始即可；复习清单也在同一处；<br>' +
         '· <b>词库中心</b>：查看、更新各年级与四六级词库；<br>' +
         '· <b>设置</b>：账号、学习偏好、界面与云端同步。<br>' +
-        '建议第一步：进入「英语学习 → 词表筛选」，选好主词库和次词库，生成词表后开始背单词。</div>' +
+        '建议第一步：进入「词汇背诵 → 词表筛选」，选好主词库和次词库，生成词表后开始背单词。</div>' +
         '<div style="margin-top:14px"><button class="btn btn-primary" onclick="AppUI.dismissWelcome()">开始使用</button></div></div>';
     } else {
       $('#dash-banner').innerHTML = '';
@@ -4114,11 +4246,12 @@ const AppUI = {
       return n;
     })();
     $('#dash-stats').innerHTML = [
-      ['bookOpen','新单词', newN === null ? '—' : newN, newN === null ? '生成词表后显示' : '当前词表中还没接触过的词', 'stat-blue'],
-      ['clock','学习中', learnN, '已接触过，正在走 6 遍复习', 'stat-orange'],
-      ['checkCircle','已掌握', known, '走完 +1/2/4/7/15/21 天全部 6 遍 <button class="tip" onclick="termTip(&quot;curve&quot;)" aria-label="什么是遗忘曲线" title="什么是遗忘曲线">?</button>', 'stat-green'],
+      // v2.7.6：按需求删掉三条说明文案（保留「今日需复习」那条的进度提示）
+      ['bookOpen','新单词', newN === null ? '—' : newN, '', 'stat-blue'],
+      ['clock','学习中', learnN, '', 'stat-orange'],
+      ['checkCircle','已掌握', known, '', 'stat-green'],
       ['refresh','今日需复习', due, due ? ('已复习 ' + todayReview + ' 词') : '今日无到期单词', 'stat-red']
-    ].map(x => '<div class="stat"><span class="stat-ico '+x[4]+'">'+icon(x[0])+'</span><div class="stat-body"><span class="k">'+x[1]+'</span><span class="v">'+x[2]+'</span><span class="d">'+x[3]+'</span></div></div>').join('');
+    ].map(x => '<div class="stat"><span class="stat-ico '+x[4]+'">'+icon(x[0])+'</span><div class="stat-body"><span class="k">'+x[1]+'</span><span class="v">'+x[2]+'</span>'+(x[3] ? '<span class="d">'+x[3]+'</span>' : '')+'</div></div>').join('');
     // 近 7 日学习趋势（来自每日学习日志，纯 CSS 柱状，无第三方图表依赖）
     const log = d.stats.dayLog || {};
     const days7 = [];
@@ -4137,7 +4270,7 @@ const AppUI = {
       '<div style="display:flex;justify-content:space-between;align-items:baseline;font-size:14px;margin-bottom:4px"><span class="muted">今日已认识</span><b>'+todayMarks+' 词</b></div>' +
       '<div class="bar" style="margin:8px 0 6px"><i style="width:'+Math.min(100, Math.round(todayMarks / Math.max(1, d.settings.daily) * 100))+'%"></i></div>' +
       '<div class="wk">'+bars+'</div>' +
-      '<div class="muted small">'+(lastTs ? '上次学习：'+relTime(lastTs)+' · ' : '')+'每日目标 '+d.settings.daily+' 词（按新学单词数计）· 复习计划按艾宾浩斯日期自动安排，与认得与否无关。</div>';
+      '';   // v2.7.6：按需求删除「上次学习 · 每日目标 · 复习计划」这行提示
     const tip = $('#dash-english-tip');
     if(AppFilter.result){
       const r = AppFilter.result;
@@ -4184,6 +4317,7 @@ const AppUI = {
     if($('#set-autospeak')) $('#set-autospeak').checked = !!s.autoSpeak;
     if($('#set-showimg')) $('#set-showimg').checked = s.showImg === true;   // 内测功能：只认显式开启
     if($('#set-autoonline')) $('#set-autoonline').checked = true;
+    if($('#set-offset')) $('#set-offset').checked = s.offsetLayout !== false;   // v2.7.6 错位排版
     $('#set-deriv').checked = s.deriv;
     $('#set-theme').value = s.theme;
     AppSettings.bindAutoSave();
@@ -4443,6 +4577,8 @@ function applyTheme(){
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
   const acc = ACCENTS[st.accent] ? st.accent : 'graphite';
   document.documentElement.dataset.accent = acc;
+  // v2.7.6：错位式排版开关（设置里可一键关掉，回到完全整齐的排布）
+  document.documentElement.dataset.layout = (st.offsetLayout === false) ? 'aligned' : 'offset';
   const grp = document.getElementById('set-accent');
   if(grp){
     if(!grp.children.length){
@@ -4800,7 +4936,7 @@ const AppStudy = {
         (dueN
           ? '<button class="btn en-cta2 en-to-review" onclick="AppUI.englishTab(\'review\')">'+icon('refresh')+' 去复习旧单词 · 今日 '+dueN+' 词需复习</button>'
           : '<div class="en-done-hint">'+icon('checkCircle')+' 今天没有到期的复习，专心背新词即可</div>') +
-        '<div class="fc-hint">新词学完会进入「学习中」，从明天起按 +1 / +2 / +4 / +7 / +15 / +21 天自动安排 6 遍复习，走完即「已掌握」。复习在另一个入口里单独进行，学到一半也能随时切过去。</div>' +
+        // v2.7.6：按需求删掉这段复习机制说明
         (quizN ? '<div style="text-align:center"><button class="btn btn-sm btn-ghost" onclick="AppStudy.askCount(\'quiz\','+quizN+')">'+icon('search', 14)+' 学习情况抽测（已学 '+quizN+' 词，不计入任何统计）</button></div>' : '') +
       '</div>';
   },
@@ -4850,6 +4986,7 @@ const AppStudy = {
       const prefer = st.studyMode === 'fixed' ? (st.studyFixed || 30) : (st.daily || 20);
       this.quickStart('new', Math.max(1, Math.min(max, prefer)));
     });
+    this.clearBandGo();
     if(!cur){ layer.classList.remove('view-layer', 'from-left'); return; }
     slideLayers(box, cur, layer, 'fwd', () => { try{ fitNow(box); fitStudyViewport(); }catch(e){} });
   },
@@ -5360,10 +5497,28 @@ const AppReview = {
       + '。复习一遍记一遍；漏掉的日子会在此列出空缺。</div>'
       + '<div class="rv-list">'+rowsHtml+'</div>'
       + '<div class="muted small" style="margin-top:14px">复习节点：学完当天起来第 +1 / +2 / +4 / +7 / +15 / +21 天，共 6 遍，走完即自动变为「已掌握」。逾期完成的词会以当天为新的起点重新排后续节点。</div>'
-      + '<div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">'
-      + '<button class="btn btn-primary btn-lg" onclick="AppReview.start()">开始复习（'+total+' 词）</button>'
-      + '<button class="btn" onclick="AppUI.englishTab(\'study\')">去背新单词</button>'
-      + '</div></div>';
+      + fcButtonsBandHtml('AppReview', '开始复习', '今日 '+total+' 词到期 · 走完 6 遍即掌握', total)
+      + '<div style="margin-top:2px;text-align:center"><button class="btn btn-sm" onclick="AppUI.englishTab(\'study\')">去背新单词</button></div>'
+      + '</div>';
+  },
+  /* v2.7.6：与「开始学习」1:1 的同一条流带 —— 加速后预渲染复习卡，再双向平移进入 */
+  startFlow(el){
+    if(this._flowing) return;
+    this._flowing = true;
+    if(el) el.classList.add('go');
+    setTimeout(() => { this._flowing = false; this.enterCard(); }, 240);
+  },
+  enterCard(){
+    const box = $('#tab-review');
+    if(!box){ this.start(); return; }
+    const cur = box.querySelector('.card, .rv-list, .empty');
+    const layer = document.createElement('div');
+    layer.className = 'view-layer from-left';
+    box.appendChild(layer);
+    withRenderTarget('tab-review', layer, () => this.start());
+    AppUI.clearBandGo();
+    if(!cur){ layer.classList.remove('view-layer', 'from-left'); return; }
+    slideLayers(box, cur, layer, 'fwd', () => { try{ fitNow(box); fitStudyViewport(); }catch(e){} });
   },
   start(limit){
     const r = AppFilter.result;
@@ -5829,7 +5984,7 @@ const AppSettings = {
      已删除「保存偏好 / 保存外观」按钮：所有开关、下拉、输入框改动即保存。
      输入框用 change（失焦或回车才触发）而不是 input，避免每敲一个字符就写一次云端。 */
   AUTO_SAVE_IDS: ['set-daily', 'set-study-fixed', 'set-study-order', 'set-phon', 'set-voice',
-                  'set-autospeak', 'set-showimg', 'set-deriv', 'set-theme'],
+                  'set-autospeak', 'set-showimg', 'set-deriv', 'set-theme', 'set-offset'],
   bindAutoSave(){
     this.AUTO_SAVE_IDS.forEach(id => {
       const el = document.getElementById(id);
@@ -5887,6 +6042,7 @@ const AppSettings = {
     d.settings.useOnline = true;
     d.settings.deriv = $('#set-deriv').checked;
     d.settings.theme = $('#set-theme').value;
+    if($('#set-offset')) d.settings.offsetLayout = $('#set-offset').checked;   // v2.7.6 错位排版
     d.filter.deriv = d.settings.deriv;
     AppAuth.save(d);
     applyTheme();
