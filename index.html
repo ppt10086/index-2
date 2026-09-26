@@ -1260,7 +1260,10 @@ html.sl-has-session #view-auth{display:none}
 .view-layer.sc-leave-up{ transform:translateY(calc(var(--sc-travel, 100%) * -1)) }
 .view-layer.sc-leave-down{ transform:translateY(var(--sc-travel, 100%)) }
 .view-layer.sc-settled{ transform:translateY(0) }
-.view-layer.sc-tall{ min-height:var(--sc-travel, 100%) }
+/* v2.7.13：平移期间把层裁成「恰好一屏」。
+   长页面（学习记录 4000+px）整层参与合成时每帧都要重绘一大片，帧率掉下来就会被看成「跳」；
+   裁成一屏之后合成面积只剩一个视口，而且屏幕外那部分本来也看不见。落地时类被移除，恢复原状。 */
+.view-layer.sc-tall{ height:var(--sc-travel, 100%); overflow:hidden }
 /* 纵向平移的「起始位移」提交阶段：先关过渡摆好位置，下一帧再打开过渡并开始跑 */
 .view-layer.sc-init{ transition:none !important }
 /* ===== v2.7.11（用户反馈：自适应「一帧跳」）=====
@@ -1695,7 +1698,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.12</span>
+            <span hidden id="set-version">2.7.13</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -1954,13 +1957,18 @@ function layerDir(fwd){
   if(switchMode() === 'h') return fwd ? 'fwd' : 'back';
   return fwd ? 'up' : 'down';
 }
+/* v2.7.13：纵向滑动的时长与缓动。
+   缓动必须是对称的 ease-in-out —— 起步慢、中段快、收尾慢，才不会「一帧窜到中间」。
+   （--ease-side 是给横向那套用的，起步极快，纵向用它会像瞬移。） */
+const SLIDE_DUR = 520;
+const SLIDE_EASE = 'transform ' + SLIDE_DUR + 'ms cubic-bezier(.42,0,.24,1)';
 
 /* dir: 'fwd' = 当前层向右退出、新层自左滑入；'back' = 当前层向左退出、新层自右滑入
    dir: 'up'  = 当前层向上整屏移出、新层自下方升到中间（一上一下）
    dir: 'down'= 当前层向下整屏移出、新层自上方降到中间
    opts.keepCur = true 时旧层只隐藏不删除（页面级 section 是常驻元素，删掉就回不来了） */
 function slideLayers(container, cur, next, dir, done, opts){
-  const D = 460;
+  const D = SLIDE_DUR;                                // v2.7.13：与纵向滑动的过渡时长保持一致（520ms）
   const o = opts || {};
   if(!container || !cur || !next){ done && done(); return; }
   const V = (dir === 'up' || dir === 'down');
@@ -1978,7 +1986,8 @@ function slideLayers(container, cur, next, dir, done, opts){
   next.classList.add('is-entering');
   cur.classList.add('is-leaving');
   let h = h0;
-  let travel = 0;                                    // ⚠️ 必须提到函数作用域：双 rAF 回调里要用到它
+  let travel = 0;                                    // ⚠️ 必须提到函数作用域：动画起点的计算要用
+  let scrollY0 = 0;                                  // ⚠️ 同上：进/退场层的起点都要按滚动量补偿
   if(V){
     /* ===== v2.7.12（用户反馈：无论从哪切到哪都会跳一下）=====
        先把「这一次切换落地后每个元素的真实位置」量出来，再照着它摆图层 ——
@@ -1989,20 +1998,37 @@ function slideLayers(container, cur, next, dir, done, opts){
        并整体左移一个内边距（本机实测：宽 +68px、左 -34px）。
        于是落地（去掉图层类、回到正常流）的那一帧，整屏内容「啪」地量变一次。
        现在两层都按测量出来的流内外框摆放，落地前后完全重合。 */
-    const cRect = container.getBoundingClientRect();
-    /* ⚠️ 退场层的基准必须从「容器的内容框」算，不能量 cur 自己的外框：
-       此刻目标页也已经取消隐藏、并且排在 DOM 前面，于是 cur 在正常流里被挤到它下方，
-       量出来的 top 就是「目标页高度」那么多（实测偏下 432px，一切都跟着跳）。
-       内容框 = 容器的 padding box 去掉左右/上内边距。 */
     const ccs = getComputedStyle(container);
     const padL = parseFloat(ccs.paddingLeft) || 0, padR = parseFloat(ccs.paddingRight) || 0;
     const padT = parseFloat(ccs.paddingTop) || 0;
     const contentW = Math.max(0, container.clientWidth - padL - padR);
+    /* 内容框 = 容器的 padding box 去掉左右/上内边距。退场层的基准不能量它自己的外框：
+       此刻目标页也已取消隐藏、并且排在 DOM 前面，cur 在正常流里被挤到目标页下方
+       （实测偏下 432px，一切都跟着跳）。 */
+    /* ===== v2.7.13（用户反馈：还是跳一下；要求「先跳完再弹出」）=====
+       ① 把「滚动归零」这一下挪到用户看不见的时候：
+          用户滚到页面中间再点导航时，go() 结尾的 window.scrollTo(0) 发生在图层已经就位之后，
+          整屏（含图层）会瞬移一个滚动量 —— 实测一帧位移 600px（滚动 300 + 首帧位移），
+          这就是「页面滚着切页必跳」的来源。
+          做法（顺序很关键，全在同一个任务里、浏览器一次都没绘制）：
+            a. 先把退场层绝对化到**落位后的位置**（top = 内容框顶），并把它「按用户当前滚动量
+               往回压」——于是它在屏幕上的位置与用户刚看到的一模一样；
+            b. 再把滚动归零：此刻两层都已经是图层，画面不会有任何变化；
+            c. 之后所有量测与动画都在「滚动为 0」的坐标里做，落地（回正常流、滚动也是 0）天然重合。
+       ② 缓动曲线换成对称的 ease-in-out：原来的 --ease-side 在前 32% 时间里就走完 72% 的距离，
+          一帧能窜 180–300px —— 那正是「上一帧还在角落、下一帧就到中间」的直接原因。 */
+    scrollY0 = window.scrollY || 0;
     cur.classList.add('view-layer');
     cur.style.top = padT + 'px';
     cur.style.left = padL + 'px';
     cur.style.width = contentW + 'px';
+    cur.style.transform = 'translateY(' + (-scrollY0) + 'px)';   // 压回用户当前看到的位置
     cur.style.zIndex = '1';
+    try{ window.scrollTo(0, 0); }catch(e){}
+    try{ if(container.scrollTop) container.scrollTop = 0; }catch(e){}
+    /* ⚠️ 容器外框必须在「滚动归零之后」再量：归零前量到的 top 差一个滚动量，
+       量进层位置就会整体偏一个滚动量（实测偏 300px，落地时又是一跳）。 */
+    const cRect = container.getBoundingClientRect();
     next.style.position = 'static';                   // 让新层以正常流参与一次布局（这一步用户看不见）
     next.style.top = ''; next.style.left = ''; next.style.width = '';
     try{
@@ -2016,38 +2042,52 @@ function slideLayers(container, cur, next, dir, done, opts){
        只按内容高走会让新层起点落在视口内 —— 用户会先看见新页从下方露一截。
        取一个可视高度后新层起点必然在视口外；两层又都撑到这个高度（.sc-tall），
        任意一帧首尾相接、不露空档。 */
-    travel = Math.max(hAfter, container.clientHeight || 0, 220);
+    /* 行程取「一屏」而不是「内容高」：内容很高的页面（学习记录 4000+px）若按内容高走，
+       一帧要窜几百像素，看着就是跳；进入层落在最上面并且盖满一屏，旧页的其余部分自然被盖住。
+       内容比视口矮时（概览页 508px）行程也还是一屏，新层起点才会落在视口外。 */
+    travel = Math.max(container.clientHeight || 0, 220);
     container.style.setProperty('--sc-travel', travel + 'px');
     /* 位移用**内联样式**写死，不用类名（类名会被后定义的类按样式表顺序顶掉）。
        另外必须先用 .sc-init 关掉过渡把「起始位移」提交下去：上面那次预量测强制过一次样式结算，
        浏览器因此有了「变更前样式」，若此时才一起加上 transition，它会从 0 补间到起始位移 ——
        表现就是新层先在原地出现、再慢慢滑下去（探针量到 tY 从 0 涨到 900）。 */
-    next.classList.add('view-layer', 'sc-tall', 'sc-init');
+    next.classList.add('view-layer', 'sc-tall');
     next.style.left = Math.round(nextGeo.left - cRect.left) + 'px';    // ← 用记录下来的位置
     next.style.width = Math.round(nextGeo.width) + 'px';
     next.style.top = Math.round(nextGeo.top - cRect.top) + 'px';
     next.style.zIndex = '2';                          // 新层在上，接缝处不会露出下层
     next.style.transform = 'translateY(' + (dir === 'up' ? travel : -travel) + 'px)';
-    cur.classList.add('sc-tall', 'sc-init');
-    cur.style.transform = 'translateY(0px)';          // 退场层从原地出发
+    cur.classList.add('sc-tall');
+    cur.style.transform = 'translateY(' + (-scrollY0) + 'px)';   // 从「用户当前看到的位置」出发
   } else {
     next.classList.add('view-layer', dir === 'fwd' ? 'from-left' : 'from-right');
   }
   container.style.minHeight = h + 'px';
-  next.getBoundingClientRect();                       // 强制重排：先把起始位移落定（此刻还没有过渡）
-  // 双 rAF：确保「起始位移那一帧」真的被渲染过，否则从 display:none 变可见的元素会跳过过渡直接落位
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    if(V){
-      cur.classList.remove('sc-init');                // 打开过渡，位移才真正开始补间
-      next.classList.remove('sc-init');
-      // 退场层整屏走出去（内联位移，方向由 dir 决定），新层同时走到中间
-      cur.style.transform = 'translateY(' + (dir === 'up' ? -travel : travel) + 'px)';
-      next.style.transform = 'translateY(0px)';
-    } else {
+  next.getBoundingClientRect();                       // 强制重排：先把起始位移落定
+  /* ===== v2.7.13：位移用 Web Animations 驱动 =====
+     之前用「加 .sc-init 关过渡 → 下一帧去掉再加 transition」的写法有两个隐患：
+     去掉 sc-init 与改 transform 发生在同一次样式结算里，浏览器可能仍按「变更前」的过渡设置处理，
+     于是这一帧直接跳到位（滚动场景里实测一帧 494px 就是这么来的）。
+     改成显式关键帧：起点、终点、时长、缓动一次性交给浏览器，不存在「过渡没生效」的窗口。
+     缓动是对称 ease-in-out —— 起步慢、中段快、收尾慢，一帧最多走总行程的 ~1/12。 */
+  if(V){
+    const dur = SLIDE_DUR, ease = 'cubic-bezier(.42,0,.24,1)';
+    const from = { cur: -scrollY0, next: dir === 'up' ? travel : -travel };
+    const to = { cur: (dir === 'up' ? -travel : travel) - scrollY0, next: 0 };
+    try{
+      cur.__scAnim = cur.animate(
+        [{ transform: 'translateY(' + from.cur + 'px)' }, { transform: 'translateY(' + to.cur + 'px)' }],
+        { duration: dur, easing: ease, fill: 'both' });
+      next.__scAnim = next.animate(
+        [{ transform: 'translateY(' + from.next + 'px)' }, { transform: 'translateY(' + to.next + 'px)' }],
+        { duration: dur, easing: ease, fill: 'both' });
+    }catch(e){}
+  } else {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
       cur.classList.add('view-layer', dir === 'fwd' ? 'leave-right' : 'leave-left');
       next.classList.add('landed');
-    }
-  }));
+    }));
+  }
   setTimeout(() => {
     cur.classList.remove.apply(cur.classList, CLS);
     // v2.7.8：被保留（隐藏）的旧页把 data-no-in 摘掉 —— 它此刻不可见，
@@ -2067,6 +2107,9 @@ function slideLayers(container, cur, next, dir, done, opts){
     cur.style.left = ''; next.style.left = '';               // 清掉对齐用的内联几何（回正常流后由布局说了算）
     cur.style.width = ''; next.style.width = '';
     cur.style.transform = ''; next.style.transform = '';     // 清掉内联位移（阶段结束后样式表说了算）
+    // v2.7.13：动画是 Web Animations 起的，收尾时先取消（fill:both 会一直占着属性）
+    try{ if(cur.__scAnim){ cur.__scAnim.cancel(); cur.__scAnim = null; } }catch(e){}
+    try{ if(next.__scAnim){ next.__scAnim.cancel(); next.__scAnim = null; } }catch(e){}
     container.classList.remove('is-sliding');
     container.classList.remove('sc-vert');
     container.style.minHeight = '';
@@ -4189,7 +4232,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.12', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.13', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4218,7 +4261,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.12', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.13', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
