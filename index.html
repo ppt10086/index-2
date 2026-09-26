@@ -1692,7 +1692,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.10</span>
+            <span hidden id="set-version">2.7.11</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -3709,6 +3709,12 @@ const Fit = {
     if(!base){ base = parseFloat(getComputedStyle(el).fontSize) || 16; el.dataset.fitBase = String(base); }
     let size = Math.min(base, cap > 0 ? cap : base);
     let changed = false;
+    /* v2.7.11（用户反馈：自适应一帧跳）：记下「用户当前看到的字号」。
+       适配过程中会用 .fitting 关掉过渡（不然量到的是动画中间值，越算越偏），
+       所以适配结果落地时是一帧硬跳 —— 这正是用户看到的「下一帧直接变了」。
+       做法：算完之后用 Web Animations 从「原字号」补间到「最终字号」，
+       元素本身直接写最终值，动画只负责让这一下看起来是滑过去的。 */
+    const shownFs = parseFloat(getComputedStyle(el).fontSize) || base;
     const set = (v) => {                                 // 值没变就不写：无意义的样式写会引起整页重排
       const cur = parseFloat(el.style.fontSize);
       if(!(Math.abs(v - cur) < 0.01)){ el.style.fontSize = v + 'px'; changed = true; }
@@ -3721,6 +3727,12 @@ const Fit = {
       if(r === 'unsettled') return 'unsettled';
       size -= 1;
       set(size);
+    }
+    if(changed && Math.abs(shownFs - size) >= 0.5){
+      try{
+        el.animate([{ fontSize: shownFs + 'px' }, { fontSize: size + 'px' }],
+                   { duration: 200, easing: 'cubic-bezier(.2,0,0,1)' });
+      }catch(e){}
     }
     return changed ? 'fitted' : 'same';
   },
@@ -3961,6 +3973,9 @@ const CountSheet = {
    因此这里必须把可用高度除以 zoom 换算回 CSS 像素，并在赋值后**实测校正**一次。 */
 function _rootZoom(){
   try{
+    // v2.7.11：优先用内联目标值 —— 根缩放带过渡时 computed 是动画中间值，会把换算算偏
+    const inline = parseFloat(document.documentElement.style.zoom);
+    if(inline && inline > 0 && isFinite(inline)) return inline;
     const z = parseFloat(getComputedStyle(document.documentElement).zoom);
     return (z && z > 0 && isFinite(z)) ? z : 1;
   }catch(e){ return 1; }
@@ -4044,7 +4059,9 @@ function contentSig(){
     return false;
   }catch(e){ return false; }
 }
-/* 释义区整块缩放：zoom 值没变就不写 —— zoom 不可动画，重复写就是一次硬跳。
+/* 释义区整块缩放：zoom 值没变就不写 —— 重复写就是一次硬跳。
+   v2.7.11（用户反馈：自适应一帧跳）：zoom 在 Edge/Chromium 里可以补间（实测 1 → 1.3 平滑），
+   所以值真的变了就用 Web Animations 从「原值」滑到「新值」，用户看到的是过渡而不是硬跳。
    返回 true 表示这次确实改动了（调用方据此决定要不要再复核字号）。 */
 function fitBodyHeight(){
   try{
@@ -4054,7 +4071,8 @@ function fitBodyHeight(){
       const inner = body.firstElementChild;
       if(!inner) continue;
       const prev = inner.dataset.fitZoom || '';
-      inner.style.zoom = '';                       // 先复位再重新计算
+      const shownZoom = parseFloat(getComputedStyle(inner).zoom) || 1;   // 用户当前看到的缩放
+      inner.style.zoom = '';                       // 先复位再重新计算（量测期间无动画）
       const avail = body.clientHeight;
       if(!avail) continue;
       let z = 1;
@@ -4066,7 +4084,13 @@ function fitBodyHeight(){
         }
       }
       const next = String(z === 1 ? '' : z);
-      if(next !== prev){ inner.dataset.fitZoom = next; changed = true; }
+      if(next !== prev){
+        inner.dataset.fitZoom = next; changed = true;
+        if(Math.abs(shownZoom - z) >= 0.02){
+          try{ inner.animate([{ zoom: String(shownZoom) }, { zoom: String(z) }],
+                             { duration: 220, easing: 'cubic-bezier(.2,0,0,1)' }); }catch(e){}
+        }
+      }
       if(!next) inner.style.zoom = '';
     }
     return changed;
@@ -4142,7 +4166,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.10', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.11', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4171,7 +4195,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.10', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.11', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -4952,8 +4976,14 @@ function applyScale(v){
 function syncVpu(){
   const el = document.documentElement;
   if(!el) return;
-  let z = 1;
-  try{ const v = parseFloat(getComputedStyle(el).zoom); if(v && v > 0) z = v; }catch(e){}
+  /* ⚠️ v2.7.11：根缩放现在带过渡，过渡途中 getComputedStyle 拿到的是「中间值」——
+     用它算 --vpu 会把整页高度算成没缩放的高度（1440 宽下页面高 1035 而不是 900）。
+     所以优先读**内联目标值**（applyScale 写进去的那个），读不到才回退 computed。 */
+  let z = parseFloat(el.style.zoom) || 0;
+  if(!z || !isFinite(z) || z <= 0){
+    try{ const v = parseFloat(getComputedStyle(el).zoom); if(v && v > 0) z = v; }catch(e){}
+  }
+  if(!z || !isFinite(z) || z <= 0) z = 1;
   el.style.setProperty('--vpu', (window.innerHeight / z) + 'px');
 }
 try{ syncVpu(); }catch(e){}
