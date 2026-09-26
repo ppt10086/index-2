@@ -114,7 +114,12 @@ html[data-theme="dark"][data-accent="violet"] {--primary:#bda0ec; --primary2:#cf
 
 *{box-sizing:border-box; margin:0; padding:0}
 html{scroll-behavior:smooth; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale}
-body{font-family:"Plus Jakarta Sans Variable","Plus Jakarta Sans","Segoe UI","PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif; background:var(--bg); color:var(--text); font-size:15px; line-height:1.62; overflow-x:hidden; -webkit-tap-highlight-color:transparent}
+body{font-family:"Plus Jakarta Sans Variable","Plus Jakarta Sans","Segoe UI","PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif; background:var(--bg); color:var(--text); font-size:15px; line-height:1.62; overflow-x:hidden; -webkit-tap-highlight-color:transparent;
+  transition:background-color .22s var(--ease), color .22s var(--ease)}
+/* v2.7.7：主题/主题色切换时承载面一起淡变（只覆盖承载面，不做全站 * 过渡，避免掉帧） */
+.card,.en-hero,.sidebar,.flashcard,.page,.stat,.modal,.sheet,.flow-band,.topbar,.study-meta,.rv-row,.lib-row,.kv{
+  transition-property:background-color,border-color,color,box-shadow;
+  transition-duration:.2s; transition-timing-function:var(--ease)}
 .skip-link{position:fixed; left:14px; top:-60px; z-index:1000; background:var(--primary); color:var(--btn-fg); padding:9px 16px; border-radius:11px; font-weight:700; font-size:14px; box-shadow:var(--shadow); transition:top .18s ease-out; text-decoration:none}
 .skip-link:focus{top:14px; color:var(--btn-fg); text-decoration:none}
 /* 移动端禁用双击缩放与 300ms 点击延迟（保留双指缩放） */
@@ -848,6 +853,8 @@ li,td,th{text-wrap:normal}
    首启引导 / 三档反馈 + 发音 / 数学路线图 / 页面转场 */
 @keyframes pageIn{from{opacity:0; transform:translateY(7px)}to{opacity:1; transform:none}}
 #view-main .main > section{animation:pageIn .2s var(--ease)}
+#view-main:not([hidden]){animation:appIn .34s var(--ease-side) both}
+@keyframes appIn{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
 /* v2.7.4：整页平移期间由 transform 接管 —— CSS 动画优先级高于 transition，
    不关掉 pageIn 的话 translateX 会被动画的 translateY 顶掉（表现为瞬移无过渡） */
 #main-area.is-sliding > section{animation:none}
@@ -1083,6 +1090,24 @@ html.sl-has-session #view-auth{display:none}
 [data-fit-nowrap]{white-space:nowrap}
 [data-fit]{max-width:100%}
 
+/* v2.7.7：次级页（词表筛选/浏览/学习记录）与设置面板切换时淡入 + 轻微上移，
+   与主页面之间的平移过渡保持一致的「有过渡」手感；列表行第一次出现时极轻的级联淡入。 */
+#tab-filter>.card,#tab-browse>.card,#tab-record>.card{ animation:paneIn .26s var(--ease-side) both }
+/* 设置面板本身没有 .card 直接子元素，直接给面板做淡入 */
+.set-pane:not([hidden]){ animation:paneIn .26s var(--ease-side) both }
+@keyframes paneIn{from{opacity:0; transform:translateY(7px)} to{opacity:1; transform:none}}
+.rv-row,.lib-row,.wlist tbody tr{animation:rowIn .24s var(--ease) both}
+.rv-row:nth-child(2),.lib-row:nth-child(2),.wlist tbody tr:nth-child(2){animation-delay:.03s}
+.rv-row:nth-child(3),.lib-row:nth-child(3),.wlist tbody tr:nth-child(3){animation-delay:.06s}
+.rv-row:nth-child(4),.lib-row:nth-child(4),.wlist tbody tr:nth-child(4){animation-delay:.09s}
+.rv-row:nth-child(5),.lib-row:nth-child(5),.wlist tbody tr:nth-child(5){animation-delay:.12s}
+.rv-row:nth-child(n+6),.lib-row:nth-child(n+6),.wlist tbody tr:nth-child(n+6){animation-delay:.15s}
+@keyframes rowIn{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none}}
+@media (prefers-reduced-motion: reduce){
+  .rv-row,.lib-row,.wlist tbody tr,.set-pane,.fc-img img.on,
+  #tab-filter>.card,#tab-browse>.card,#tab-record>.card{animation:none}
+}
+
 /* 英语学习：背单词主导区（v2.3）——让「背单词」占据屏幕主体，其余入口弱化到边角 */
 .en-hero{background:var(--panel); border:1px solid var(--line); border-radius:22px; box-shadow:var(--shadow);
   padding:26px 26px 22px; display:flex; flex-direction:column; gap:16px}
@@ -1293,6 +1318,17 @@ html.sl-has-session #view-auth{display:none}
   transition:opacity .46s var(--ease)}
 .view-layer.leave-left::after,.view-layer.leave-right::after{opacity:1}
 
+/* ===== v2.7.7 自适应平滑化 =====
+   元素尺寸被自适应引擎改动时不再硬跳：字号与锁高都走过渡。
+   .fitting 期间（引擎正在逐像素试缩）关闭过渡，否则量到的是动画中间值，会越算越偏。 */
+[data-fit]{ transition:font-size .18s var(--ease) }
+.study-wrap{ transition:height .26s var(--ease-side), max-height .26s var(--ease-side) }
+.fitting [data-fit]{ transition:none !important }
+.fitting .study-wrap{ transition:none !important }
+@media (prefers-reduced-motion: reduce){
+  [data-fit], .study-wrap{ transition-duration:.01ms }
+}
+
 /* ===== v2.7.5 掉帧优化：滑动期间把「贵」的东西全部停掉 =====
    毛玻璃（backdrop-filter）与大面积模糊阴影在元素每帧位移时会反复重算，是这次掉帧的主因；
    呼吸光斑与 >>> 的无限动画也会让被移动的图层每帧重绘。滑动期间统一停用，落定即恢复。 */
@@ -1400,7 +1436,8 @@ html.sl-has-session #view-auth{display:none}
   border-radius:12px; object-fit:cover; background:var(--panel2);
   border:1px solid var(--line);
   box-shadow:0 3px 14px rgba(0,0,0,.08); opacity:0; transition:opacity .2s var(--ease)}
-.fc-img img.on{opacity:1}
+.fc-img img.on{opacity:1; animation:imgIn .3s var(--ease) both}
+@keyframes imgIn{from{opacity:0; transform:scale(.985)} to{opacity:1; transform:none}}
 .img-skel{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;
   padding:8px 14px;border:1px dashed var(--line2);border-radius:10px}
 .img-skel i{width:13px;height:13px;border:2px solid var(--line2);border-top-color:var(--primary);
@@ -3504,39 +3541,61 @@ try{
         data-fit-nowrap 表示强制单行）。 */
 const Fit = {
   MIN: 10,
+  /* v2.7.7：自适应必须在元素「显示之前」算完。
+     旧实现无条件补一帧再跑一遍，而那一遍往往才是真正缩到位的尺寸 ——
+     于是用户看到「先按原始尺寸显示，一帧后再跳一下」，这就是切换屏幕时的顿感。
+     现在：先强制一次布局结算让 clientWidth 立刻可量，只有确实量不到尺寸（例如容器还 hidden）
+     时才补一帧。 */
   run(scope){
     const root = scope || document;
     const doIt = () => {
       let els;
-      try{ els = root.querySelectorAll('[data-fit]'); }catch(e){ return; }
+      try{ els = root.querySelectorAll('[data-fit]'); }catch(e){ return 0; }
+      let unsettled = 0;
       for(const el of els){
-        try{ this.fitOne(el); }catch(e){}
+        try{ if(this.fitOne(el) === 'unsettled') unsettled++; }catch(e){}
       }
+      return unsettled;
     };
-    doIt();
-    // 元素刚插入/页签刚切换时布局可能尚未结算（clientWidth 为 0），下一帧再校准一次
-    try{ requestAnimationFrame(doIt); }catch(e){}
+    const holder = (root === document) ? document.documentElement : root;
+    // 关掉适配期间的过渡：否则逐像素试缩会变成一串动画，量到的还是中间值
+    try{ holder.classList.add('fitting'); }catch(e){}
+    try{ void holder.offsetHeight; }catch(e){}          // 强制布局结算
+    const unsettled = doIt();
+    if(unsettled > 0){ try{ requestAnimationFrame(() => doIt()); }catch(e){} }
+    try{ requestAnimationFrame(() => { try{ holder.classList.remove('fitting'); }catch(e){} }); }catch(e){}
+    return unsettled;
   },
   fitOne(el){
     const cap = parseFloat(el.getAttribute('data-fit-max')) || 0;
-    let base = parseFloat(el.dataset.fitBase || '');
+    // v2.7.7：基准字号优先取「内联值 / 上一次缓存」，最后才回退 getComputedStyle ——
+    // 字号现在带过渡，若上一轮过渡还在进行，computed 拿到的是动画中间值，会把基准记偏。
+    let base = parseFloat(el.dataset.fitBase || '') || parseFloat(el.style.fontSize) || 0;
     if(!base){ base = parseFloat(getComputedStyle(el).fontSize) || 16; el.dataset.fitBase = String(base); }
     let size = Math.min(base, cap > 0 ? cap : base);
-    el.style.fontSize = size + 'px';
+    let changed = false;
+    const set = (v) => {                                 // 值没变就不写：无意义的样式写会引起整页重排
+      const cur = parseFloat(el.style.fontSize);
+      if(!(Math.abs(v - cur) < 0.01)){ el.style.fontSize = v + 'px'; changed = true; }
+    };
+    set(size);
     const nowrap = el.hasAttribute('data-fit-nowrap');
     for(let i = 0; i < 40 && size > this.MIN; i++){
-      if(this.ok(el, nowrap)) return;
+      const r = this.ok(el, nowrap, size);        // 传入本轮目标字号，避免读到过渡中间值
+      if(r === true) break;
+      if(r === 'unsettled') return 'unsettled';
       size -= 1;
-      el.style.fontSize = size + 'px';
+      set(size);
     }
+    return changed ? 'fitted' : 'same';
   },
-  ok(el, nowrap){
+  ok(el, nowrap, curSize){
     // 用 Range 精确测量文字实际宽度（inline/flex 元素上 scrollWidth 不可靠）。
     // 可用宽度取「父容器」宽度：父容器已设 width:100%，不会随子元素缩放而抖动，
     // 否则会形成「越缩容器越窄」的反馈循环，一路缩到最小字号。
     const avail = (el.parentElement ? el.parentElement.clientWidth : 0) || el.clientWidth || 0;
-    // 布局还没结算：不要据此缩小（等下一帧再校准）
-    if(avail <= 0) return true;
+    // 布局还没结算：不要据此缩小，明确回报给调用方（只有这种情况才值得补一帧）
+    if(avail <= 0) return 'unsettled';
 
     // 高度模式（data-fit-h）：释义这类长文本块要能整块塞进固定高度的容器，
     // 优先「缩放压缩」，缩到最小仍放不下才交给容器内部滚动。
@@ -3560,7 +3619,7 @@ const Fit = {
     if(el.scrollWidth > avail + 2) return false;                // 横向溢出
     const text = (el.textContent || '').replace(/\s+/g, '');
     if(text.length < 4) return true;
-    const fs = parseFloat(getComputedStyle(el).fontSize) || 16;
+    const fs = curSize || parseFloat(el.style.fontSize) || parseFloat(getComputedStyle(el).fontSize) || 16;
     const h = el.getBoundingClientRect().height;
     const lines = Math.max(1, Math.round(h / (fs * 1.2)));
     if(lines >= 2){
@@ -3801,9 +3860,10 @@ function fitStudyViewport(){
       w.style.maxHeight = h + 'px';
     }
     fitBodyHeight();    // 释义长就整体缩放压缩，缩到最小仍放不下才内部滚动
-    fitNow(document);   // 高度变化后重新校准字号
-    // 配图/音标/在线释义是异步到达的，内容长出来后再复核一次
-    setTimeout(() => { try{ fitBodyHeight(); fitNow(document); }catch(e){} }, 400);
+    // v2.7.7：这里不再额外 fitNow(document) —— 字号由调用方那次 Fit 一次算清；
+    // 多跑一遍就等于「元素已经显示出来之后又改字号」，正是顿感的来源。
+    // 配图/音标/在线释义是异步到达的：只在内容真的变了时才复核（内容不变＝零重排）。
+    setTimeout(() => { try{ if(fitBodyHeight() || contentSig()) fitNow(document); }catch(e){} }, 400);
     setTimeout(() => { try{ fitBodyHeight(); }catch(e){} }, 1500);
   }catch(e){}
 }
@@ -3811,24 +3871,46 @@ function fitStudyViewport(){
 /* 释义区整块「缩放压缩」：长释义优先缩小而不是把按钮挤出屏幕。
    用 zoom 而不是只缩字号——这样列表、虚线框、配图会一起等比缩小，版面更整齐；
    缩到 0.55 倍仍放不下才交给 #fc-body 内部滚动（保底可用）。 */
+/* 内容指纹：配图/音标/在线释义变化会改变它，用它判断「要不要复核自适应」 */
+function contentSig(){
+  try{
+    let sig = 0;
+    const roots = document.querySelectorAll('#tab-study, #tab-review');
+    for(const r of roots) sig += (r.innerText || '').length;
+    if(document.querySelector('#tab-study #fc-img img, #tab-review #fc-img img')) sig += 1;
+    // 首次调用只是登记基线（渲染时已经适配过），不算「内容变了」
+    if(window.__fitSig === undefined){ window.__fitSig = sig; return false; }
+    if(sig !== window.__fitSig){ window.__fitSig = sig; return true; }
+    return false;
+  }catch(e){ return false; }
+}
+/* 释义区整块缩放：zoom 值没变就不写 —— zoom 不可动画，重复写就是一次硬跳。
+   返回 true 表示这次确实改动了（调用方据此决定要不要再复核字号）。 */
 function fitBodyHeight(){
   try{
+    let changed = false;
     const bodies = document.querySelectorAll('#tab-study #fc-body, #tab-review #fc-body');
     for(const body of bodies){
       const inner = body.firstElementChild;
       if(!inner) continue;
+      const prev = inner.dataset.fitZoom || '';
       inner.style.zoom = '';                       // 先复位再重新计算
       const avail = body.clientHeight;
       if(!avail) continue;
-      if(body.scrollHeight <= avail + 2) continue; // 本来就放得下
       let z = 1;
-      for(let i = 0; i < 20 && z > 0.55; i++){
-        z = Math.round((z - 0.05) * 100) / 100;
-        inner.style.zoom = String(z);
-        if(body.scrollHeight <= avail + 2) break;
+      if(body.scrollHeight > avail + 2){           // 放不下才缩
+        for(let i = 0; i < 20 && z > 0.55; i++){
+          z = Math.round((z - 0.05) * 100) / 100;
+          inner.style.zoom = String(z);
+          if(body.scrollHeight <= avail + 2) break;
+        }
       }
+      const next = String(z === 1 ? '' : z);
+      if(next !== prev){ inner.dataset.fitZoom = next; changed = true; }
+      if(!next) inner.style.zoom = '';
     }
-  }catch(e){}
+    return changed;
+  }catch(e){ return false; }
 }
 window.addEventListener('resize', () => { setTimeout(fitStudyViewport, 200); });
 window.addEventListener('orientationchange', () => { setTimeout(fitStudyViewport, 300); });
@@ -4979,6 +5061,9 @@ const AppStudy = {
     const box = $('#tab-study');
     if(!box){ if(o && o.resume) this.resume(); else this.start(); return; }
     const cur = box.querySelector('.en-hero, .card, .study-wrap');
+    // v2.7.7：先把容器高度锁成当前这一屏的高度，让「预渲染时的量测几何」与最终一致 ——
+    // 这样自适应能在不可见状态下一次算对，落地后就不用再改字号（改字号就是顿感的来源）。
+    if(cur){ box.classList.add('is-sliding'); box.style.minHeight = Math.max(cur.offsetHeight, 220) + 'px'; }
     const layer = document.createElement('div');
     layer.className = 'view-layer from-left';            // 先摆到画布外，避免闪一帧
     box.appendChild(layer);
@@ -4990,8 +5075,9 @@ const AppStudy = {
       this.quickStart('new', Math.max(1, Math.min(max, prefer)));
     });
     clearBandGo();
-    if(!cur){ layer.classList.remove('view-layer', 'from-left'); return; }
-    slideLayers(box, cur, layer, 'fwd', () => { try{ fitNow(box); fitStudyViewport(); }catch(e){} });
+    if(!cur){ layer.classList.remove('view-layer', 'from-left'); box.classList.remove('is-sliding'); return; }
+    // 落地后只做「轻量校验」：字号已经在不可见时算完，不再重算（重算＝可见后改尺寸）
+    slideLayers(box, cur, layer, 'fwd', () => { try{ contentSig(); }catch(e){} });
   },
   /* v2.7.4：返回上一级（背新单词 → 入口页）。自绘返回按钮与 Esc 都走这里：
      先把入口页预渲染好，再让卡片向左退出、入口页自右侧滑入。 */
@@ -5008,14 +5094,15 @@ const AppStudy = {
     this.clearSession();
     WordImg.clear();
     AppData.autoBackup();
+    if(cur){ box.classList.add('is-sliding'); box.style.minHeight = Math.max(cur.offsetHeight, 220) + 'px'; }
     const layer = document.createElement('div');
     layer.className = 'view-layer from-right';
     box.appendChild(layer);
     withRenderTarget('tab-study', layer, () => this.renderSetup());
     this._flowing = false;
-    if(!cur){ layer.classList.remove('view-layer', 'from-right'); try{ AppUI.refreshEntryCounts(); }catch(e){} return; }
+    if(!cur){ layer.classList.remove('view-layer', 'from-right'); box.classList.remove('is-sliding'); try{ AppUI.refreshEntryCounts(); }catch(e){} return; }
     slideLayers(box, cur, layer, 'back', () => {
-      try{ AppUI.refreshEntryCounts(); fitNow(box); fitStudyViewport(); }catch(e){}
+      try{ AppUI.refreshEntryCounts(); contentSig(); }catch(e){}
     });
   },
   /* 直接开始（带指定数量） */
@@ -5515,13 +5602,14 @@ const AppReview = {
     const box = $('#tab-review');
     if(!box){ this.start(); return; }
     const cur = box.querySelector('.card, .rv-list, .empty');
+    if(cur){ box.classList.add('is-sliding'); box.style.minHeight = Math.max(cur.offsetHeight, 220) + 'px'; }
     const layer = document.createElement('div');
     layer.className = 'view-layer from-left';
     box.appendChild(layer);
     withRenderTarget('tab-review', layer, () => this.start());
     AppUI.clearBandGo();
-    if(!cur){ layer.classList.remove('view-layer', 'from-left'); return; }
-    slideLayers(box, cur, layer, 'fwd', () => { try{ fitNow(box); fitStudyViewport(); }catch(e){} });
+    if(!cur){ layer.classList.remove('view-layer', 'from-left'); box.classList.remove('is-sliding'); return; }
+    slideLayers(box, cur, layer, 'fwd', () => { try{ contentSig(); }catch(e){} });
   },
   start(limit){
     const r = AppFilter.result;
@@ -5605,14 +5693,15 @@ const AppReview = {
     this.wantCount = 0;
     document.onkeydown = null;
     WordImg.clear();
+    if(cur){ box.classList.add('is-sliding'); box.style.minHeight = Math.max(cur.offsetHeight, 220) + 'px'; }
     const layer = document.createElement('div');
     layer.className = 'view-layer from-right';
     box.appendChild(layer);
     withRenderTarget('tab-review', layer, () => this.render());
     this._flowing = false;
-    if(!cur){ layer.classList.remove('view-layer', 'from-right'); try{ AppUI.refreshEntryCounts(); }catch(e){} return; }
+    if(!cur){ layer.classList.remove('view-layer', 'from-right'); box.classList.remove('is-sliding'); try{ AppUI.refreshEntryCounts(); }catch(e){} return; }
     slideLayers(box, cur, layer, 'back', () => {
-      try{ AppUI.refreshEntryCounts(); fitNow(box); fitStudyViewport(); }catch(e){}
+      try{ AppUI.refreshEntryCounts(); contentSig(); }catch(e){}
     });
   },
   /* v2.7.2：第一个按钮的统一入口 —— 普通态＝忘了（两步确认），确认态＝下一个 */
