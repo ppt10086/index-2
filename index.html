@@ -1263,6 +1263,18 @@ html.sl-has-session #view-auth{display:none}
 .view-layer.sc-tall{ min-height:var(--sc-travel, 100%) }
 /* 纵向平移的「起始位移」提交阶段：先关过渡摆好位置，下一帧再打开过渡并开始跑 */
 .view-layer.sc-init{ transition:none !important }
+/* ===== v2.7.11（用户反馈：自适应「一帧跳」）=====
+   两条路一起走：
+   ① 事先对齐 —— 首屏的缩放 / 渲染 / 自适应全部在用户看不见的时候算完（见 showMain()），
+      页面切换时的自适应也在目标页还在屏幕外时算完（见 slideLayers 的预量测）。
+   ② 真的一帧后必须自适应时，让它平滑过渡而不是硬跳 —— 根缩放（zoom）在 Edge/Chromium 里
+      是可以补间的（实测 1 → 1.3 平滑走完），所以给 html 挂一条过渡；为避免适配引擎在过渡途中
+      量到中间值，这条过渡只在「首屏显示之后」才开启（.zoom-anim），且 applyScale() 会把随后的
+      适配复核推迟到过渡结束。 */
+html.zoom-anim{ transition:zoom .34s var(--ease) }
+/* 首屏那几帧里，异步内容（头像/统计）会让整页高度差几像素，浏览器默认的「滚动锚定」会顺手把
+   整页顶一下（实测 6–9px）。关掉它，几像素的收尾也不会被放大成「屏幕动了一下」。 */
+html{ overflow-anchor:none }
 /* 退场的那一屏带一层渐变遮罩（随它一起移出屏幕），进入层始终干净。
    纵向的层位移走内联样式（见 slideLayers），所以这里按「容器在纵向平移 + 这一层是退场层」来挂遮罩。 */
 .sc-vert .view-layer.is-leaving::after,
@@ -4255,7 +4267,14 @@ const AppUI = {
     }catch(e){}
     // 已有登录状态：直接进入主界面
     $('#view-auth').hidden = true;
-    $('#view-main').hidden = false;
+    const shell = $('#view-main');
+    /* v2.7.11（用户反馈：概览页「上一帧还在下面、下一帧直接跑到中间」）：
+       首屏的显示顺序要反过来 —— 先把外壳「占位但不给看」（visibility:hidden 仍然会排版、量得到尺寸），
+       在该状态下跑完主题、缩放（zoom 1 → 1.15 是全局跳变，最刺眼）、当页渲染与自适应，
+       最后再一次性显示。这样用户看到的第一帧就已经是适配好的最终版面，不存在「先显示再自适应」。 */
+    shell.hidden = false;
+    const hadInlineVis = shell.style.visibility;
+    shell.style.visibility = 'hidden';
     this.decorate();
     this.applySide();          // 恢复侧栏折叠状态（含按钮 aria 与适配复核）
     applyTheme();
@@ -4273,7 +4292,12 @@ const AppUI = {
     $('#set-theme').value = AppAuth.data().settings.theme;
     this.mountLibraryPane();
     try{ this.go(this.page); }catch(e){ showFatal(e && e.message ? e.message : String(e)); }
-    fitNow(document);       // 首屏排版自适应
+    fitNow(document);       // 首屏排版自适应（发生在用户看不见的时候）
+    if(typeof fitStudyViewport === 'function') fitStudyViewport();
+    void shell.offsetHeight;                     // 强制结算：把上面所有改动一次性落到布局上
+    shell.style.visibility = hadInlineVis || '';
+    /* 首屏显示之后再打开「缩放过渡」：以后改缩放（设置项、窗口尺寸）都是平滑变化而不是一帧跳 */
+    document.documentElement.classList.add('zoom-anim');
     this.maybeOnboard();
   },
   mountLibraryPane(){
@@ -4909,6 +4933,7 @@ function applyScale(v){
   else cur = parseInt(s.uiScale, 10) || 100;
   const scale = clamp(cur, 85, 150) / 100;
   const el = document.documentElement;
+  const before = parseFloat(getComputedStyle(el).zoom) || 1;
   if('zoom' in el.style){
     el.style.zoom = String(scale);
   } else {
@@ -4916,7 +4941,11 @@ function applyScale(v){
   }
   // 缩放会改变视觉尺寸，卡片锁高必须按新 zoom 重算
   syncVpu();
-  try{ if(typeof fitStudyViewport === 'function') setTimeout(fitStudyViewport, 0); }catch(e){}
+  /* v2.7.11：根缩放现在带过渡（html.zoom-anim），过渡途中量到的尺寸是中间值 ——
+     适配复核必须等过渡走完再跑，否则会把卡片按「中途缩放」算歪（07-KNOWN-ISSUES 42 同一类坑）。 */
+  const animating = Math.abs(scale - before) > 0.001 && el.classList.contains('zoom-anim');
+  const delay = animating ? 380 : 0;
+  try{ if(typeof fitStudyViewport === 'function') setTimeout(fitStudyViewport, delay); }catch(e){}
 }
 /* CSS zoom 会连 100vh/100dvh 一起放大（zoom=1.15 时 100dvh 渲染成 1035px，而视口只有 900px），
    结果桌面端整页多出滚动条、侧栏底部用户信息落到屏外。这里按 zoom 折算成布局可用的真实视口高度。 */
