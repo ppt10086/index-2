@@ -1846,6 +1846,9 @@ function fcButtonsBandHtml(api, main, sub, max, iconName){
     '<span class="arw">' + icon('chevRight') + '</span><span class="arw">' + icon('chevRight') + '</span></span>' +
   '</button>';
 }
+/* v2.7.6：清掉所有流带残留的加速态（.go）。定义成全局函数，三个模块都能直接调用 ——
+   之前写成 AppUI 的方法，AppStudy 里 this.clearBandGo() 直接 TypeError。 */
+function clearBandGo(){ $$('.flow-band.go').forEach(b => b.classList.remove('go')); }
 /* 新节点先以「两键并排」的初始态落定，下一帧再加 .pending 触发过渡（否则同一帧内不会动） */
 function startBtnMerge(root){
   const btns = root && root.querySelector ? root.querySelector('#fc-btns') : null;
@@ -4107,7 +4110,7 @@ const AppUI = {
   /* v2.7.6：清掉所有流带残留的加速态。
      之前概览页的流带是静态 HTML（切页不重建），点完 .go 一直挂着 —— 第二次回到概览就会看到
      「>>> 一直在快波 + 整条常驻实心（主题色偏蓝）」，也就是用户说的鬼畜。 */
-  clearBandGo(){ $$('.flow-band.go').forEach(b => b.classList.remove('go')); },
+  clearBandGo(){ clearBandGo(); },          // 全局函数转发（AppStudy / AppReview 也能直接调）
   /* v2.7.4：概览页的「开始学习」流带 —— 加速后把目标页提前渲染好，再整页双向平移过去。
      page：目标页；tab：可选，进入后再切到该子入口（filter / review / browse / record）。 */
   startFlowTo(el, page, tab){
@@ -4986,7 +4989,7 @@ const AppStudy = {
       const prefer = st.studyMode === 'fixed' ? (st.studyFixed || 30) : (st.daily || 20);
       this.quickStart('new', Math.max(1, Math.min(max, prefer)));
     });
-    this.clearBandGo();
+    clearBandGo();
     if(!cur){ layer.classList.remove('view-layer', 'from-left'); return; }
     slideLayers(box, cur, layer, 'fwd', () => { try{ fitNow(box); fitStudyViewport(); }catch(e){} });
   },
