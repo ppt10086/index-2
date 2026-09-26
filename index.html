@@ -1119,16 +1119,20 @@ html.sl-has-session #view-auth{display:none}
 .fb-txt{display:flex; flex-direction:column; gap:2px; min-width:0}
 .fb-main{font-size:18px; font-weight:800; letter-spacing:-.01em}
 .fb-sub{font-size:12.5px; color:var(--muted)}
-.fb-arrows{display:flex; align-items:center; flex:none; color:var(--primary)}
+.fb-arrows{display:flex; align-items:center; flex:none; color:var(--primary); overflow:hidden; padding:2px 2px 2px 6px}
 .fb-arrows .ico-svg{width:22px; height:22px; stroke-width:2.6}
-.fb-arrows .arw{display:flex; opacity:.32; animation:fbFlow 2.8s cubic-bezier(.45,.05,.55,.95) infinite}
-.fb-arrows .arw:nth-child(2){animation-delay:.26s}
-.fb-arrows .arw:nth-child(3){animation-delay:.52s}
+/* v2.7.5：>>> 改成「传送带」——每枚箭头在窗口左侧淡入、一路右移、在右侧淡出，
+   0% 与 100% 的透明度都是 0，所以循环回卷的那一帧完全看不见，不再出现「跳回左边」的生硬感。
+   三枚错相叠加成连续波浪；整组再极轻微地前倾，读起来是隐隐向前，而不是在抖。 */
+.fb-arrows .arw{display:flex; animation:fbFlow 3.2s cubic-bezier(.45,.06,.42,.96) infinite; opacity:0}
+.fb-arrows .arw:nth-child(2){animation-delay:.42s}
+.fb-arrows .arw:nth-child(3){animation-delay:.84s}
 @keyframes fbFlow{
-  0%{opacity:.30; transform:translateX(-3px) scale(.96)}
-  45%{opacity:1; transform:translateX(4px) scale(1)}
-  75%{opacity:.55; transform:translateX(9px) scale(.98)}
-  100%{opacity:.30; transform:translateX(13px) scale(.96)}
+  0%{opacity:0; transform:translateX(-7px) scale(.90)}
+  16%{opacity:1; transform:translateX(-2px) scale(1)}
+  52%{opacity:1; transform:translateX(4px) scale(1)}
+  82%{opacity:.45; transform:translateX(9px) scale(.97)}
+  100%{opacity:0; transform:translateX(12px) scale(.93)}
 }
 @keyframes fbBreath{0%,100%{opacity:.4; transform:scale(1)} 50%{opacity:.85; transform:scale(1.06)}}
 /* 点击：整条变实心（承诺）+ 一道光扫过 + >>> 切成快波（突然变快，但仍是同一条曲线，过渡不跳） */
@@ -1138,7 +1142,13 @@ html.sl-has-session #view-auth{display:none}
 .flow-band.go .arw{animation:fbRush .34s cubic-bezier(.22,.61,.36,1) infinite}
 .flow-band.go::before{animation-duration:1.2s}
 .flow-band.go::after{animation:fbSweep .52s cubic-bezier(.4,0,.2,1) forwards}
-@keyframes fbRush{0%{opacity:.35; transform:translateX(-8px)} 55%{opacity:1; transform:translateX(7px)} 100%{opacity:.3; transform:translateX(15px)}}
+/* 加速同样是「传送带」形状，只是快了 7 倍 —— 速度突变但位移轨迹连续，所以不会闪跳 */
+@keyframes fbRush{
+  0%{opacity:0; transform:translateX(-9px) scale(.92)}
+  18%{opacity:1; transform:translateX(-2px) scale(1)}
+  62%{opacity:1; transform:translateX(6px) scale(1)}
+  100%{opacity:0; transform:translateX(15px) scale(.94)}
+}
 @keyframes fbSweep{0%{opacity:0; left:-46%} 18%{opacity:1} 100%{opacity:0; left:100%}}
 /* 入口页左滑淡出 → 学习卡从右侧平滑滑入 */
 .en-hero.setup-out,.card.setup-out{animation:setupOut .3s cubic-bezier(.4,0,1,1) forwards; pointer-events:none}
@@ -1155,8 +1165,16 @@ html.sl-has-session #view-auth{display:none}
 .fb-alt button{font:inherit; font-size:12.5px; color:var(--muted); background:none; border:none; cursor:pointer;
   padding:6px 10px; border-radius:10px; transition:color .16s var(--ease), background .16s var(--ease)}
 .fb-alt button:hover{color:var(--primary); background:var(--primary-soft)}
-/* 概览页用的紧凑版（放在页头右侧，不占整行） */
-.flow-band.compact{width:auto; min-height:46px; padding:0 10px 0 16px; border-radius:14px; gap:10px}
+/* 概览页用的紧凑版（放在页头右侧，不占整行）
+   v2.7.5：按需求「概览的开始不要有颜色」—— 这一条改成纯中性灰，连箭头也不吃主题色；
+   学习入口那条（.flow-band 非 compact）保留主题色，作为「主行动」的识别。 */
+.flow-band.compact{width:auto; min-height:46px; padding:0 6px 0 16px; border-radius:14px; gap:10px;
+  background:var(--panel2); border-color:var(--line); color:var(--text)}
+.flow-band.compact::before{background:radial-gradient(130px 70px at 22% 50%, color-mix(in srgb, var(--text) 9%, transparent), transparent 70%)}
+.flow-band.compact:hover{background:var(--panel3); border-color:var(--line2); box-shadow:0 0 0 3px color-mix(in srgb, var(--text) 6%, transparent)}
+.flow-band.compact .fb-arrows{color:var(--muted)}
+.flow-band.compact.go{background:var(--btn-solid); color:var(--btn-fg)}
+.flow-band.compact.go .fb-arrows{color:var(--btn-fg)}
 .flow-band.compact .fb-main{font-size:15px}
 .flow-band.compact .fb-sub{font-size:11.5px}
 .flow-band.compact .fb-arrows .ico-svg{width:18px; height:18px}
@@ -1167,27 +1185,65 @@ html.sl-has-session #view-auth{display:none}
    前进 fwd ：当前层向右退出、新层自左侧滑入（与 >>> 的方向一致）
    返回 back：当前层向左退出、新层自右侧滑入
    关键点：两层都是 absolute 且同时存在，容器锁住高度 —— 全程没有任何空窗，所以看不到接缝。 */
-.is-sliding{position:relative}
-.view-layer{position:absolute; left:0; top:0; width:100%; will-change:transform, opacity;
+.is-sliding{position:relative; contain:paint}      /* v2.7.5：把重绘限制在容器内，滑动时不再牵动整页 */
+.view-layer{position:absolute; left:0; top:0; width:100%;
+  will-change:transform; transform:translateZ(0); backface-visibility:hidden;
   transition:transform .46s var(--ease-side), opacity .46s var(--ease)}
-.view-layer.from-left{transform:translateX(-100%); opacity:.55}
-.view-layer.from-right{transform:translateX(100%); opacity:.55}
-.view-layer.landed{transform:translateX(0); opacity:1}
+.view-layer.from-left{transform:translateX(-100%)}
+.view-layer.from-right{transform:translateX(100%)}
+.view-layer.landed{transform:translateX(0)}
 .view-layer.leave-right{transform:translateX(100%); opacity:.45}
 .view-layer.leave-left{transform:translateX(-100%); opacity:.45}
+/* v2.7.5（需求②）：退场的那一屏盖一层渐变遮罩，随退场淡入；入场层不加任何遮罩，
+   所以「上一级」的内容始终是干净的。 */
+.view-layer::after{content:''; position:absolute; inset:0; pointer-events:none; opacity:0;
+  background:linear-gradient(100deg, color-mix(in srgb, var(--bg) 80%, transparent), color-mix(in srgb, var(--bg) 56%, transparent));
+  transition:opacity .46s var(--ease)}
+.view-layer.leave-left::after,.view-layer.leave-right::after{opacity:1}
+
+/* ===== v2.7.5 掉帧优化：滑动期间把「贵」的东西全部停掉 =====
+   毛玻璃（backdrop-filter）与大面积模糊阴影在元素每帧位移时会反复重算，是这次掉帧的主因；
+   呼吸光斑与 >>> 的无限动画也会让被移动的图层每帧重绘。滑动期间统一停用，落定即恢复。 */
+.is-sliding .flow-band,
+.is-sliding .fc-btns .btn,
+.is-sliding .avatar,
+.is-sliding .side-user .avatar,
+.is-sliding .toast{ -webkit-backdrop-filter:none !important; backdrop-filter:none !important}
+.is-sliding .flow-band::before,
+.is-sliding .flow-band::after,
+.is-sliding .fb-arrows .arw{ animation-play-state:paused !important}
+.is-sliding .flow-band,
+.is-sliding .card,
+.is-sliding .en-hero,
+.is-sliding .flashcard,
+.is-sliding .study-done{ box-shadow:none !important}
+.is-sliding .flow-band.compact{background:var(--panel2)}
 
 /* 页面内自绘的「返回」按钮：自绘 SVG 箭头 + 按下时旋转半圈，然后整屏向左平移退回上一级 */
-.study-back{display:inline-flex; align-items:center; gap:5px; font:inherit; font-size:12.5px; font-weight:650;
-  color:var(--muted); background:transparent; border:1px solid var(--line2); border-radius:999px;
-  padding:4px 13px 4px 9px; cursor:pointer;
-  transition:color .18s var(--ease), border-color .18s var(--ease), background .18s var(--ease), transform .2s var(--ease-side)}
-.study-back .ico-svg{width:16px; height:16px; transition:transform .46s var(--ease-side)}
-.study-back:hover{color:var(--primary); border-color:color-mix(in srgb, var(--primary) 46%, transparent); background:var(--primary-soft)}
+/* v2.7.5 重新设计：箭头在胶囊里「回卷」——轻回弹的旋转 + 向左滚动 + 一圈涟漪 + 柔和填充，
+   不再是一次生硬的 180° 翻转。 */
+.study-back{position:relative; display:inline-flex; align-items:center; gap:6px; font:inherit; font-size:12.5px;
+  font-weight:650; color:var(--muted); background:transparent; border:1px solid var(--line2); border-radius:999px;
+  padding:4px 13px 4px 9px; cursor:pointer; overflow:hidden;
+  transition:color .2s var(--ease), border-color .2s var(--ease), background .2s var(--ease),
+             transform .22s var(--ease-side), box-shadow .2s var(--ease)}
+.study-back .ico{display:flex; align-items:center}
+.study-back .ico-svg{width:16px; height:16px;
+  transition:transform .52s cubic-bezier(.34,1.42,.5,1), opacity .3s var(--ease)}   /* 略带回弹 */
+.study-back:hover{color:var(--primary); border-color:color-mix(in srgb, var(--primary) 46%, transparent);
+  background:var(--primary-soft); box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 10%, transparent)}
 .study-back:hover .ico-svg{transform:translateX(-2px)}
-.study-back:active{transform:scale(.95)}
-/* 交互后：图标旋转半圈（与卡片向左退出的方向一致） */
-.study-back.pressing{color:var(--primary); border-color:var(--primary); background:var(--primary-soft)}
-.study-back.pressing .ico-svg{transform:rotate(-180deg)}
+.study-back:active{transform:scale(.94)}
+/* 涟漪：从胶囊中心扩散一圈，给「按下去」一个明确的触感 */
+.study-back::after{content:''; position:absolute; left:50%; top:50%; width:14px; height:14px; margin:-7px 0 0 -7px;
+  border-radius:50%; background:color-mix(in srgb, var(--primary) 26%, transparent); opacity:0; pointer-events:none}
+.study-back.pressing{color:var(--primary); border-color:var(--primary); background:var(--primary-soft);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent)}
+.study-back.pressing .ico-svg{transform:rotate(-180deg) translateX(-1px)}
+.study-back.pressing::after{animation:sbRipple .56s cubic-bezier(.22,.61,.36,1) forwards}
+.study-back.pressing .sb-txt{opacity:.72}
+.sb-txt{transition:opacity .3s var(--ease)}
+@keyframes sbRipple{0%{opacity:.85; transform:scale(.6)} 100%{opacity:0; transform:scale(4.2)}}
 
 @media (prefers-reduced-motion: reduce){
   .flow-band::before,.flow-band::after,.fb-arrows .arw{animation:none !important}
@@ -1471,7 +1527,7 @@ html.sl-has-session #view-auth{display:none}
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.7.4</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.7.5</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">自绘图标集（48 枚，24×24 网格 / 1.7 线宽）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用在线优先设计（v2.0.0）：账号与学习进度保存在云端数据库，需要联网使用；词库数据同样在线加载并缓存在本机，不再内嵌于页面。仍建议定期「导出数据备份」。</div>
@@ -3720,7 +3776,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.4', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.5', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -3749,7 +3805,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.4', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.5', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -5023,7 +5079,8 @@ const AppStudy = {
     box.innerHTML =
       '<div class="study-wrap">' +
       '<div class="study-meta">' +
-        '<span class="sm-l"><button class="study-back" type="button" onclick="AppStudy.backToSetup()" title="返回上一级（Esc）">' + icon('arrowLeft', 16) + '返回</button>' +
+        '<span class="sm-l"><button class="study-back" type="button" onclick="AppStudy.backToSetup()" title="返回上一级（Esc）">' +
+          '<span class="ico">' + icon('arrowLeft', 16) + '</span><span class="sb-txt">返回</span></button>' +
         '<span>第 '+(s.idx+1)+' / '+total+' 个</span></span>' +
         '<span class="tag '+stage.cls+'">'+stage.txt+'</span></div>' +
       '<div class="bar" style="margin-bottom:16px" role="progressbar" aria-valuemin="0" aria-valuemax="'+total+'" aria-valuenow="'+(s.idx+1)+'" aria-label="学习进度"><i style="width:'+Math.round(s.idx/total*100)+'%"></i></div>' +
@@ -5335,7 +5392,8 @@ const AppReview = {
     box.innerHTML =
       '<div class="study-wrap">' +
       '<div class="study-meta">' +
-        '<span class="sm-l"><button class="study-back" type="button" onclick="AppReview.backToList()" title="返回复习清单（Esc）">' + icon('arrowLeft', 16) + '返回</button>' +
+        '<span class="sm-l"><button class="study-back" type="button" onclick="AppReview.backToList()" title="返回复习清单（Esc）">' +
+          '<span class="ico">' + icon('arrowLeft', 16) + '</span><span class="sb-txt">返回</span></button>' +
         '<span>复习 '+(s.idx+1)+' / '+total+'</span></span>' +
         '<span class="tag '+stage.cls+'">第 '+Math.min((c && c.n || 0) + 1, SRS.ROUNDS)+' 遍</span></div>' +
       '<div class="bar" style="margin-bottom:16px" role="progressbar" aria-valuemin="0" aria-valuemax="'+total+'" aria-valuenow="'+(s.idx+1)+'" aria-label="复习进度"><i style="width:'+Math.round(s.idx/total*100)+'%"></i></div>' +
