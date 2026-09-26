@@ -848,6 +848,10 @@ li,td,th{text-wrap:normal}
    首启引导 / 三档反馈 + 发音 / 数学路线图 / 页面转场 */
 @keyframes pageIn{from{opacity:0; transform:translateY(7px)}to{opacity:1; transform:none}}
 #view-main .main > section{animation:pageIn .2s var(--ease)}
+/* v2.7.4：整页平移期间由 transform 接管 —— CSS 动画优先级高于 transition，
+   不关掉 pageIn 的话 translateX 会被动画的 translateY 顶掉（表现为瞬移无过渡） */
+#main-area.is-sliding > section{animation:none}
+#view-main .main > section[data-no-in]{animation:none}
 
 /* 发音按钮与单词区 */
 .fc-word-wrap{display:flex; align-items:center; justify-content:center; gap:10px 16px; flex-wrap:wrap; width:100%}
@@ -1151,11 +1155,45 @@ html.sl-has-session #view-auth{display:none}
 .fb-alt button{font:inherit; font-size:12.5px; color:var(--muted); background:none; border:none; cursor:pointer;
   padding:6px 10px; border-radius:10px; transition:color .16s var(--ease), background .16s var(--ease)}
 .fb-alt button:hover{color:var(--primary); background:var(--primary-soft)}
+/* 概览页用的紧凑版（放在页头右侧，不占整行） */
+.flow-band.compact{width:auto; min-height:46px; padding:0 10px 0 16px; border-radius:14px; gap:10px}
+.flow-band.compact .fb-main{font-size:15px}
+.flow-band.compact .fb-sub{font-size:11.5px}
+.flow-band.compact .fb-arrows .ico-svg{width:18px; height:18px}
+@keyframes fbBreathSm{0%,100%{opacity:.4; transform:scale(1)} 50%{opacity:.8; transform:scale(1.04)}}
+.flow-band.compact::before{animation-name:fbBreathSm}
+
+/* ===== v2.7.4 视图迁移原语：两层同时平移（新层提前渲染好再入场）→ 无缝衔接 =====
+   前进 fwd ：当前层向右退出、新层自左侧滑入（与 >>> 的方向一致）
+   返回 back：当前层向左退出、新层自右侧滑入
+   关键点：两层都是 absolute 且同时存在，容器锁住高度 —— 全程没有任何空窗，所以看不到接缝。 */
+.is-sliding{position:relative}
+.view-layer{position:absolute; left:0; top:0; width:100%; will-change:transform, opacity;
+  transition:transform .46s var(--ease-side), opacity .46s var(--ease)}
+.view-layer.from-left{transform:translateX(-100%); opacity:.55}
+.view-layer.from-right{transform:translateX(100%); opacity:.55}
+.view-layer.landed{transform:translateX(0); opacity:1}
+.view-layer.leave-right{transform:translateX(100%); opacity:.45}
+.view-layer.leave-left{transform:translateX(-100%); opacity:.45}
+
+/* 页面内自绘的「返回」按钮：自绘 SVG 箭头 + 按下时旋转半圈，然后整屏向左平移退回上一级 */
+.study-back{display:inline-flex; align-items:center; gap:5px; font:inherit; font-size:12.5px; font-weight:650;
+  color:var(--muted); background:transparent; border:1px solid var(--line2); border-radius:999px;
+  padding:4px 13px 4px 9px; cursor:pointer;
+  transition:color .18s var(--ease), border-color .18s var(--ease), background .18s var(--ease), transform .2s var(--ease-side)}
+.study-back .ico-svg{width:16px; height:16px; transition:transform .46s var(--ease-side)}
+.study-back:hover{color:var(--primary); border-color:color-mix(in srgb, var(--primary) 46%, transparent); background:var(--primary-soft)}
+.study-back:hover .ico-svg{transform:translateX(-2px)}
+.study-back:active{transform:scale(.95)}
+/* 交互后：图标旋转半圈（与卡片向左退出的方向一致） */
+.study-back.pressing{color:var(--primary); border-color:var(--primary); background:var(--primary-soft)}
+.study-back.pressing .ico-svg{transform:rotate(-180deg)}
+
 @media (prefers-reduced-motion: reduce){
   .flow-band::before,.flow-band::after,.fb-arrows .arw{animation:none !important}
   .fb-arrows .arw{opacity:.9; transform:none}
-  .study-wrap.enter-right{animation-duration:.01ms}
-  .en-hero.setup-out,.card.setup-out{animation-duration:.01ms}
+  .view-layer{transition-duration:.01ms}
+  .study-back .ico-svg{transition-duration:.01ms}
 }
 /* 「去复习旧单词」：同页第二入口的引导按钮，用复习侧的暖色与入口徽标呼应 */
 .en-to-review{background:var(--warn-soft); color:var(--text); border:1px solid var(--line2); font-weight:750}
@@ -1315,7 +1353,10 @@ html.sl-has-session #view-auth{display:none}
     <!-- 仪表盘 -->
     <section id="page-dashboard">
       <div class="topbar"><div><h1>你好，<span id="dash-name">同学</span></h1><div class="sub" id="dash-date"></div></div>
-        <button class="btn btn-primary" data-icon="play" onclick="AppUI.go('english');AppUI.englishTab('study')">开始学习</button></div>
+        <button class="flow-band compact" type="button" onclick="AppUI.startFlowTo(this,'english')" aria-label="开始学习，进入英语学习">
+          <span class="fb-txt"><span class="fb-main">开始学习</span><span class="fb-sub">进入英语学习</span></span>
+          <span class="fb-arrows" aria-hidden="true"><span class="arw" data-icon="chevRight"></span><span class="arw" data-icon="chevRight"></span><span class="arw" data-icon="chevRight"></span></span>
+        </button></div>
       <div id="dash-banner"></div>
       <div class="grid grid-4" id="dash-stats"></div>
       <div class="card" style="margin-top:16px">
@@ -1430,7 +1471,7 @@ html.sl-has-session #view-auth{display:none}
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
             <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.7.3</span></div>
+            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.7.4</span></div>
             <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
             <div class="kv"><span class="kk">图标</span><span class="vv">自绘图标集（48 枚，24×24 网格 / 1.7 线宽）</span></div>
             <div class="note-box" style="margin-top:14px">本系统采用在线优先设计（v2.0.0）：账号与学习进度保存在云端数据库，需要联网使用；词库数据同样在线加载并缓存在本机，不再内嵌于页面。仍建议定期「导出数据备份」。</div>
@@ -1569,6 +1610,8 @@ const ICONS = {
   user:'<circle cx="12" cy="8.6" r="3.9"/><path d="M4.8 20.2a7.4 7.4 0 0 1 14.4 0"/>',
   logout:'<path d="M14.6 5.6h2.6a2 2 0 0 1 2 2v8.8a2 2 0 0 1-2 2h-2.6"/><path d="M10.4 8.8 7 12l3.4 3.2"/><path d="M7 12h8.4"/>',
   chevLeft:'<path d="M14.4 6 8.4 12l6 6"/>',
+  /* v2.7.4：返回按钮专用（带尾巴的左向箭头，自绘，24 网格 1.7 线宽） */
+  arrowLeft:'<path d="M19.2 12H4.8"/><path d="M11 4.8 3.8 12l7.2 7.2"/>',
   chevRight:'<path d="M9.6 6l6 6-6 6"/>',
   chevDown:'<path d="M6 9.6l6 6 6-6"/>',
   x:'<path d="M6.4 6.4 17.6 17.6"/><path d="M17.6 6.4 6.4 17.6"/>',
@@ -1632,6 +1675,49 @@ function startBtnMerge(root){
   if(!btns) return;
   btns.getBoundingClientRect();                       // 强制重排，让初始态生效
   requestAnimationFrame(() => btns.classList.add('pending'));
+}
+
+/* ===== v2.7.4 视图迁移原语（无缝衔接的关键）=====
+   withRenderTarget：临时把某个容器改成目标 id，让现有 render 函数「提前」把下一屏渲染进去
+                     （渲染完成后立刻把 id 还回去，业务代码一行都不用改）
+   slideLayers     ：把「当前层」与「下一层」做一次同向平移 —— 两层同时存在、同时运动，
+                     中间不会出现空窗，所以衔接看不出接缝。 */
+function withRenderTarget(id, el, fn){
+  const box = document.getElementById(id);
+  const oldId = box ? box.id : null;
+  if(box) box.id = '__sl_hidden_' + id;
+  el.id = id;
+  try{ fn(); }
+  finally{ el.id = ''; if(box) box.id = oldId; }
+}
+/* dir: 'fwd' = 当前层向右退出、新层自左滑入；'back' = 当前层向左退出、新层自右滑入
+   opts.keepCur = true 时旧层只隐藏不删除（页面级 section 是常驻元素，删掉就回不来了） */
+function slideLayers(container, cur, next, dir, done, opts){
+  const D = 460;
+  const o = opts || {};
+  if(!container || !cur || !next){ done && done(); return; }
+  const CLS = ['view-layer', 'from-left', 'from-right', 'landed', 'leave-left', 'leave-right'];
+  const h = Math.max(cur.offsetHeight || 0, next.offsetHeight || 0, 220);
+  cur.setAttribute('data-no-in', '');                 // 迁移期间与结束后都不再重放入场动画
+  next.setAttribute('data-no-in', '');
+  container.classList.add('is-sliding');
+  container.style.minHeight = h + 'px';
+  next.classList.add('view-layer', dir === 'fwd' ? 'from-left' : 'from-right');
+  next.getBoundingClientRect();                       // 强制重排：先把起始位移落定
+  // 双 rAF：确保「起始位移那一帧」真的被渲染过，否则从 display:none 变可见的元素会跳过过渡直接落位
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    cur.classList.add('view-layer', dir === 'fwd' ? 'leave-right' : 'leave-left');
+    next.classList.add('landed');
+  }));
+  setTimeout(() => {
+    cur.classList.remove.apply(cur.classList, CLS);
+    if(o.keepCur) cur.hidden = true;
+    else cur.remove();
+    next.classList.remove.apply(next.classList, CLS);
+    container.classList.remove('is-sliding');
+    container.style.minHeight = '';
+    done && done();
+  }, D + 60);
 }
 
 /* ================= 本地存储 ================= */
@@ -3634,7 +3720,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.3', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.4', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -3663,7 +3749,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.3', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.4', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -3820,7 +3906,9 @@ const AppUI = {
     $$('.bnav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
     const su = $('#side-user-btn'); if(su) su.classList.toggle('active', page === 'profile');
     ['dashboard','english','settings','profile'].forEach(p => {
-      $('#page-'+p).hidden = p !== page;
+      const el = $('#page-'+p);
+      el.hidden = p !== page;
+      el.removeAttribute('data-no-in');               // 普通切页仍保留 pageIn 入场动画
     });
     if(page === 'dashboard') this.renderDashboard();
     if(page === 'english') this.renderEnglish();
@@ -3837,6 +3925,21 @@ const AppUI = {
         }
       }catch(e){}
     }
+  },
+  /* v2.7.4：概览页的「开始学习」流带 —— 加速后把英语页提前渲染好，再整页双向平移过去 */
+  startFlowTo(el, page){
+    if(this._flowing) return;
+    this._flowing = true;
+    if(el) el.classList.add('go');
+    setTimeout(() => { this._flowing = false; this.goFlow(page); }, 240);
+  },
+  goFlow(page, dir){
+    const cur = document.querySelector('#main-area > section:not([hidden])');   // 页面区是 #main-area 下的 <section id=page-*>
+    const target = document.getElementById('page-' + page);
+    this.go(page);                                        // 先把目标页渲染好（提前渲染）
+    if(!cur || !target || cur === target || !target.parentElement) return;
+    cur.hidden = false;                                   // 把上一页放回来，两层一起做动画
+    slideLayers(target.parentElement, cur, target, dir || 'fwd', null, { keepCur: true });
   },
   englishTab(tab){
     this.etab = tab;
@@ -4672,24 +4775,52 @@ const AppStudy = {
     const o = opts || {};
     if(el && el.classList.contains('is-empty')) return;
     this._flowing = true;
-    const box = $('#tab-study');
-    const hero = box && box.querySelector('.en-hero, .card');
     if(el) el.classList.add('go');
-    setTimeout(() => { if(hero) hero.classList.add('setup-out'); }, 360);
-    setTimeout(() => {
-      this._flowing = false;
-      if(o.resume){
-        this.resume();
-      } else {
-        const s = AppAuth.data().settings;
-        const max = parseInt((el && el.dataset.max) || '0', 10) || 1;
-        const prefer = s.studyMode === 'fixed' ? (s.studyFixed || 30) : (s.daily || 20);
-        this.quickStart('new', Math.max(1, Math.min(max, prefer)));
-      }
-      const wrap = document.querySelector('#tab-study .study-wrap');
-      // 下一帧再加类：先让 fitStudyViewport 按未位移的真实布局量一次，避免把入场位移算成溢出
-      if(wrap) requestAnimationFrame(() => wrap.classList.add('enter-right'));
-    }, 600);
+    // v2.7.4：加速阶段压到 240ms 就接上平移，两层同时动 —— 不再有「等它开始」的延迟感
+    setTimeout(() => { this._flowing = false; this.enterRound(el, o); }, 240);
+  },
+  /* 预渲染学习卡 → 与入口页做双向平移（前进：入口页右移退出、卡片自左侧滑入） */
+  enterRound(el, o){
+    const box = $('#tab-study');
+    if(!box){ if(o && o.resume) this.resume(); else this.start(); return; }
+    const cur = box.querySelector('.en-hero, .card, .study-wrap');
+    const layer = document.createElement('div');
+    layer.className = 'view-layer from-left';            // 先摆到画布外，避免闪一帧
+    box.appendChild(layer);
+    withRenderTarget('tab-study', layer, () => {
+      if(o && o.resume){ this.resume(); return; }
+      const st = AppAuth.data().settings;
+      const max = parseInt((el && el.dataset.max) || '0', 10) || 1;
+      const prefer = st.studyMode === 'fixed' ? (st.studyFixed || 30) : (st.daily || 20);
+      this.quickStart('new', Math.max(1, Math.min(max, prefer)));
+    });
+    if(!cur){ layer.classList.remove('view-layer', 'from-left'); return; }
+    slideLayers(box, cur, layer, 'fwd', () => { try{ fitNow(box); fitStudyViewport(); }catch(e){} });
+  },
+  /* v2.7.4：返回上一级（背新单词 → 入口页）。自绘返回按钮与 Esc 都走这里：
+     先把入口页预渲染好，再让卡片向左退出、入口页自右侧滑入。 */
+  backToSetup(){
+    const box = $('#tab-study');
+    if(!box || !this.state || this._flowing) return;
+    this._flowing = true;
+    const cur = box.querySelector('.study-wrap');
+    const btn = cur && cur.querySelector('.study-back');
+    if(btn) btn.classList.add('pressing');               // 图标旋转半圈
+    this.state = null;
+    AppUI._keyHandler = null;
+    document.onkeydown = null;
+    this.clearSession();
+    WordImg.clear();
+    AppData.autoBackup();
+    const layer = document.createElement('div');
+    layer.className = 'view-layer from-right';
+    box.appendChild(layer);
+    withRenderTarget('tab-study', layer, () => this.renderSetup());
+    this._flowing = false;
+    if(!cur){ layer.classList.remove('view-layer', 'from-right'); try{ AppUI.refreshEntryCounts(); }catch(e){} return; }
+    slideLayers(box, cur, layer, 'back', () => {
+      try{ AppUI.refreshEntryCounts(); fitNow(box); fitStudyViewport(); }catch(e){}
+    });
   },
   /* 直接开始（带指定数量） */
   quickStart(mode, count){
@@ -4892,7 +5023,7 @@ const AppStudy = {
     box.innerHTML =
       '<div class="study-wrap">' +
       '<div class="study-meta">' +
-        '<span class="sm-l"><button class="study-back" type="button" onclick="AppStudy.finish()" title="结束本轮并返回">返回</button>' +
+        '<span class="sm-l"><button class="study-back" type="button" onclick="AppStudy.backToSetup()" title="返回上一级（Esc）">' + icon('arrowLeft', 16) + '返回</button>' +
         '<span>第 '+(s.idx+1)+' / '+total+' 个</span></span>' +
         '<span class="tag '+stage.cls+'">'+stage.txt+'</span></div>' +
       '<div class="bar" style="margin-bottom:16px" role="progressbar" aria-valuemin="0" aria-valuemax="'+total+'" aria-valuenow="'+(s.idx+1)+'" aria-label="学习进度"><i style="width:'+Math.round(s.idx/total*100)+'%"></i></div>' +
@@ -5029,8 +5160,8 @@ const AppStudy = {
       else if(isSpeakKey(e)){ e.preventDefault(); this.speak(); }
       else if(e.key === '1') this.first();
       else if(e.key === '2'){ if(this.state && this.state.againPending) return; this.mark('good'); }
-      // v2.7.0：Esc 不再跳去词表筛选，而是结束本轮、回到「本轮结束」页
-      else if(e.key === 'Escape'){ this.finish(); }
+      // v2.7.4：Esc = 返回上一级（与页面上的自绘返回按钮同一行为），不再跳「本轮结束」页
+      else if(e.key === 'Escape'){ this.backToSetup(); }
     };
     document.onkeydown = AppUI._keyHandler;
   }
@@ -5204,7 +5335,7 @@ const AppReview = {
     box.innerHTML =
       '<div class="study-wrap">' +
       '<div class="study-meta">' +
-        '<span class="sm-l"><button class="study-back" type="button" onclick="AppReview.finish()" title="结束本轮复习并返回">返回</button>' +
+        '<span class="sm-l"><button class="study-back" type="button" onclick="AppReview.backToList()" title="返回复习清单（Esc）">' + icon('arrowLeft', 16) + '返回</button>' +
         '<span>复习 '+(s.idx+1)+' / '+total+'</span></span>' +
         '<span class="tag '+stage.cls+'">第 '+Math.min((c && c.n || 0) + 1, SRS.ROUNDS)+' 遍</span></div>' +
       '<div class="bar" style="margin-bottom:16px" role="progressbar" aria-valuemin="0" aria-valuemax="'+total+'" aria-valuenow="'+(s.idx+1)+'" aria-label="复习进度"><i style="width:'+Math.round(s.idx/total*100)+'%"></i></div>' +
@@ -5240,10 +5371,34 @@ const AppReview = {
       else if(isSpeakKey(e2)){ e2.preventDefault(); this.speak(); }
       else if(e2.key === '1') this.first();
       else if(e2.key === '2'){ if(this.state && this.state.againPending) return; this.mark('good'); }
-      else if(e2.key === 'Escape') this.finish();
+      // v2.7.4：Esc = 返回复习清单（与自绘返回按钮同一行为）
+      else if(e2.key === 'Escape') this.backToList();
     };
   },
   reveal(){ if(this.state){ this.state.revealed = true; this.renderCard(); } },
+  /* v2.7.4：返回上一级（复习 → 今日复习清单）。自绘返回按钮与 Esc 都走这里：
+     先把清单预渲染好，再让卡片向左退出、清单自右侧滑入。 */
+  backToList(){
+    const box = $('#tab-review');
+    if(!box || !this.state || this._flowing) return;
+    this._flowing = true;
+    const cur = box.querySelector('.study-wrap');
+    const btn = cur && cur.querySelector('.study-back');
+    if(btn) btn.classList.add('pressing');
+    this.state = null;
+    this.wantCount = 0;
+    document.onkeydown = null;
+    WordImg.clear();
+    const layer = document.createElement('div');
+    layer.className = 'view-layer from-right';
+    box.appendChild(layer);
+    withRenderTarget('tab-review', layer, () => this.render());
+    this._flowing = false;
+    if(!cur){ layer.classList.remove('view-layer', 'from-right'); try{ AppUI.refreshEntryCounts(); }catch(e){} return; }
+    slideLayers(box, cur, layer, 'back', () => {
+      try{ AppUI.refreshEntryCounts(); fitNow(box); fitStudyViewport(); }catch(e){}
+    });
+  },
   /* v2.7.2：第一个按钮的统一入口 —— 普通态＝忘了（两步确认），确认态＝下一个 */
   first(){
     const s = this.state;
