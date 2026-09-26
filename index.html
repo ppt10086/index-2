@@ -1224,80 +1224,6 @@ html.sl-has-session #view-auth{display:none}
 @keyframes fbBreathSm{0%,100%{opacity:.4; transform:scale(1)} 50%{opacity:.8; transform:scale(1.04)}}
 .flow-band.compact::before{animation-name:fbBreathSm}
 
-/* ===== v2.7.6 错位式排版（需求：尝试对 UI 界面进行错位式排版，彰显特色）=====
-   思路：不做「一切居中/等距」的模板化排布，而是建立一条左侧纵轴，
-   让内容沿着它做有节奏的错位 —— 统计卡逐级下沉、卡片左右交替缩进、
-   标题块两行之间再错开一档。整套只用 data-layout="offset" 控制，关掉即完全回到原来的整齐排布。 */
-/* 注意：只给页面 section 开 position:relative（纵轴伪元素需要它）。
-   千万不要在这里给 .card 也加 position:relative —— 它的特异性会盖掉迁移层的
-   `.view-layer{position:absolute}`，让整段平移失效（v2.7.6 踩过一次）。 */
-[data-layout="offset"] #page-dashboard,
-[data-layout="offset"] #page-english{ position:relative }
-
-/* ① 错位档位：--off 是这一块相对轴的缩进（每档 +18px 的递进阶梯），
-   每个区块还在轴上有一个节点刻度，读起来是「挂在一条轴上的节奏」而不是随手缩进。 */
-[data-layout="offset"] [data-off="1"]{ --off:18px }
-[data-layout="offset"] [data-off="2"]{ --off:36px }
-[data-layout="offset"] [data-off="3"]{ --off:54px }
-[data-layout="offset"] #page-dashboard>[data-off],
-[data-layout="offset"] #page-english>[data-off]{ position:relative;
-  margin-left:var(--off, 0); width:calc(100% - var(--off, 0px)) }
-/* 节点刻度：从纵轴（left:13px）拉到区块左边界的一小段横线 + 一个圆点 */
-[data-layout="offset"] #page-dashboard>[data-off]::before,
-[data-layout="offset"] #page-english>[data-off]::before{
-  content:''; position:absolute; left:calc(-1 * var(--off, 0px)); top:26px; width:var(--off, 0px); height:1px;
-  background:var(--line2); opacity:.85}
-[data-layout="offset"] #page-dashboard>[data-off]::after,
-[data-layout="offset"] #page-english>[data-off]::after{
-  content:''; position:absolute; left:calc(-1 * var(--off, 0px) - 2.5px); top:23.5px; width:6px; height:6px;
-  border-radius:50%; background:var(--panel); border:1px solid var(--line2)}
-
-/* ① 纵向轴：一条很淡的竖线，所有错位都挂在它上面 */
-[data-layout="offset"] #page-dashboard::before,
-[data-layout="offset"] #page-english::before{
-  content:''; position:absolute; left:11px; top:6px; bottom:34px; width:1px;
-  background:linear-gradient(180deg, transparent, var(--line2) 12%, var(--line2) 88%, transparent); opacity:.7}
-
-/* ② 标题块：主标题贴轴，副标题再退一档 */
-[data-layout="offset"] .topbar{ margin-left:26px }
-[data-layout="offset"] .topbar>div>.sub,
-[data-layout="offset"] .topbar>div>h1+.sub{ margin-left:22px }
-
-/* ③ 统计卡：逐级下沉成阶梯（错位但不乱，第 4 张回到基线） */
-[data-layout="offset"] #dash-stats{ padding-left:26px }
-[data-layout="offset"] #dash-stats .stat:nth-child(1){ margin-top:0 }
-[data-layout="offset"] #dash-stats .stat:nth-child(2){ margin-top:9px }
-[data-layout="offset"] #dash-stats .stat:nth-child(3){ margin-top:18px }
-[data-layout="offset"] #dash-stats .stat:nth-child(4){ margin-top:27px }
-
-/* ④ 卡片：改由上面的 data-off 阶梯统一控制（不再按奇偶交替，避免与阶梯互相打架） */
-[data-layout="offset"] #page-english>#tab-study>.card{ width:calc(100% - 20px); margin-left:20px }
-
-/* ⑤ 背单词入口页的数字行也逐级下沉（与统计卡同一套语言） */
-[data-layout="offset"] .en-hero-nums{ padding-left:14px }
-[data-layout="offset"] .en-hero-nums .en-num:nth-child(2){ margin-top:8px }
-[data-layout="offset"] .en-hero-nums .en-num:nth-child(3){ margin-top:16px }
-[data-layout="offset"] .en-hero>.flow-band{ margin-left:14px; width:calc(100% - 14px) }
-
-/* ⑥ 小屏（≤860px）把错位幅度减半，别挤掉内容宽度 */
-@media (max-width: 860px){
-  [data-layout="offset"] .topbar{ margin-left:14px }
-  [data-layout="offset"] #dash-stats{ padding-left:14px }
-  [data-layout="offset"] #dash-stats .stat:nth-child(n){ margin-top:0 }
-  [data-layout="offset"] #page-dashboard>.card,
-  [data-layout="offset"] #page-english>.card,
-  [data-layout="offset"] #page-english>#tab-study>.card{ width:100%; margin-left:0 }
-  [data-layout="offset"] [data-off="1"]{ --off:8px }
-  [data-layout="offset"] [data-off="2"]{ --off:14px }
-  [data-layout="offset"] [data-off="3"]{ --off:20px }
-  [data-layout="offset"] #page-dashboard>[data-off]::before,
-  [data-layout="offset"] #page-dashboard>[data-off]::after,
-  [data-layout="offset"] #page-english>[data-off]::before,
-  [data-layout="offset"] #page-english>[data-off]::after{ display:none }
-  [data-layout="offset"] #page-dashboard::before,
-  [data-layout="offset"] #page-english::before{ display:none }
-}
-
 /* ===== v2.7.4 视图迁移原语
    前进 fwd ：当前层向右退出、新层自左侧滑入（与 >>> 的方向一致）
    返回 back：当前层向左退出、新层自右侧滑入
@@ -1317,6 +1243,61 @@ html.sl-has-session #view-auth{display:none}
   background:linear-gradient(100deg, color-mix(in srgb, var(--bg) 80%, transparent), color-mix(in srgb, var(--bg) 56%, transparent));
   transition:opacity .46s var(--ease)}
 .view-layer.leave-left::after,.view-layer.leave-right::after{opacity:1}
+
+/* ===== v2.7.8 无界并列 / 渐变分割线 / 右下角小字入口 ===== */
+
+/* ⑥ 三、四列并列的数字块：取消外框，只留一条极简渐变分割线 */
+.grid-4 > .stat,
+.filter-summary .stat,
+.en-num{ position:relative }
+.grid-4 > .stat::after,
+.filter-summary .stat + .stat::after,
+.en-num + .en-num::after{
+  content:''; position:absolute; left:0; top:14%; bottom:14%; width:1px; pointer-events:none;
+  background:linear-gradient(to bottom, transparent, var(--line2) 22%, var(--line2) 78%, transparent)
+}
+.grid-4 > .stat:first-child::after{ display:none }
+
+/* 三列块折行后（≤860）：竖线改横线，仍是无框的渐变线 */
+.filter-summary .stat + .stat{ border-left:0; border-top:0 }
+@media (max-width:860px){
+  .filter-summary .stat + .stat::after{ display:none }
+  .filter-summary .stat + .stat::before{
+    content:''; position:absolute; left:10%; right:10%; top:0; height:1px; pointer-events:none;
+    background:linear-gradient(to right, transparent, var(--line2) 22%, var(--line2) 78%, transparent)
+  }
+}
+
+/* 四列块折成两列（≤1080）：分割线只留在每行第二个；单列（≤640）全部收起 */
+@media (max-width:1080px){
+  .grid-4 > .stat::after{ display:none }
+  .grid-4 > .stat:nth-child(even)::after{ display:block }
+}
+@media (max-width:640px){
+  .grid-4 > .stat::after{ display:none !important }
+}
+
+/* 背新单词里的三只小框（新单词 / 今日需复习 / 已掌握）改为无界显示 */
+.en-hero-nums{ gap:0 }
+.en-num{ background:transparent; border:0; border-radius:0; padding:8px 4px }
+@media (max-width:860px){ .en-hero-nums{ gap:0 } }
+
+/* ④ 词库数据来源：右下角无框小字入口（图标 + 文字，点击弹说明） */
+.corner-note{
+  position:fixed; right:26px; bottom:22px; z-index:7;
+  display:inline-flex; align-items:center; gap:6px; padding:5px 2px;
+  border:0; background:transparent; color:var(--muted);
+  font:inherit; font-size:12px; font-weight:600; letter-spacing:.03em;
+  cursor:pointer; opacity:.66;
+  transition:opacity .22s var(--ease), color .22s var(--ease), translate .22s var(--ease)
+}
+.corner-note:hover{ opacity:1; color:var(--text); translate:0 -1px }
+.corner-note:focus-visible{ outline:2px solid var(--primary); outline-offset:3px; border-radius:6px }
+.corner-note .ico-svg{ width:14px; height:14px; opacity:.9 }
+@media (max-width:860px){
+  .corner-note{ right:18px; bottom:calc(74px + env(safe-area-inset-bottom, 0px)) }
+}
+@media print{ .corner-note{ display:none } }
 
 /* ===== v2.7.7 自适应平滑化 =====
    元素尺寸被自适应引擎改动时不再硬跳：字号与锁高都走过渡。
@@ -1543,14 +1524,14 @@ html.sl-has-session #view-auth{display:none}
           <span class="fb-arrows" aria-hidden="true"><span class="arw" data-icon="chevRight"></span><span class="arw" data-icon="chevRight"></span><span class="arw" data-icon="chevRight"></span></span>
         </button></div>
       <div id="dash-banner"></div>
-      <div class="grid grid-4" id="dash-stats" data-off="1"></div>
-      <div class="card" style="margin-top:16px" data-off="2">
+      <div class="grid grid-4" id="dash-stats"></div>
+      <div class="card" style="margin-top:16px">
         <div class="card-title"><span class="dot"></span>今日学习进度</div>
         <div id="dash-progress"></div>
       </div>
       <!-- v2.7.6：去掉「英语 · 下一步建议」标题；当前词表说明移到底部；
            三个入口改成与「开始学习」同一条流带（保留各自图标 + >>>） -->
-      <div class="card" style="margin-top:16px" data-off="3">
+      <div class="card" style="margin-top:16px">
         <div class="fb-row">
           <button class="flow-band mini" type="button" onclick="AppUI.startFlowTo(this,'english','filter')" aria-label="调整词表">
             <span class="fb-ic" data-icon="sliders"></span>
@@ -1618,14 +1599,6 @@ html.sl-has-session #view-auth{display:none}
         <div style="display:flex; gap:8px"><button class="btn" data-icon="refresh" onclick="AppLibrary.refreshAll()">全部更新</button><button class="btn btn-primary" data-icon="filter" onclick="AppUI.go('english')">前往筛选</button></div></div>
       <div id="library-status"></div>
       <div class="card"><div class="card-title"><span class="dot"></span>词库列表</div><div id="library-list"></div></div>
-      <div class="card"><div class="card-title"><span class="dot" style="background:var(--accent)"></span>数据来源说明</div>
-        <div class="muted" style="font-size:13px">
-          · <b>全部词库均来自在线源</b>：整理自 <a href="https://github.com/KyleBing/english-vocabulary" target="_blank" rel="noopener">KyleBing/english-vocabulary</a>（含人教版小学/初中/高中等教材词表，以及四级 7508、六级 5651、高中 6008、初中 3223 等带释义与词组的版本），通过多个 CDN 镜像在线加载<br>
-          · <b>本应用已不再包含任何本地/内置词库</b>：v2.4 起删除了全部内置词表数据，词库一律联网获取，并在本机 IndexedDB 中缓存以加速下次打开<br>
-          · 如需离线使用，请保持网络可用；缓存可让「已加载过的词库」在弱网下也能秒开
-          · <b>来源与许可</b>：<a href="https://github.com/KyleBing/english-vocabulary" target="_blank" rel="noopener">KyleBing/english-vocabulary</a>（开源词库，许可以仓库页为准）· <a href="https://github.com/mahavivo/english-wordlists" target="_blank" rel="noopener">mahavivo/english-wordlists</a>（整理词表）。数据仅供个人学习使用，商用请核对原始许可。
-        </div>
-      </div>
     </section>
 
     <!-- 设置 -->
@@ -1635,7 +1608,7 @@ html.sl-has-session #view-auth{display:none}
         <div class="set-nav" role="tablist" aria-label="设置分类">
           <button class="set-cat active" data-cat="account" onclick="AppSettings.cat('account')">账户</button>
           <button class="set-cat" data-cat="study" onclick="AppSettings.cat('study')">学习偏好</button>
-          <button class="set-cat" data-cat="appearance" onclick="AppSettings.cat('appearance')">外观与关于</button>
+          <button class="set-cat" data-cat="appearance" onclick="AppSettings.cat('appearance')">外观设计</button>
           <button class="set-cat" data-cat="data" onclick="AppSettings.cat('data')">数据与备份</button>
           <button class="set-cat" data-cat="library" onclick="AppSettings.cat('library')">词库中心</button>
         </div>
@@ -1664,17 +1637,11 @@ html.sl-has-session #view-auth{display:none}
             <div class="kv"><span class="kk">默认剔除衍生词 <button class="tip" onclick="termTip(&quot;deriv&quot;)" aria-label="什么是衍生词" title="什么是衍生词">?</button></span><span class="vv"><label class="switch"><input type="checkbox" id="set-deriv"><span class="sl"></span></label></span></div>
           </section>
           <section class="set-pane" data-pane="appearance" hidden>
-            <div class="card-title"><span class="dot"></span>外观与关于</div>
+            <div class="card-title"><span class="dot"></span>外观设计</div>
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <div class="kv"><span class="kk">错位式排版</span><span class="vv"><label class="switch"><input type="checkbox" id="set-offset"><span class="sl"></span></label></span></div>
-            <div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">错位排布：标题沿一条纵轴挂靠、统计卡逐级下沉、卡片左右交替缩进。关闭后回到完全整齐的等距排布。</div>
-            <div class="divider"></div>
-            <div class="kv"><span class="kk">版本</span><span class="vv" id="set-version">2.7.7</span></div>
-            <div class="kv"><span class="kk">模块数量</span><span class="vv" id="set-modcount">2</span></div>
-            <div class="kv"><span class="kk">图标</span><span class="vv">自绘图标集（48 枚，24×24 网格 / 1.7 线宽）</span></div>
-            <div class="note-box" style="margin-top:14px">本系统采用在线优先设计（v2.0.0）：账号与学习进度保存在云端数据库，需要联网使用；词库数据同样在线加载并缓存在本机，不再内嵌于页面。仍建议定期「导出数据备份」。</div>
+            <span hidden id="set-version">2.7.8</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -1761,6 +1728,12 @@ html.sl-has-session #view-auth{display:none}
   <button class="bnav-btn" data-page="settings" onclick="AppUI.go('settings')"><span class="ico" data-icon="settings"></span>设置</button>
   <button class="bnav-btn" data-page="profile" onclick="AppUI.go('profile')"><span class="ico" data-icon="user"></span>我的</button>
 </nav>
+
+<!-- v2.7.8（需求 4）：词库数据来源 —— 右下角无框小字 + 图标入口。
+     刻意放在 #view-main 外面：「外壳」上有 transform，fixed 会以它为包含块跑到页面外。
+     显隐由 syncCornerNote() 跟着设置页的「词库中心」面板走。 -->
+<button id="lib-src-note" class="corner-note" type="button" data-icon="info" hidden
+        onclick="AppLibrary.srcInfo()" aria-label="查看词库数据来源说明">数据来源</button>
 
 <div id="toast-wrap" role="status" aria-live="polite"></div>
 <div id="onboard-root" hidden></div>
@@ -1928,13 +1901,31 @@ function slideLayers(container, cur, next, dir, done, opts){
   }));
   setTimeout(() => {
     cur.classList.remove.apply(cur.classList, CLS);
-    if(o.keepCur) cur.hidden = true;
+    // v2.7.8：被保留（隐藏）的旧页把 data-no-in 摘掉 —— 它此刻不可见，
+    // 摘掉不会重播动画，却能保证「以后普通切页」仍然有 pageIn 入场动画。
+    if(o.keepCur){ cur.hidden = true; cur.removeAttribute('data-no-in'); }
     else cur.remove();
     next.classList.remove.apply(next.classList, CLS);
     container.classList.remove('is-sliding');
     container.style.minHeight = '';
     done && done();
   }, D + 60);
+}
+
+/* v2.7.8（需求 4）：词库数据来源的「右下角小字入口」显隐开关。
+   为什么不用纯 CSS：入口挂在 <body> 下、位置固定在视口右下角，而它所属的
+   「词库中心」其实是设置页里的一个面板（mountLibraryPane 会把 #page-library
+   搬进 #set-pane-library），所以显隐只能跟着面板状态走。
+   也不能把它留在 #page-library 里面：#view-main 上带着入场动画残留的 transform
+   （animation-fill-mode 收尾成 matrix(1,0,0,1,0,0)），会变成 fixed 的包含块，
+   入口就被顶到页面外面去了（实测 bottom 1007px > 视口 900px）。 */
+function syncCornerNote(){
+  const note = document.getElementById('lib-src-note');
+  if(!note) return;
+  const shell = document.getElementById('view-main');
+  const pane = document.getElementById('set-pane-library');
+  const settings = document.getElementById('page-settings');
+  note.hidden = !(shell && !shell.hidden && settings && !settings.hidden && pane && !pane.hidden);
 }
 
 /* ================= 本地存储 ================= */
@@ -2351,7 +2342,7 @@ const AppAuth = {
   defaultData(){
     const deployed = typeof location !== 'undefined' && location.protocol === 'https:';
     return {
-      settings: { daily: 20, phon: true, deriv: true, theme: 'auto', useOnline: true, autoOnline: true, studyMode: 'daily', studyFixed: 30, studyOrder: 'random', uiScale: 100, autoScale: true, onboarded: false, voice: 'en-US', autoSpeak: false, studyModeChoice: 'new', showImg: false, offsetLayout: true, cloud: { enabled: deployed, lastSync: 0, endpoint: '' } },
+      settings: { daily: 20, phon: true, deriv: true, theme: 'auto', useOnline: true, autoOnline: true, studyMode: 'daily', studyFixed: 30, studyOrder: 'random', uiScale: 100, autoScale: true, onboarded: false, voice: 'en-US', autoSpeak: false, studyModeChoice: 'new', showImg: false, cloud: { enabled: deployed, lastSync: 0, endpoint: '' } },
       filter: { target: 'cet4', bases: ['primary','middle','hs'], deriv: true, presetName: '' },
       presets: [],
       wordState: {},
@@ -3982,7 +3973,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.7', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.8', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4011,7 +4002,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.7', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.8', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -4123,7 +4114,6 @@ const AppUI = {
     if($('#set-autospeak')) $('#set-autospeak').checked = !!AppAuth.data().settings.autoSpeak;
     $('#set-deriv').checked = AppAuth.data().settings.deriv;
     $('#set-theme').value = AppAuth.data().settings.theme;
-    $('#set-modcount').textContent = Modules.registry.length;
     this.mountLibraryPane();
     try{ this.go(this.page); }catch(e){ showFatal(e && e.message ? e.message : String(e)); }
     fitNow(document);       // 首屏排版自适应
@@ -4179,6 +4169,7 @@ const AppUI = {
     if(page === 'library') AppLibrary.render();
     else AppLibrary._autoRan = false;                     // 离开词库中心 → 允许下次进入再自动更新
     if(page === 'settings') this.renderSettings();
+    syncCornerNote();                                     // v2.7.8：右下角「数据来源」小字跟着词库面板显隐
     window.scrollTo({top:0});
     if(!fromHash){
       try{
@@ -4199,17 +4190,42 @@ const AppUI = {
     if(this._flowing) return;
     this._flowing = true;
     if(el) el.classList.add('go');
+    // v2.7.8：把「目标页渲染」放进加速窗口内完成 —— 滑动一开始就能动，
+    // 不再出现「点下去 → 等渲染 → 才开始滑」的死时间。
+    let target = null;
+    setTimeout(() => { try{ target = this.preRenderPage(page, tab); }catch(e){} }, 80);
     setTimeout(() => {
       this._flowing = false;
       this.clearBandGo();                                 // 先收拾干净再切页
-      this.goFlow(page, 'fwd', tab);
-    }, 240);
+      this.goFlow(page, 'fwd', tab, target);
+    }, 220);
   },
-  goFlow(page, dir, tab){
-    const cur = document.querySelector('#main-area > section:not([hidden])');   // 页面区是 #main-area 下的 <section id=page-*>
+  /* 渲染但不显示：在同一帧内先把目标页渲染好，再把可见性还原（同步执行不会绘制出中间态） */
+  preRenderPage(page, tab){
+    const cur = document.querySelector('#main-area > section:not([hidden])');
     const target = document.getElementById('page-' + page);
-    this.go(page);                                        // 先把目标页渲染好（提前渲染）
+    if(!target || cur === target) return null;
+    const curHidden = cur ? cur.hidden : true;
+    this.go(page);
     if(tab && page === 'english') this.englishTab(tab);
+    target.hidden = true;                                  // 还原：渲染完成但依旧不可见
+    // v2.7.8：放回当前页之前先关掉它的入场动画。
+    // 踩过的坑：go() 里那轮 hidden 开关会让当前页重播 pageIn（opacity 0→1、0.2s），
+    // 于是「点开始学习」后会出现约 0.1s 的空白 —— 旧页淡没了、新页还没上来，
+    // 这正是用户说的「不够丝滑」。data-no-in 与 slideLayers 用的是同一个开关，
+    // 滑动结束时由 slideLayers 摘掉，普通切页的 pageIn 入场动画不受影响。
+    if(cur){ cur.setAttribute('data-no-in', ''); cur.hidden = curHidden; }
+    return target;
+  },
+  goFlow(page, dir, tab, preRendered){
+    const cur = document.querySelector('#main-area > section:not([hidden])');   // 页面区是 #main-area 下的 <section id=page-*>
+    const target = preRendered || document.getElementById('page-' + page);
+    if(!preRendered){
+      this.go(page);                                      // 没预先渲染就现在渲染（提前渲染）
+      if(tab && page === 'english') this.englishTab(tab);
+    } else {
+      target.hidden = false;                              // 已经渲染好了，直接放出来
+    }
     if(!cur || !target || cur === target || !target.parentElement) return;
     cur.hidden = false;                                   // 把上一页放回来，两层一起做动画
     slideLayers(target.parentElement, cur, target, dir || 'fwd', null, { keepCur: true });
@@ -4402,7 +4418,6 @@ const AppUI = {
     if($('#set-autospeak')) $('#set-autospeak').checked = !!s.autoSpeak;
     if($('#set-showimg')) $('#set-showimg').checked = s.showImg === true;   // 内测功能：只认显式开启
     if($('#set-autoonline')) $('#set-autoonline').checked = true;
-    if($('#set-offset')) $('#set-offset').checked = s.offsetLayout !== false;   // v2.7.6 错位排版
     $('#set-deriv').checked = s.deriv;
     $('#set-theme').value = s.theme;
     AppSettings.bindAutoSave();
@@ -4662,8 +4677,6 @@ function applyTheme(){
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
   const acc = ACCENTS[st.accent] ? st.accent : 'graphite';
   document.documentElement.dataset.accent = acc;
-  // v2.7.6：错位式排版开关（设置里可一键关掉，回到完全整齐的排布）
-  document.documentElement.dataset.layout = (st.offsetLayout === false) ? 'aligned' : 'offset';
   const grp = document.getElementById('set-accent');
   if(grp){
     if(!grp.children.length){
@@ -5997,6 +6010,25 @@ const AppLibrary = {
   _autoRan: false,          // v2.7.2（需求 10）：进入词库中心自动执行一次「全部更新」
   background: false,        // 静默更新中（不盖内容）
 
+  /* v2.7.8（需求 4）：数据来源说明从常驻卡片改为右下角可点小字，正文搬进弹层 */
+  srcInfo(){
+    openModal(
+      '<button class="close" onclick="AppUI.closeModal()">×</button>' +
+      '<h3 style="margin:2px 0 14px">词库数据来源</h3>' +
+      '<div class="muted" style="font-size:13px; line-height:1.8">' +
+        '· <b>全部词库均来自在线源</b>：整理自 ' +
+        '<a href="https://github.com/KyleBing/english-vocabulary" target="_blank" rel="noopener">KyleBing/english-vocabulary</a>' +
+        '（含人教版小学/初中/高中等教材词表，以及四级 7508、六级 5651、高中 6008、初中 3223 等带释义与词组的版本），通过多个 CDN 镜像在线加载<br>' +
+        '· <b>本应用不包含任何本地/内置词库</b>：v2.4 起删除了全部内置词表数据，词库一律联网获取，并在本机 IndexedDB 中缓存以加速下次打开<br>' +
+        '· 如需离线使用，请保持网络可用；缓存可让「已加载过的词库」在弱网下也能秒开<br>' +
+        '· <b>来源与许可</b>：' +
+        '<a href="https://github.com/KyleBing/english-vocabulary" target="_blank" rel="noopener">KyleBing/english-vocabulary</a>（开源词库，许可以仓库页为准）· ' +
+        '<a href="https://github.com/mahavivo/english-wordlists" target="_blank" rel="noopener">mahavivo/english-wordlists</a>（整理词表）。数据仅供个人学习使用，商用请核对原始许可。' +
+      '</div>' +
+      '<div style="margin-top:20px; text-align:right"><button class="btn" onclick="AppUI.closeModal()">知道了</button></div>'
+    );
+  },
+
   async render(){
     this.autoUpdateOnce();                            // 进入即自动更新一次
     const box = $('#library-list');
@@ -6076,7 +6108,7 @@ const AppSettings = {
      已删除「保存偏好 / 保存外观」按钮：所有开关、下拉、输入框改动即保存。
      输入框用 change（失焦或回车才触发）而不是 input，避免每敲一个字符就写一次云端。 */
   AUTO_SAVE_IDS: ['set-daily', 'set-study-fixed', 'set-study-order', 'set-phon', 'set-voice',
-                  'set-autospeak', 'set-showimg', 'set-deriv', 'set-theme', 'set-offset'],
+                  'set-autospeak', 'set-showimg', 'set-deriv', 'set-theme'],
   bindAutoSave(){
     this.AUTO_SAVE_IDS.forEach(id => {
       const el = document.getElementById(id);
@@ -6134,7 +6166,6 @@ const AppSettings = {
     d.settings.useOnline = true;
     d.settings.deriv = $('#set-deriv').checked;
     d.settings.theme = $('#set-theme').value;
-    if($('#set-offset')) d.settings.offsetLayout = $('#set-offset').checked;   // v2.7.6 错位排版
     d.filter.deriv = d.settings.deriv;
     AppAuth.save(d);
     applyTheme();
