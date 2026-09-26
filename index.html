@@ -1244,6 +1244,37 @@ html.sl-has-session #view-auth{display:none}
   transition:opacity .46s var(--ease)}
 .view-layer.leave-left::after,.view-layer.leave-right::after{opacity:1}
 
+/* ===== v2.7.9 全站「旧的下去、新的上来」上下平移 =====
+   用户要求：所有点击切换都改成上下平移，并「参考开始学习/开始复习那套方案」——
+   也就是同一套两层预渲染平移，只是把位移从横向换成纵向。
+   ⚠️ 位移用 transform:translateY（不是独立的 translate 属性）：探针 A/B 实测过，
+   走 translate 属性时「词表筛选」这种大 DOM 会出现 193ms 的单帧卡顿，transform 没有。
+   纵向类比横向那套特异度高一档（0,3,0），不会被 .view-layer.landed 顶掉。
+   方向语义：
+     'up'   旧层往下沉（translateY 14% + 淡出）+ 新层自下方升上来盖住它 —— 旧的下去、新的上来
+     'down' 旧层整屏往下退出 + 新层自上方降下 —— 返回上一级
+   两者都保证「任意一帧屏幕上都有内容」：up 是新层压在上面盖住旧层，down 是两层首尾相接。 */
+.view-layer.sc-from-below{ transform:translateY(100%) }
+.view-layer.sc-from-above{ transform:translateY(-100%) }
+.view-layer.sc-settled{ transform:translateY(0) }
+.view-layer.sc-sink{ transform:translateY(14%); opacity:.6 }
+.view-layer.sc-drop{ transform:translateY(100%); opacity:.45 }
+/* 纵向退场的遮罩竖着铺（横向那条是 100deg 斜向） */
+.view-layer.sc-sink::after,
+.view-layer.sc-drop::after{
+  opacity:1;
+  background:linear-gradient(to bottom,
+    color-mix(in srgb, var(--bg) 78%, transparent),
+    color-mix(in srgb, var(--bg) 50%, transparent))
+}
+/* 纵向平移期间容器不再铺底色：实测给「词表筛选」这种超长容器铺背景会触发整面重绘，
+   单帧冲到 168ms；旧层下沉露出的那 14% 本来就是页面底色，不铺也一样。 */
+/* 参与纵向平移的容器必须有定位上下文（锁高 + 绝对定位的层才有着落） */
+#en-views,.set-panes{ position:relative }
+/* 平移期间关掉入场动画：旧层被放回来时不重播，免得出现空档 */
+#en-views>[data-no-in]>.card,
+.set-pane[data-no-in]{ animation:none }
+
 /* ===== v2.7.8 无界并列 / 渐变分割线 / 右下角小字入口 ===== */
 
 /* ⑥ 三、四列并列的数字块：取消外框，只留一条极简渐变分割线 */
@@ -1574,22 +1605,24 @@ html.sl-has-session #view-auth{display:none}
         <span class="crumb" id="en-crumb"></span>
       </div>
 
-      <!-- 主导区：背单词 / 复习（占据屏幕主体） -->
-      <div id="tab-study"></div>
-      <div id="tab-review" hidden></div>
+      <!-- v2.7.9：所有子入口（背单词 / 复习 / 词表筛选 / 浏览 / 记录）收进同一个容器，
+           切换时在这一层里做上下平移 —— 容器需要 position:relative 才能锁高、摆放两层 -->
+      <div id="en-views">
+        <div id="tab-study"></div>
+        <div id="tab-review" hidden></div>
+        <!-- 次级页面内容 -->
+        <div id="tab-filter" hidden></div>
+        <div id="tab-browse" hidden></div>
+        <div id="tab-record" hidden></div>
+      </div>
 
-      <!-- 次级入口：弱化到边角，起引导而非并列的作用 -->
+      <!-- 次级入口：弱化到边角，起引导而非并列的作用（放在主区之后，主入口下面才是它） -->
       <div id="english-minor">
         <span class="en-minor-label">其他功能</span>
         <button data-tab="filter" onclick="AppUI.englishTab('filter')">词表筛选</button>
         <button data-tab="browse" onclick="AppUI.englishTab('browse')">词表浏览</button>
         <button data-tab="record" onclick="AppUI.englishTab('record')">学习记录</button>
       </div>
-
-      <!-- 次级页面内容 -->
-      <div id="tab-filter" hidden></div>
-      <div id="tab-browse" hidden></div>
-      <div id="tab-record" hidden></div>
     </section>
 
 
@@ -1641,7 +1674,7 @@ html.sl-has-session #view-auth{display:none}
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.8</span>
+            <span hidden id="set-version">2.7.9</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -1880,34 +1913,98 @@ function withRenderTarget(id, el, fn){
   try{ fn(); }
   finally{ el.id = ''; if(box) box.id = oldId; }
 }
+/* ===== v2.7.9 切换方向统一在这里决定（用户要求：全站都改成「旧的下去、新的上来」）=====
+   语义统一成「前进 / 返回」两个意图，具体怎么动由模式决定：
+     v（默认，纵向）：前进 = 旧层下沉 + 新层自下方升上来；返回 = 旧层下退出 + 新层自上方降下
+     h（对照，横向）：v2.7.4 起就在用的左右平移（保留下来做 A/B 逐帧对比）
+   探针用 window.__SL_SWITCH_MODE = 'h' 就能把全站切回横向，跑同一条路径对比两种方案。 */
+const SWITCH = { mode: 'v' };
+function switchMode(){
+  try{ const m = window.__SL_SWITCH_MODE; return (m === 'h' || m === 'v') ? m : SWITCH.mode; }
+  catch(e){ return SWITCH.mode; }
+}
+/* 进入层的起始类名（先摆到画布外，避免闪一帧） */
+function layerEntryClass(fwd){
+  if(switchMode() === 'h') return fwd ? 'from-left' : 'from-right';
+  return fwd ? 'sc-from-below' : 'sc-from-above';
+}
+/* 传给 slideLayers 的方向 */
+function layerDir(fwd){
+  if(switchMode() === 'h') return fwd ? 'fwd' : 'back';
+  return fwd ? 'up' : 'down';
+}
+
 /* dir: 'fwd' = 当前层向右退出、新层自左滑入；'back' = 当前层向左退出、新层自右滑入
+   dir: 'up'  = 当前层往下沉、新层自下方升上来（新层压在上面，任意一帧都有内容）
+   dir: 'down'= 当前层整屏往下退出、新层自上方降下
    opts.keepCur = true 时旧层只隐藏不删除（页面级 section 是常驻元素，删掉就回不来了） */
 function slideLayers(container, cur, next, dir, done, opts){
   const D = 460;
   const o = opts || {};
   if(!container || !cur || !next){ done && done(); return; }
-  const CLS = ['view-layer', 'from-left', 'from-right', 'landed', 'leave-left', 'leave-right'];
+  const V = (dir === 'up' || dir === 'down');
+  const CLS = ['view-layer', 'from-left', 'from-right', 'landed', 'leave-left', 'leave-right',
+               'sc-from-below', 'sc-from-above', 'sc-settled', 'sc-sink', 'sc-drop',
+               'is-entering', 'is-leaving'];
   const h = Math.max(cur.offsetHeight || 0, next.offsetHeight || 0, 220);
   cur.setAttribute('data-no-in', '');                 // 迁移期间与结束后都不再重放入场动画
   next.setAttribute('data-no-in', '');
   container.classList.add('is-sliding');
+  if(V) container.classList.add('sc-vert');
   container.style.minHeight = h + 'px';
-  next.classList.add('view-layer', dir === 'fwd' ? 'from-left' : 'from-right');
+  /* 给两层打上「进入层 / 退场层」标记类（与方向无关）：
+     探针与后续维护都靠它选元素，不必再记住 from-left/leave-right/sc-sink 这些方向类名 */
+  next.classList.add('is-entering');
+  cur.classList.add('is-leaving');
+  if(V){
+    next.classList.add('view-layer', dir === 'up' ? 'sc-from-below' : 'sc-from-above');
+    next.style.zIndex = '2';                          // 新层在上：旧层下沉时下面是新层，不会露空
+    cur.style.zIndex = '1';
+  } else {
+    next.classList.add('view-layer', dir === 'fwd' ? 'from-left' : 'from-right');
+  }
   next.getBoundingClientRect();                       // 强制重排：先把起始位移落定
   // 双 rAF：确保「起始位移那一帧」真的被渲染过，否则从 display:none 变可见的元素会跳过过渡直接落位
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    cur.classList.add('view-layer', dir === 'fwd' ? 'leave-right' : 'leave-left');
-    next.classList.add('landed');
+    if(V){
+      // ⚠️ 这里必须把 'view-layer' 一起加上：退场层的过渡（transform/opacity）与遮罩 ::after
+      // 都挂在 .view-layer 上，漏掉它退场层会「瞬移 + 不带遮罩」（v2.7.9 探针抓到的）。
+      cur.classList.add('view-layer', dir === 'up' ? 'sc-sink' : 'sc-drop');
+      next.classList.add('sc-settled');
+    } else {
+      cur.classList.add('view-layer', dir === 'fwd' ? 'leave-right' : 'leave-left');
+      next.classList.add('landed');
+    }
   }));
   setTimeout(() => {
     cur.classList.remove.apply(cur.classList, CLS);
     // v2.7.8：被保留（隐藏）的旧页把 data-no-in 摘掉 —— 它此刻不可见，
     // 摘掉不会重播动画，却能保证「以后普通切页」仍然有 pageIn 入场动画。
-    if(o.keepCur){ cur.hidden = true; cur.removeAttribute('data-no-in'); }
+    // v2.7.9：还要防「滑动没结束用户又点了一次」—— 那时旧页可能已经重新变成当前页，
+    // 不能再把它藏起来（否则两个页面全被隐藏，屏幕上什么都没了）。以 AppUI.page 为准。
+    if(o.keepCur){
+      const stillCurrent = !!(cur.id && cur.id.indexOf('page-') === 0 &&
+                              typeof AppUI !== 'undefined' && AppUI && AppUI.page === cur.id.slice(5));
+      cur.hidden = !stillCurrent;
+      cur.removeAttribute('data-no-in');
+    }
     else cur.remove();
     next.classList.remove.apply(next.classList, CLS);
+    cur.style.zIndex = ''; next.style.zIndex = '';
     container.classList.remove('is-sliding');
+    container.classList.remove('sc-vert');
     container.style.minHeight = '';
+    // v2.7.9：平移落定后**只在整页真的溢出视口时**才复核一次自适应。
+    // 滑动期间容器被锁高（minHeight = 两层里更高的那个），此刻量到的「可用高度」与最终版面不一致，
+    // 量早了会把学习卡的高度算歪（e2e-v25 的「整页不溢出视口」就是这么被抓出来的）。
+    // 正常路径不跑 —— 显示之后再改尺寸正是 v2.7.7 要消灭的「顿一下」（probe-v277 会盯着）。
+    if(container.id === 'tab-study' || container.id === 'tab-review' || container.id === 'en-views'){
+      const recheck = () => {
+        try{ if(document.documentElement.scrollHeight - window.innerHeight > 2 && typeof fitStudyViewport === 'function') fitStudyViewport(); }catch(e){}
+      };
+      setTimeout(recheck, 40);
+      setTimeout(recheck, 420);      // 释义/音标等异步内容到达后再兜一次
+    }
     done && done();
   }, D + 60);
 }
@@ -3973,7 +4070,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.8', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.9', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4002,7 +4099,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.8', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.9', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -4148,7 +4245,17 @@ const AppUI = {
     if(d.stats.totalStudy > 0 || Object.keys(d.wordState || {}).length > 0) return;
     setTimeout(() => Onboarding.open(), 350);
   },
-  go(page, fromHash){
+  /* v2.7.9（需求 7）：页面切换也改成「旧的下去、新的上来」的上下平移。
+     做法与「开始学习」那套完全一致：先按老样子切好（这一步就把目标页渲染完，等于预渲染），
+     再把上一页放回来、两层一起做纵向平移 —— 用户看到的是持续的移动，而不是内容瞬间替换。
+     opts.noSlide = true 给预渲染/自定义动画的调用方用（它们自己负责显隐与动画）；
+     opts.back = true 表示返回上一级（方向反过来：旧页整屏下退出、新页自上方降下）。 */
+  go(page, fromHash, opts){
+    const o = opts || {};
+    const prev = document.querySelector('#main-area > section:not([hidden])');
+    const targetEl = document.getElementById('page-' + page);
+    const canSlide = !o.noSlide && prev && targetEl && prev !== targetEl &&
+                     prev.parentElement === targetEl.parentElement && !this._switching;
     if(page === 'library'){ AppSettings.catName = 'library'; AppSettings._keepCat = true; page = 'settings'; }
     if(page === 'settings' && !AppSettings._keepCat) AppSettings.catName = 'account';
     AppSettings._keepCat = false;
@@ -4170,6 +4277,14 @@ const AppUI = {
     else AppLibrary._autoRan = false;                     // 离开词库中心 → 允许下次进入再自动更新
     if(page === 'settings') this.renderSettings();
     syncCornerNote();                                     // v2.7.8：右下角「数据来源」小字跟着词库面板显隐
+    if(canSlide){
+      prev.setAttribute('data-no-in', '');                // 放回旧页前先关掉入场动画，免得重播出现空档
+      prev.hidden = false;
+      this._switching = true;
+      const clear = () => { this._switching = false; };
+      setTimeout(clear, 1000);                            // 兜底：回调万一没来，别把后续切换永久锁死
+      slideLayers(targetEl.parentElement, prev, targetEl, layerDir(!o.back), clear, { keepCur: true });
+    }
     window.scrollTo({top:0});
     if(!fromHash){
       try{
@@ -4197,7 +4312,7 @@ const AppUI = {
     setTimeout(() => {
       this._flowing = false;
       this.clearBandGo();                                 // 先收拾干净再切页
-      this.goFlow(page, 'fwd', tab, target);
+      this.goFlow(page, layerDir(true), tab, target);
     }, 220);
   },
   /* 渲染但不显示：在同一帧内先把目标页渲染好，再把可见性还原（同步执行不会绘制出中间态） */
@@ -4206,8 +4321,8 @@ const AppUI = {
     const target = document.getElementById('page-' + page);
     if(!target || cur === target) return null;
     const curHidden = cur ? cur.hidden : true;
-    this.go(page);
-    if(tab && page === 'english') this.englishTab(tab);
+    this.go(page, false, { noSlide: true });                // 预渲染自己管显隐，别在这里滑动
+    if(tab && page === 'english') this.englishTab(tab, { noSlide: true });
     target.hidden = true;                                  // 还原：渲染完成但依旧不可见
     // v2.7.8：放回当前页之前先关掉它的入场动画。
     // 踩过的坑：go() 里那轮 hidden 开关会让当前页重播 pageIn（opacity 0→1、0.2s），
@@ -4221,16 +4336,23 @@ const AppUI = {
     const cur = document.querySelector('#main-area > section:not([hidden])');   // 页面区是 #main-area 下的 <section id=page-*>
     const target = preRendered || document.getElementById('page-' + page);
     if(!preRendered){
-      this.go(page);                                      // 没预先渲染就现在渲染（提前渲染）
-      if(tab && page === 'english') this.englishTab(tab);
+      this.go(page, false, { noSlide: true });            // 没预先渲染就现在渲染（提前渲染）
+      if(tab && page === 'english') this.englishTab(tab, { noSlide: true });
     } else {
       target.hidden = false;                              // 已经渲染好了，直接放出来
     }
     if(!cur || !target || cur === target || !target.parentElement) return;
+    cur.setAttribute('data-no-in', '');
     cur.hidden = false;                                   // 把上一页放回来，两层一起做动画
-    slideLayers(target.parentElement, cur, target, dir || 'fwd', null, { keepCur: true });
+    slideLayers(target.parentElement, cur, target, dir || layerDir(true), null, { keepCur: true });
   },
-  englishTab(tab){
+  /* v2.7.9：子入口（背单词 / 复习 / 词表筛选 / 浏览 / 记录）之间也是上下平移。
+     渲染在新的 Tab 容器里完成（等于预渲染），随后两层在 #en-views 里做纵向平移。
+     opts.noSlide = true 给预渲染/页面级动画用。 */
+  englishTab(tab, opts){
+    const o = opts || {};
+    const box = document.getElementById('en-views');
+    const prevTab = box ? Array.prototype.find.call(box.children, el => !el.hidden) : null;
     this.etab = tab;
     const MAJOR = ['study','review'];           // 两个并列的主入口：背新单词 / 复习旧单词
     const isMajor = MAJOR.indexOf(tab) >= 0;
@@ -4268,6 +4390,17 @@ const AppUI = {
     if(tab === 'record') AppRecord.render();
     this.refreshEntryCounts();
     fitNow($('#page-english'));
+    // v2.7.9：内容已经渲染完（等于预渲染），现在把上一层放回来做纵向平移 ——
+    // 渲染发生在滑动之前，所以不会出现「先滑过去再慢慢填内容」的卡顿感。
+    const nextTab = document.getElementById('tab-' + tab);
+    if(!o.noSlide && box && prevTab && nextTab && prevTab !== nextTab && !this._tabSwitching){
+      prevTab.setAttribute('data-no-in', '');
+      prevTab.hidden = false;
+      this._tabSwitching = true;
+      const clearTab = () => { this._tabSwitching = false; };
+      setTimeout(clearTab, 1000);                          // 兜底，同 go()
+      slideLayers(box, prevTab, nextTab, layerDir(!o.back), clearTab, { keepCur: true });
+    }
   },
   /* 进入「背新单词」入口：会话进行中要回到卡片本身（而不是回准备页），
      这样「学到一半切去复习旧词、再切回来」进度不丢、不用重新点开始。 */
@@ -5069,7 +5202,7 @@ const AppStudy = {
     // v2.7.4：加速阶段压到 240ms 就接上平移，两层同时动 —— 不再有「等它开始」的延迟感
     setTimeout(() => { this._flowing = false; this.enterRound(el, o); }, 240);
   },
-  /* 预渲染学习卡 → 与入口页做双向平移（前进：入口页右移退出、卡片自左侧滑入） */
+  /* 预渲染学习卡 → 与入口页做双向平移（v2.7.9：纵向 —— 入口页往下沉、卡片自下方升上来） */
   enterRound(el, o){
     const box = $('#tab-study');
     if(!box){ if(o && o.resume) this.resume(); else this.start(); return; }
@@ -5078,7 +5211,7 @@ const AppStudy = {
     // 这样自适应能在不可见状态下一次算对，落地后就不用再改字号（改字号就是顿感的来源）。
     if(cur){ box.classList.add('is-sliding'); box.style.minHeight = Math.max(cur.offsetHeight, 220) + 'px'; }
     const layer = document.createElement('div');
-    layer.className = 'view-layer from-left';            // 先摆到画布外，避免闪一帧
+    layer.className = 'view-layer ' + layerEntryClass(true);   // 先摆到画布外，避免闪一帧
     box.appendChild(layer);
     withRenderTarget('tab-study', layer, () => {
       if(o && o.resume){ this.resume(); return; }
@@ -5088,12 +5221,12 @@ const AppStudy = {
       this.quickStart('new', Math.max(1, Math.min(max, prefer)));
     });
     clearBandGo();
-    if(!cur){ layer.classList.remove('view-layer', 'from-left'); box.classList.remove('is-sliding'); return; }
+    if(!cur){ layer.classList.remove('view-layer', 'from-left', 'sc-from-below', 'sc-from-above'); box.classList.remove('is-sliding'); return; }
     // 落地后只做「轻量校验」：字号已经在不可见时算完，不再重算（重算＝可见后改尺寸）
-    slideLayers(box, cur, layer, 'fwd', () => { try{ contentSig(); }catch(e){} });
+    slideLayers(box, cur, layer, layerDir(true), () => { try{ contentSig(); }catch(e){} });
   },
-  /* v2.7.4：返回上一级（背新单词 → 入口页）。自绘返回按钮与 Esc 都走这里：
-     先把入口页预渲染好，再让卡片向左退出、入口页自右侧滑入。 */
+  /* v2.7.4：返回上一级（背新单词 → 入口页）。自绘返回按钮与 Esc 都走这里。
+     v2.7.9：纵向 —— 卡片整屏往下退出、入口页自上方降下。 */
   backToSetup(){
     const box = $('#tab-study');
     if(!box || !this.state || this._flowing) return;
@@ -5109,12 +5242,12 @@ const AppStudy = {
     AppData.autoBackup();
     if(cur){ box.classList.add('is-sliding'); box.style.minHeight = Math.max(cur.offsetHeight, 220) + 'px'; }
     const layer = document.createElement('div');
-    layer.className = 'view-layer from-right';
+    layer.className = 'view-layer ' + layerEntryClass(false);
     box.appendChild(layer);
     withRenderTarget('tab-study', layer, () => this.renderSetup());
     this._flowing = false;
-    if(!cur){ layer.classList.remove('view-layer', 'from-right'); box.classList.remove('is-sliding'); try{ AppUI.refreshEntryCounts(); }catch(e){} return; }
-    slideLayers(box, cur, layer, 'back', () => {
+    if(!cur){ layer.classList.remove('view-layer', 'from-right', 'sc-from-below', 'sc-from-above'); box.classList.remove('is-sliding'); try{ AppUI.refreshEntryCounts(); }catch(e){} return; }
+    slideLayers(box, cur, layer, layerDir(false), () => {
       try{ AppUI.refreshEntryCounts(); contentSig(); }catch(e){}
     });
   },
@@ -5617,12 +5750,12 @@ const AppReview = {
     const cur = box.querySelector('.card, .rv-list, .empty');
     if(cur){ box.classList.add('is-sliding'); box.style.minHeight = Math.max(cur.offsetHeight, 220) + 'px'; }
     const layer = document.createElement('div');
-    layer.className = 'view-layer from-left';
+    layer.className = 'view-layer ' + layerEntryClass(true);
     box.appendChild(layer);
     withRenderTarget('tab-review', layer, () => this.start());
     AppUI.clearBandGo();
-    if(!cur){ layer.classList.remove('view-layer', 'from-left'); box.classList.remove('is-sliding'); return; }
-    slideLayers(box, cur, layer, 'fwd', () => { try{ contentSig(); }catch(e){} });
+    if(!cur){ layer.classList.remove('view-layer', 'from-left', 'sc-from-below', 'sc-from-above'); box.classList.remove('is-sliding'); return; }
+    slideLayers(box, cur, layer, layerDir(true), () => { try{ contentSig(); }catch(e){} });
   },
   start(limit){
     const r = AppFilter.result;
@@ -5708,12 +5841,12 @@ const AppReview = {
     WordImg.clear();
     if(cur){ box.classList.add('is-sliding'); box.style.minHeight = Math.max(cur.offsetHeight, 220) + 'px'; }
     const layer = document.createElement('div');
-    layer.className = 'view-layer from-right';
+    layer.className = 'view-layer ' + layerEntryClass(false);
     box.appendChild(layer);
     withRenderTarget('tab-review', layer, () => this.render());
     this._flowing = false;
-    if(!cur){ layer.classList.remove('view-layer', 'from-right'); box.classList.remove('is-sliding'); try{ AppUI.refreshEntryCounts(); }catch(e){} return; }
-    slideLayers(box, cur, layer, 'back', () => {
+    if(!cur){ layer.classList.remove('view-layer', 'from-right', 'sc-from-below', 'sc-from-above'); box.classList.remove('is-sliding'); try{ AppUI.refreshEntryCounts(); }catch(e){} return; }
+    slideLayers(box, cur, layer, layerDir(false), () => {
       try{ AppUI.refreshEntryCounts(); contentSig(); }catch(e){}
     });
   },
@@ -6100,9 +6233,19 @@ const AppLibrary = {
 const AppSettings = {
   catName: 'account',
   cat(name){
+    // v2.7.9：设置面板切换也是上下平移 —— 先记住当前面板，renderSettings() 渲染完新面板后，
+    // 把旧面板放回来，两层在 .set-panes 里做纵向平移（内容早就渲染好了，不存在滑到一半才填）。
+    const panes = document.querySelector('.set-panes');
+    const before = panes ? Array.prototype.find.call(panes.children, el => !el.hidden) : null;
     this.catName = name;
     if(name !== 'library') AppLibrary._autoRan = false;   // 离开词库中心 → 允许下次进入再自动更新
     if(AppUI && typeof AppUI.renderSettings === 'function') AppUI.renderSettings();
+    const after = panes ? Array.prototype.find.call(panes.children, el => !el.hidden) : null;
+    if(panes && before && after && before !== after){
+      before.setAttribute('data-no-in', '');              // 面板自带 paneIn 入场动画，放回来前先关掉
+      before.hidden = false;
+      slideLayers(panes, before, after, layerDir(true), null, { keepCur: true });
+    }
   },
   /* ---- 偏好自动保存（v2.6.2）----
      已删除「保存偏好 / 保存外观」按钮：所有开关、下拉、输入框改动即保存。
