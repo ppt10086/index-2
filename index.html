@@ -1368,8 +1368,11 @@ html{ overflow-anchor:none }
 .is-sliding .side-user .avatar,
 .is-sliding .toast{ -webkit-backdrop-filter:none !important; backdrop-filter:none !important}
 .is-sliding .flow-band::before,
-.is-sliding .flow-band::after,
-.is-sliding .fb-arrows .arw{ animation-play-state:paused !important}
+.is-sliding .flow-band::after{ animation-play-state:paused !important}
+/* v2.7.12：`>>>` 那三枚箭头不再暂停。
+   暂停会让它们停在动画中间状态（截图量到 16px → 14px、位置差 10px），
+   在退场层上看起来就是「一切换，箭头上下一跳」。它们本来就很小，留着跑的代价可以忽略；
+   真正贵的是呼吸光斑（::before/::after，大范围模糊），那两条继续暂停。 */
 .is-sliding .flow-band,
 .is-sliding .card,
 .is-sliding .en-hero,
@@ -1692,7 +1695,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.11</span>
+            <span hidden id="set-version">2.7.12</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -1977,19 +1980,35 @@ function slideLayers(container, cur, next, dir, done, opts){
   let h = h0;
   let travel = 0;                                    // ⚠️ 必须提到函数作用域：双 rAF 回调里要用到它
   if(V){
-    /* v2.7.10（用户反馈 2 / 4）：先把「落地后的真实版面」量准，再开始动。
-       做法：旧层立刻绝对化（脱离文档流、视觉位置不变），新层临时恢复成正常流参与一次布局 ——
-       此刻整页高度 = 落位后的真实高度，于是 fitStudyViewport() 的「整页溢出校正」能算准，
-       学习卡不会被压到最小高度；而且这一切都发生在同一帧内、还没有绘制过，用户看不见。
-       量完马上把新层摆回图层（绝对定位 + 位移），然后才开始滑动。 */
+    /* ===== v2.7.12（用户反馈：无论从哪切到哪都会跳一下）=====
+       先把「这一次切换落地后每个元素的真实位置」量出来，再照着它摆图层 ——
+       也就是用户要求的那套：先在不被看见的地方把这次跳转预演一遍、逐个元素对齐、记录位置，
+       然后把记录下来的位置应用到用户实际看到的那一帧上。
+       量出来的关键差异：绝对定位的层的包含块是容器的 **padding box**，
+       而流内元素从 **content box** 开始 —— 不校正的话层会宽出「左右内边距之和」、
+       并整体左移一个内边距（本机实测：宽 +68px、左 -34px）。
+       于是落地（去掉图层类、回到正常流）的那一帧，整屏内容「啪」地量变一次。
+       现在两层都按测量出来的流内外框摆放，落地前后完全重合。 */
+    const cRect = container.getBoundingClientRect();
+    /* ⚠️ 退场层的基准必须从「容器的内容框」算，不能量 cur 自己的外框：
+       此刻目标页也已经取消隐藏、并且排在 DOM 前面，于是 cur 在正常流里被挤到它下方，
+       量出来的 top 就是「目标页高度」那么多（实测偏下 432px，一切都跟着跳）。
+       内容框 = 容器的 padding box 去掉左右/上内边距。 */
+    const ccs = getComputedStyle(container);
+    const padL = parseFloat(ccs.paddingLeft) || 0, padR = parseFloat(ccs.paddingRight) || 0;
+    const padT = parseFloat(ccs.paddingTop) || 0;
+    const contentW = Math.max(0, container.clientWidth - padL - padR);
     cur.classList.add('view-layer');
-    cur.style.top = anchor + 'px';
+    cur.style.top = padT + 'px';
+    cur.style.left = padL + 'px';
+    cur.style.width = contentW + 'px';
     cur.style.zIndex = '1';
-    next.style.position = 'static';
-    next.style.top = '';
+    next.style.position = 'static';                   // 让新层以正常流参与一次布局（这一步用户看不见）
+    next.style.top = ''; next.style.left = ''; next.style.width = '';
     try{
       if(typeof fitStudyViewport === 'function') fitStudyViewport();
     }catch(e){}
+    const nextGeo = next.getBoundingClientRect();     // ← 记录：落地后的真实外框
     next.style.position = '';
     const hAfter = Math.max(cur.offsetHeight || 0, next.offsetHeight || 0, 220);
     h = hAfter;
@@ -2004,7 +2023,9 @@ function slideLayers(container, cur, next, dir, done, opts){
        浏览器因此有了「变更前样式」，若此时才一起加上 transition，它会从 0 补间到起始位移 ——
        表现就是新层先在原地出现、再慢慢滑下去（探针量到 tY 从 0 涨到 900）。 */
     next.classList.add('view-layer', 'sc-tall', 'sc-init');
-    next.style.top = anchor + 'px';                   // 绝对定位会丢掉页面自身的顶部留白，这里补回来
+    next.style.left = Math.round(nextGeo.left - cRect.left) + 'px';    // ← 用记录下来的位置
+    next.style.width = Math.round(nextGeo.width) + 'px';
+    next.style.top = Math.round(nextGeo.top - cRect.top) + 'px';
     next.style.zIndex = '2';                          // 新层在上，接缝处不会露出下层
     next.style.transform = 'translateY(' + (dir === 'up' ? travel : -travel) + 'px)';
     cur.classList.add('sc-tall', 'sc-init');
@@ -2043,6 +2064,8 @@ function slideLayers(container, cur, next, dir, done, opts){
     next.classList.remove.apply(next.classList, CLS);
     cur.style.zIndex = ''; next.style.zIndex = '';
     cur.style.top = ''; next.style.top = '';
+    cur.style.left = ''; next.style.left = '';               // 清掉对齐用的内联几何（回正常流后由布局说了算）
+    cur.style.width = ''; next.style.width = '';
     cur.style.transform = ''; next.style.transform = '';     // 清掉内联位移（阶段结束后样式表说了算）
     container.classList.remove('is-sliding');
     container.classList.remove('sc-vert');
@@ -4166,7 +4189,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.11', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.12', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4195,7 +4218,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.11', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.12', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
