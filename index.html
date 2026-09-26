@@ -1244,24 +1244,30 @@ html.sl-has-session #view-auth{display:none}
   transition:opacity .46s var(--ease)}
 .view-layer.leave-left::after,.view-layer.leave-right::after{opacity:1}
 
-/* ===== v2.7.9 全站「旧的下去、新的上来」上下平移 =====
+/* ===== v2.7.9 / v2.7.10 全站「一上一下」上下平移 =====
    用户要求：所有点击切换都改成上下平移，并「参考开始学习/开始复习那套方案」——
-   也就是同一套两层预渲染平移，只是把位移从横向换成纵向。
-   ⚠️ 位移用 transform:translateY（不是独立的 translate 属性）：探针 A/B 实测过，
-   走 translate 属性时「词表筛选」这种大 DOM 会出现 193ms 的单帧卡顿，transform 没有。
-   纵向类比横向那套特异度高一档（0,3,0），不会被 .view-layer.landed 顶掉。
-   方向语义：
-     'up'   旧层往下沉（translateY 14% + 淡出）+ 新层自下方升上来盖住它 —— 旧的下去、新的上来
-     'down' 旧层整屏往下退出 + 新层自上方降下 —— 返回上一级
-   两者都保证「任意一帧屏幕上都有内容」：up 是新层压在上面盖住旧层，down 是两层首尾相接。 */
-.view-layer.sc-from-below{ transform:translateY(100%) }
-.view-layer.sc-from-above{ transform:translateY(-100%) }
+   同一套两层预渲染平移，只是把位移从横向换成纵向。
+
+   v2.7.10 按用户反馈修订：**要走的整屏干脆走出屏幕、要来的从屏幕一侧走到中间**。
+   上一版退场层只往下沉 14% 并淡到 0.6，于是「旧屏还赖在屏幕上」，观感差；
+   现在两层各自走**整整一个容器高度**（--sc-travel，像素值），任意一帧首尾相接：
+     'up'   旧层向上整屏移出 + 新层自下方升到中间（一上一下）
+     'down' 旧层向下整屏移出 + 新层自上方降到中间
+   为什么用像素而不是 100%：百分比是「自身高度」的百分比，两层高度不等时中间会露空档。
+   两层在过渡期间都撑到容器高度（.sc-tall），保证矮的那层也能把画面接住。 */
+.view-layer.sc-from-below{ transform:translateY(var(--sc-travel, 100%)) }
+.view-layer.sc-from-above{ transform:translateY(calc(var(--sc-travel, 100%) * -1)) }
+.view-layer.sc-leave-up{ transform:translateY(calc(var(--sc-travel, 100%) * -1)) }
+.view-layer.sc-leave-down{ transform:translateY(var(--sc-travel, 100%)) }
 .view-layer.sc-settled{ transform:translateY(0) }
-.view-layer.sc-sink{ transform:translateY(14%); opacity:.6 }
-.view-layer.sc-drop{ transform:translateY(100%); opacity:.45 }
-/* 纵向退场的遮罩竖着铺（横向那条是 100deg 斜向） */
-.view-layer.sc-sink::after,
-.view-layer.sc-drop::after{
+.view-layer.sc-tall{ min-height:var(--sc-travel, 100%) }
+/* 纵向平移的「起始位移」提交阶段：先关过渡摆好位置，下一帧再打开过渡并开始跑 */
+.view-layer.sc-init{ transition:none !important }
+/* 退场的那一屏带一层渐变遮罩（随它一起移出屏幕），进入层始终干净。
+   纵向的层位移走内联样式（见 slideLayers），所以这里按「容器在纵向平移 + 这一层是退场层」来挂遮罩。 */
+.sc-vert .view-layer.is-leaving::after,
+.view-layer.sc-leave-up::after,
+.view-layer.sc-leave-down::after{
   opacity:1;
   background:linear-gradient(to bottom,
     color-mix(in srgb, var(--bg) 78%, transparent),
@@ -1674,7 +1680,7 @@ html.sl-has-session #view-auth{display:none}
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.9</span>
+            <span hidden id="set-version">2.7.10</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -1935,8 +1941,8 @@ function layerDir(fwd){
 }
 
 /* dir: 'fwd' = 当前层向右退出、新层自左滑入；'back' = 当前层向左退出、新层自右滑入
-   dir: 'up'  = 当前层往下沉、新层自下方升上来（新层压在上面，任意一帧都有内容）
-   dir: 'down'= 当前层整屏往下退出、新层自上方降下
+   dir: 'up'  = 当前层向上整屏移出、新层自下方升到中间（一上一下）
+   dir: 'down'= 当前层向下整屏移出、新层自上方降到中间
    opts.keepCur = true 时旧层只隐藏不删除（页面级 section 是常驻元素，删掉就回不来了） */
 function slideLayers(container, cur, next, dir, done, opts){
   const D = 460;
@@ -1944,33 +1950,66 @@ function slideLayers(container, cur, next, dir, done, opts){
   if(!container || !cur || !next){ done && done(); return; }
   const V = (dir === 'up' || dir === 'down');
   const CLS = ['view-layer', 'from-left', 'from-right', 'landed', 'leave-left', 'leave-right',
-               'sc-from-below', 'sc-from-above', 'sc-settled', 'sc-sink', 'sc-drop',
-               'is-entering', 'is-leaving'];
-  const h = Math.max(cur.offsetHeight || 0, next.offsetHeight || 0, 220);
+               'sc-from-below', 'sc-from-above', 'sc-settled', 'sc-leave-up', 'sc-leave-down',
+               'sc-tall', 'sc-init', 'is-entering', 'is-leaving'];
+  const h0 = Math.max(cur.offsetHeight || 0, next.offsetHeight || 0, 220);
+  const anchor = cur.offsetTop || 0;                  // 新层要顶替旧层的位置（页面区顶部有 34px 留白）
   cur.setAttribute('data-no-in', '');                 // 迁移期间与结束后都不再重放入场动画
   next.setAttribute('data-no-in', '');
   container.classList.add('is-sliding');
   if(V) container.classList.add('sc-vert');
-  container.style.minHeight = h + 'px';
   /* 给两层打上「进入层 / 退场层」标记类（与方向无关）：
-     探针与后续维护都靠它选元素，不必再记住 from-left/leave-right/sc-sink 这些方向类名 */
+     探针与后续维护都靠它选元素，不必再记住 from-left/leave-right/sc-* 这些方向类名 */
   next.classList.add('is-entering');
   cur.classList.add('is-leaving');
+  let h = h0;
+  let travel = 0;                                    // ⚠️ 必须提到函数作用域：双 rAF 回调里要用到它
   if(V){
-    next.classList.add('view-layer', dir === 'up' ? 'sc-from-below' : 'sc-from-above');
-    next.style.zIndex = '2';                          // 新层在上：旧层下沉时下面是新层，不会露空
+    /* v2.7.10（用户反馈 2 / 4）：先把「落地后的真实版面」量准，再开始动。
+       做法：旧层立刻绝对化（脱离文档流、视觉位置不变），新层临时恢复成正常流参与一次布局 ——
+       此刻整页高度 = 落位后的真实高度，于是 fitStudyViewport() 的「整页溢出校正」能算准，
+       学习卡不会被压到最小高度；而且这一切都发生在同一帧内、还没有绘制过，用户看不见。
+       量完马上把新层摆回图层（绝对定位 + 位移），然后才开始滑动。 */
+    cur.classList.add('view-layer');
+    cur.style.top = anchor + 'px';
     cur.style.zIndex = '1';
+    next.style.position = 'static';
+    next.style.top = '';
+    try{
+      if(typeof fitStudyViewport === 'function') fitStudyViewport();
+    }catch(e){}
+    next.style.position = '';
+    const hAfter = Math.max(cur.offsetHeight || 0, next.offsetHeight || 0, 220);
+    h = hAfter;
+    /* 行程取「内容高」与「容器可视高」的较大者：内容比视口矮时（概览页只有 508px），
+       只按内容高走会让新层起点落在视口内 —— 用户会先看见新页从下方露一截。
+       取一个可视高度后新层起点必然在视口外；两层又都撑到这个高度（.sc-tall），
+       任意一帧首尾相接、不露空档。 */
+    travel = Math.max(hAfter, container.clientHeight || 0, 220);
+    container.style.setProperty('--sc-travel', travel + 'px');
+    /* 位移用**内联样式**写死，不用类名（类名会被后定义的类按样式表顺序顶掉）。
+       另外必须先用 .sc-init 关掉过渡把「起始位移」提交下去：上面那次预量测强制过一次样式结算，
+       浏览器因此有了「变更前样式」，若此时才一起加上 transition，它会从 0 补间到起始位移 ——
+       表现就是新层先在原地出现、再慢慢滑下去（探针量到 tY 从 0 涨到 900）。 */
+    next.classList.add('view-layer', 'sc-tall', 'sc-init');
+    next.style.top = anchor + 'px';                   // 绝对定位会丢掉页面自身的顶部留白，这里补回来
+    next.style.zIndex = '2';                          // 新层在上，接缝处不会露出下层
+    next.style.transform = 'translateY(' + (dir === 'up' ? travel : -travel) + 'px)';
+    cur.classList.add('sc-tall', 'sc-init');
+    cur.style.transform = 'translateY(0px)';          // 退场层从原地出发
   } else {
     next.classList.add('view-layer', dir === 'fwd' ? 'from-left' : 'from-right');
   }
-  next.getBoundingClientRect();                       // 强制重排：先把起始位移落定
+  container.style.minHeight = h + 'px';
+  next.getBoundingClientRect();                       // 强制重排：先把起始位移落定（此刻还没有过渡）
   // 双 rAF：确保「起始位移那一帧」真的被渲染过，否则从 display:none 变可见的元素会跳过过渡直接落位
   requestAnimationFrame(() => requestAnimationFrame(() => {
     if(V){
-      // ⚠️ 这里必须把 'view-layer' 一起加上：退场层的过渡（transform/opacity）与遮罩 ::after
-      // 都挂在 .view-layer 上，漏掉它退场层会「瞬移 + 不带遮罩」（v2.7.9 探针抓到的）。
-      cur.classList.add('view-layer', dir === 'up' ? 'sc-sink' : 'sc-drop');
-      next.classList.add('sc-settled');
+      cur.classList.remove('sc-init');                // 打开过渡，位移才真正开始补间
+      next.classList.remove('sc-init');
+      // 退场层整屏走出去（内联位移，方向由 dir 决定），新层同时走到中间
+      cur.style.transform = 'translateY(' + (dir === 'up' ? -travel : travel) + 'px)';
+      next.style.transform = 'translateY(0px)';
     } else {
       cur.classList.add('view-layer', dir === 'fwd' ? 'leave-right' : 'leave-left');
       next.classList.add('landed');
@@ -1991,20 +2030,16 @@ function slideLayers(container, cur, next, dir, done, opts){
     else cur.remove();
     next.classList.remove.apply(next.classList, CLS);
     cur.style.zIndex = ''; next.style.zIndex = '';
+    cur.style.top = ''; next.style.top = '';
+    cur.style.transform = ''; next.style.transform = '';     // 清掉内联位移（阶段结束后样式表说了算）
     container.classList.remove('is-sliding');
     container.classList.remove('sc-vert');
     container.style.minHeight = '';
-    // v2.7.9：平移落定后**只在整页真的溢出视口时**才复核一次自适应。
-    // 滑动期间容器被锁高（minHeight = 两层里更高的那个），此刻量到的「可用高度」与最终版面不一致，
-    // 量早了会把学习卡的高度算歪（e2e-v25 的「整页不溢出视口」就是这么被抓出来的）。
-    // 正常路径不跑 —— 显示之后再改尺寸正是 v2.7.7 要消灭的「顿一下」（probe-v277 会盯着）。
-    if(container.id === 'tab-study' || container.id === 'tab-review' || container.id === 'en-views'){
-      const recheck = () => {
-        try{ if(document.documentElement.scrollHeight - window.innerHeight > 2 && typeof fitStudyViewport === 'function') fitStudyViewport(); }catch(e){}
-      };
-      setTimeout(recheck, 40);
-      setTimeout(recheck, 420);      // 释义/音标等异步内容到达后再兜一次
-    }
+    container.style.removeProperty('--sc-travel');
+    // v2.7.10（用户反馈 4）：这里**不再**做落地后的复核自适应。
+    // 用户要的是「在看不见的地方先适应好，再呈现」，落地后再改尺寸就是屏幕上动一下。
+    // 真正的修法在 fitStudyViewport()：平移中的层改用「容器顶部」当锚点量高度，
+    // 于是预渲染阶段就能把卡片算准，落地即定型（probe-v277 / probe-v2710 都会盯着）。
     done && done();
   }, D + 60);
 }
@@ -3926,15 +3961,29 @@ function fitStudyViewport(){
       if(!w.isConnected) continue;
       const r0 = w.getBoundingClientRect();
       if(r0.height === 0 && r0.width === 0) continue;
+      // v2.7.10（用户反馈 2）：纵向平移中，进入层被整个推到屏幕外（translateY 一个屏高），
+      // 这时 r0.top 会是屏幕下方很远的位置 →「可用高度」算成负数 → 卡片被压到最小 300px。
+      // 这就是「背新单词/复习时中间那个单词框有概率被压缩」的真凶。
+      // 修法：量高度时用「不带动画的锚点」—— .view-layer 是绝对定位、贴着容器左上角，
+      // 所以容器的 top 就是这层最终落位的 top；两者相减补回层内的偏移即可。
+      const hostLayer = w.closest ? w.closest('.view-layer') : null;
+      // 正在离场的那一层不用适配（它马上就不在屏幕上了），避免白算一次还写坏尺寸
+      if(hostLayer && hostLayer.classList.contains('is-leaving')) continue;
+      let anchorTop = r0.top;
+      if(hostLayer && hostLayer.parentElement){
+        const hostRect = hostLayer.getBoundingClientRect();
+        anchorTop = hostLayer.parentElement.getBoundingClientRect().top + (r0.top - hostRect.top);
+      }
       const bn = document.getElementById('bottom-nav');
       const bnH = (bn && getComputedStyle(bn).display !== 'none') ? bn.getBoundingClientRect().height : 0;
-      const availVisual = window.innerHeight - r0.top - bnH - 18;   // 视觉像素
-      let h = Math.max(300, Math.floor(availVisual / zoom));        // → CSS 像素
+      const availVisual = window.innerHeight - anchorTop - bnH - 18;   // 视觉像素
+      let h = Math.max(300, Math.floor(availVisual / zoom));           // → CSS 像素
 
       // 实测校正：按「整页是否溢出视口」反复微调。
       // 注意不能只看按钮位置——卡片下方还有次级入口行、主区底部留白等固定高度，
       // 只看按钮会让整页多出 100+px 滚动（桌面端 zoom 1.15/1.3 时尤其明显）。
-      for(let i = 0; i < 4; i++){
+      // 平移中的层整层都是绝对定位、不参与文档高度，所以这一段要跳过（量了也不代表落位后的版面）。
+      for(let i = 0; !hostLayer && i < 4; i++){
         w.style.height = h + 'px';
         w.style.maxHeight = h + 'px';
         const docOver = document.documentElement.scrollHeight - window.innerHeight;  // 视觉像素
@@ -3946,11 +3995,22 @@ function fitStudyViewport(){
       }
       w.style.height = h + 'px';
       w.style.maxHeight = h + 'px';
+      // v2.7.10：平移中的层是绝对定位，卡片那一份不参与文档高度 —— 用「除卡片以外的高度 + 目标高度」
+      // 预估落位后的整页高度，超了就按超出量收一收（等价于上面那个实测校正循环）。
+      // 没有这一步，滑动途中被触发的自适应会把卡片定得偏高，落地后整页多出几十像素要滚动。
+      if(hostLayer && hostLayer.parentElement){
+        const containerH = hostLayer.parentElement.getBoundingClientRect().height;   // 视觉像素
+        const rest = Math.max(0, document.documentElement.scrollHeight - containerH);
+        const over = rest + h * zoom - window.innerHeight;
+        if(over > 2){ h = Math.max(300, h - Math.ceil(over / zoom) - 2); w.style.height = h + 'px'; w.style.maxHeight = h + 'px'; }
+      }
     }
     fitBodyHeight();    // 释义长就整体缩放压缩，缩到最小仍放不下才内部滚动
     // v2.7.7：这里不再额外 fitNow(document) —— 字号由调用方那次 Fit 一次算清；
     // 多跑一遍就等于「元素已经显示出来之后又改字号」，正是顿感的来源。
     // 配图/音标/在线释义是异步到达的：只在内容真的变了时才复核（内容不变＝零重排）。
+    // v2.7.10：这两次复核同样只在「内容真的变了」时才动手，并且平移中的层一律跳过 ——
+    // 用户看到的任何一次尺寸变化都会被视为「屏幕动了一下」。
     setTimeout(() => { try{ if(fitBodyHeight() || contentSig()) fitNow(document); }catch(e){} }, 400);
     setTimeout(() => { try{ fitBodyHeight(); }catch(e){} }, 1500);
   }catch(e){}
@@ -4070,7 +4130,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.9', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.10', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4099,7 +4159,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.9', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.10', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -5510,8 +5570,17 @@ const AppStudy = {
     }
     if(level === 'again'){
       // 两步：先给答案（显示释义、隐藏「记得」，按钮变成居中的「下一个」），
-      // 再点「下一个」才真正前进，并把这个词混回本轮尚未列出的词里
-      if(!s.revealed){ s.againPending = true; s.revealed = true; this.render(); return; }
+      // 再点「下一个」才真正前进，并把这个词混回本轮尚未列出的词里。
+      // v2.7.10（用户反馈 3）修复：判据从 s.revealed 改成 s.againPending。
+      // 原来用 revealed 判断「是不是已经看到答案了」，而「显示释义」按钮也会把 revealed 置 true，
+      // 于是「先点释义、再点不认识」时这一下被当成「下一个」→ 忘记的词既不回炉也不留痕，
+      // 直接消失在队列里（用户描述：相当于选了认识、后续不再出现）。
+      if(s.againPending) return this.next();
+      if(!s.revealed){
+        s.againPending = true; s.revealed = true; this.render(); return;   // 还没看答案：先给答案
+      }
+      // 答案是他自己点「显示释义」看过的：这一下就是确认 → 走回炉分支
+      s.againPending = true;
       return this.next();
     }
     s.againPending = false;
@@ -5875,7 +5944,11 @@ const AppReview = {
     else SRS.completeRound(s.targetId, e.w);
     if(level === 'again'){
       // 两步：先给答案（显示释义、隐藏「记得」，按钮变成居中的「下一个」）
+      // v2.7.10（用户反馈 3）：与背新单词同一处修复 —— 判据用 againPending 而不是 revealed，
+      // 否则「先点释义再点不认识」时这一下会被当成「下一个」，忘记的词不回炉、直接消失。
+      if(s.againPending) return this.next();
       if(!s.revealed){ s.againPending = true; s.revealed = true; this.renderCard(); return; }
+      s.againPending = true;
       return this.next();
     }
     s.againPending = false;
