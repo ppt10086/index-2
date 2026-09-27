@@ -1698,7 +1698,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.14</span>
+            <span hidden id="set-version">2.7.15</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -4242,7 +4242,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.14', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.15', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4271,7 +4271,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.14', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.15', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -4332,11 +4332,18 @@ const AppUI = {
       b.setAttribute('aria-expanded', on ? 'false' : 'true');
       b.setAttribute('aria-label', on ? '展开侧边栏' : '收起侧边栏');
     }
-    // 宽度/留白变化后重新适配卡片高度与字号（表格化布局会跟着变）
+    /* ===== v2.7.15（用户反馈：收起侧栏时学习卡「缩起来」）=====
+       .main 的 padding-left 有 300ms 过渡，而这里原来「立刻 fitNow + 260ms 后 fitStudyViewport」
+       —— 恰好卡在过渡中间：量到的可用高度是中途值，于是把卡片高度与释义缩放一起压到最小
+       （实测 1000×700 下卡片 606 → 300px、释义 zoom 1 → 0.65；再展开只回到一半，
+        反复折叠会越缩越小）。改法：等过渡走完（360ms）再复核一次，量到的是稳定版面。 */
     try{
       if(typeof syncVpu === 'function') syncVpu();
-      if(typeof fitNow === 'function') fitNow(document);
-      if(typeof fitStudyViewport === 'function') setTimeout(fitStudyViewport, 260);
+      clearTimeout(window.__sideFitT);
+      window.__sideFitT = setTimeout(() => {
+        try{ if(typeof fitNow === 'function') fitNow(document); }catch(e){}
+        try{ if(typeof fitStudyViewport === 'function') fitStudyViewport(true); }catch(e){}
+      }, 360);
     }catch(e){}
   },
   toggleSide(force){
