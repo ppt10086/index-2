@@ -1698,7 +1698,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.15</span>
+            <span hidden id="set-version">2.7.16</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -2333,6 +2333,10 @@ const Supa = {
   },
   _syncUI(){
     try{
+      // v2.7.16：每次「同步状态」刷新时顺手重画头像。
+      // 之前头像只在登录首屏画一次，换设备登录时云端数据可能比首屏晚一步到位，
+      // 于是侧栏一直显示首字母 —— 用户看到的就是「头像不能跨设备显示」。
+      if(typeof AppProfile !== 'undefined' && AppProfile.paintAvatar) AppProfile.paintAvatar();
       const el = document.getElementById('sync-status');
       if(!el) return;
       const ok = this.lastOk || 0, err = this.lastErr || 0;
@@ -4242,7 +4246,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.15', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.16', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4271,7 +4275,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.15', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.16', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -6715,7 +6719,7 @@ const AvatarCrop = {
       ctx.fillStyle = '#ffffff';                     // 透明 PNG 垫白底，免得转 JPEG 后发黑
       ctx.fillRect(0, 0, size, size);
       ctx.drawImage(this.img, sx, sy, sw, sw, 0, 0, size, size);
-      AppProfile.save({ avatar: c.toDataURL('image/jpeg', 0.82) }, true);
+      AppProfile.save({ avatar: c.toDataURL('image/jpeg', 0.72) }, true);  // v2.7.16：更低质量，控制体积
       AppProfile.paintAvatar();
       this.close();
       toast('头像已更新');
@@ -6727,7 +6731,7 @@ const AvatarCrop = {
 };
 
 const AppProfile = {
-  AVATAR_SIZE: 192,        // 存进数据的正方形边长（JPEG 压缩后通常 8–20KB）
+  AVATAR_SIZE: 128,        // v2.7.16：存进云端数据的正方形边长（JPEG 压缩后通常 4–8KB，跨设备同步更稳）
   form: [],                // v2.7.2：昵称 / 邮箱 / 一句话简介都已按需求删除，用户中心没有文本字段
   render(){
     const s = AppAuth.current();
