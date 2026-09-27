@@ -1264,7 +1264,83 @@ html.sl-has-session #view-auth{display:none}
    长页面（学习记录 4000+px）整层参与合成时每帧都要重绘一大片，帧率掉下来就会被看成「跳」；
    裁成一屏之后合成面积只剩一个视口，而且屏幕外那部分本来也看不见。落地时类被移除，恢复原状。 */
 .view-layer.sc-tall{ height:var(--sc-travel, 100%); overflow:hidden }
+/* v2.7.17 修复（设置索引 → 内容，落地那一帧卡一下）：
+   平移期间层被强制成一屏高（上面的 --sc-travel），而 .set-index 是网格容器，
+   网格默认 align-content:stretch —— 行高被拉伸去填满这一屏，卡片从 118px 涨到 489px，
+   落地（层回到自然高度）那一帧再缩回来，就是看得见的一跳。
+   实测：卡片顶 129px 没动、高度 489 → 118（差 371px）。改成按内容排布即彻底消除。 */
+/* 只改 align-content（这是「行」的分布）：行高回到内容高，就不会被拉去填满一屏。
+   不能顺手改 align-items —— 那会让同一行的卡片各自按内容缩高（实测 94px vs 天然 118px），
+   落地时同样是一跳。 */
+.set-index.sc-tall{ align-content:start }
 /* 纵向平移的「起始位移」提交阶段：先关过渡摆好位置，下一帧再打开过渡并开始跑 */
+/* ===== v2.7.17 设置索引页 + 概览主行动条（样式） ===== */
+/* ===== v2.7.17 概览「开始学习」：整行主行动条，主题色呼吸、更有动感 ===== */
+#page-dashboard .topbar{ flex-wrap:wrap; align-items:flex-end; gap:14px 18px }
+#page-dashboard .topbar > div:first-child{ flex:1 1 auto; min-width:0 }
+/* v2.7.17：文字与 》 成组居中（justify-content:center），不再左右分居两端。 */
+#page-dashboard .topbar .flow-band.compact{ flex:1 1 100%; order:2; min-height:86px; border-radius:22px;
+  justify-content:center; gap:16px; padding:0 22px;
+  border-color:color-mix(in srgb, var(--primary) 34%, var(--line));
+  background:color-mix(in srgb, var(--primary) 9%, transparent);
+  animation:heroBandBreath 3.4s var(--ease) infinite }
+#page-dashboard .topbar .flow-band.compact .fb-txt{ flex-direction:column; align-items:center; text-align:center; gap:8px }
+#page-dashboard .topbar .flow-band.compact .fb-main{ font-size:24px; font-weight:800; letter-spacing:.005em;
+  color:var(--primary); animation:heroTextPulse 2.6s var(--ease) infinite }
+#page-dashboard .topbar .flow-band.compact .fb-sub{ font-size:14px;
+  color:color-mix(in srgb, var(--primary) 66%, var(--muted)); animation:heroTextPulse 2.6s var(--ease) infinite }
+#page-dashboard .topbar .flow-band.compact .fb-arrows{ color:var(--primary); padding:0 0 0 2px;
+  animation:heroArrowBreath 2.2s var(--ease) infinite }
+#page-dashboard .topbar .flow-band.compact .fb-arrows .arw{ width:30px; height:30px }
+#page-dashboard .topbar .flow-band.compact:hover{ background:color-mix(in srgb, var(--primary) 15%, transparent) }
+#page-dashboard .topbar .flow-band.compact::before{
+  inset:-60% -6%;
+  background:radial-gradient(240px 120px at 50% 50%, color-mix(in srgb, var(--primary) 26%, transparent), transparent 70%) }
+#page-dashboard .topbar .flow-band.compact.go{ background:var(--btn-solid); border-color:transparent }
+#page-dashboard .topbar .flow-band.compact.go .fb-main,
+#page-dashboard .topbar .flow-band.compact.go .fb-sub,
+#page-dashboard .topbar .flow-band.compact.go .fb-arrows{ color:var(--btn-fg) }
+@keyframes heroBandBreath{
+  0%,100%{ box-shadow:0 0 0 0 color-mix(in srgb, var(--primary) 0%, transparent);
+           border-color:color-mix(in srgb, var(--primary) 26%, var(--line)) }
+  50%{ box-shadow:0 0 0 8px color-mix(in srgb, var(--primary) 10%, transparent);
+      border-color:color-mix(in srgb, var(--primary) 52%, var(--line)) }
+}
+@keyframes heroTextPulse{ 0%,100%{ opacity:.72 } 50%{ opacity:1 } }
+/* 》 组：容器做极轻的缩放呼吸（transform 不能和 arw 的 fbFlow 抢，所以放在容器上） */
+@keyframes heroArrowBreath{ 0%,100%{ opacity:.66; transform:scale(.94) translateX(-2px) }
+  50%{ opacity:1; transform:scale(1.06) translateX(3px) } }
+@media (prefers-reduced-motion: reduce){
+  #page-dashboard .topbar .flow-band.compact,
+  #page-dashboard .topbar .flow-band.compact .fb-main,
+  #page-dashboard .topbar .flow-band.compact .fb-sub,
+  #page-dashboard .topbar .flow-band.compact .fb-arrows,
+  #page-dashboard .topbar .flow-band.compact .fb-arrows .arw{ animation:none }
+}
+/* ===== v2.7.17 设置：索引一屏 + 内容一屏 ===== */
+.set-views{ position:relative }
+.set-index{ display:grid; gap:10px; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)) }
+.set-card{ display:flex; align-items:center; gap:14px; width:100%; text-align:left; cursor:pointer;
+  padding:16px 18px; border-radius:16px; border:1px solid var(--line); background:var(--panel);
+  color:inherit; font:inherit; transition:border-color .18s var(--ease), background-color .18s var(--ease), translate .18s var(--ease) }
+.set-card:hover{ border-color:color-mix(in srgb, var(--primary) 40%, var(--line)); translate:0 -2px }
+.set-card .sc-ico{ width:38px; height:38px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  border-radius:12px; background:color-mix(in srgb, var(--primary) 12%, transparent); color:var(--primary) }
+.set-card .sc-ico .ico-svg{ width:20px; height:20px }
+.set-card .sc-txt{ display:flex; flex-direction:column; gap:3px; min-width:0 }
+.set-card .sc-txt b{ font-size:15.5px; font-weight:750 }
+.set-card .sc-txt span{ font-size:12.5px; color:var(--muted) }
+.set-card .sc-chev{ margin-left:auto; color:var(--muted); display:flex }
+.set-card:hover .sc-chev{ color:var(--primary) }
+.set-back-row{ display:flex; align-items:center; gap:12px; margin:0 0 14px }
+.set-back{ display:inline-flex; align-items:center; gap:6px; padding:6px 12px 6px 8px; border-radius:999px;
+  border:1px solid var(--line); background:transparent; color:var(--muted); font:inherit; font-size:13px; font-weight:650; cursor:pointer;
+  transition:color .18s var(--ease), border-color .18s var(--ease), translate .18s var(--ease) }
+.set-back:hover{ color:var(--primary); border-color:color-mix(in srgb, var(--primary) 40%, var(--line)); translate:-2px 0 }
+.set-back .ico-svg{ width:15px; height:15px }
+#set-crumb{ font-size:12.5px; color:var(--muted) }
+@media (max-width:640px){ .set-index{ grid-template-columns:1fr } .set-card{ padding:14px } }
+
 .view-layer.sc-init{ transition:none !important }
 /* ===== v2.7.11（用户反馈：自适应「一帧跳」）=====
    两条路一起走：
@@ -1661,15 +1737,40 @@ html{ overflow-anchor:none }
     <!-- 设置 -->
     <section id="page-settings" hidden>
       <div class="topbar"><div><h1>设置</h1><div class="sub">账号、学习偏好与数据管理</div></div></div>
-      <div class="set-layout">
-        <div class="set-nav" role="tablist" aria-label="设置分类">
-          <button class="set-cat active" data-cat="account" onclick="AppSettings.cat('account')">账户</button>
-          <button class="set-cat" data-cat="study" onclick="AppSettings.cat('study')">学习偏好</button>
-          <button class="set-cat" data-cat="appearance" onclick="AppSettings.cat('appearance')">外观设计</button>
-          <button class="set-cat" data-cat="data" onclick="AppSettings.cat('data')">数据与备份</button>
-          <button class="set-cat" data-cat="library" onclick="AppSettings.cat('library')">词库中心</button>
+      <div class="set-views" id="set-views">
+        <!-- v2.7.17：设置拆成「索引一屏 + 内容一屏」——这一屏只列大类，点进去才滑到具体内容 -->
+        <div class="set-index" id="set-index">
+          <button class="set-card" type="button" data-cat="account" onclick="AppSettings.cat('account')">
+            <span class="sc-ico" data-icon="user"></span>
+            <span class="sc-txt"><b>账户</b><span>当前登录账号与退出</span></span>
+            <span class="sc-chev" data-icon="chevRight"></span>
+          </button>
+          <button class="set-card" type="button" data-cat="study" onclick="AppSettings.cat('study')">
+            <span class="sc-ico" data-icon="bookOpen"></span>
+            <span class="sc-txt"><b>学习偏好</b><span>每日词数、顺序、发音与配图</span></span>
+            <span class="sc-chev" data-icon="chevRight"></span>
+          </button>
+          <button class="set-card" type="button" data-cat="appearance" onclick="AppSettings.cat('appearance')">
+            <span class="sc-ico" data-icon="grid"></span>
+            <span class="sc-txt"><b>外观设计</b><span>自动适配、界面缩放、主题与主题色</span></span>
+            <span class="sc-chev" data-icon="chevRight"></span>
+          </button>
+          <button class="set-card" type="button" data-cat="data" onclick="AppSettings.cat('data')">
+            <span class="sc-ico" data-icon="download"></span>
+            <span class="sc-txt"><b>数据与备份</b><span>导出、导入、自动备份与危险操作</span></span>
+            <span class="sc-chev" data-icon="chevRight"></span>
+          </button>
+          <button class="set-card" type="button" data-cat="library" onclick="AppSettings.cat('library')">
+            <span class="sc-ico" data-icon="cloud"></span>
+            <span class="sc-txt"><b>词库中心</b><span>词库列表、更新与数据来源</span></span>
+            <span class="sc-chev" data-icon="chevRight"></span>
+          </button>
         </div>
-        <div class="set-panes">
+        <div class="set-panes" id="set-panes" hidden>
+          <div class="set-back-row">
+            <button class="set-back" type="button" data-icon="arrowLeft" onclick="AppSettings.back()">返回</button>
+            <span class="crumb" id="set-crumb"></span>
+          </div>
           <section class="set-pane" data-pane="account">
             <div class="card-title"><span class="dot"></span>账户</div>
             <div class="kv"><span class="kk">当前账号</span><span class="vv" id="set-user">—</span></div>
@@ -4452,7 +4553,7 @@ const AppUI = {
     const canSlide = !o.noSlide && prev && targetEl && prev !== targetEl &&
                      prev.parentElement === targetEl.parentElement && !this._switching;
     if(page === 'library'){ AppSettings.catName = 'library'; AppSettings._keepCat = true; page = 'settings'; }
-    if(page === 'settings' && !AppSettings._keepCat) AppSettings.catName = 'account';
+    if(page === 'settings' && !AppSettings._keepCat) AppSettings.catName = null;   // v2.7.17：默认进索引页
     AppSettings._keepCat = false;
     this.page = page;
     this.clearBandGo();                                   // v2.7.6：任何切页都顺手清掉加速态残留
@@ -4756,9 +4857,25 @@ const AppUI = {
         ? fmtDate(bm.ts) + ' ' + new Date(bm.ts).toLocaleTimeString() + ' · ' + fmtN(bm.total) + ' 词'
         : '尚无（完成一轮学习后自动生成）';
     }
-    const cat = AppSettings.catName || 'account';
+    /* v2.7.17：catName 为空 → 显示索引页（只列大类，不显示内容）；有值 → 显示对应内容页 */
+    const cat = AppSettings.catName || '';
+    const views = document.getElementById('set-views');
+    const indexEl = document.getElementById('set-index');
+    const panesEl = document.getElementById('set-panes');
+    const CAT_NAMES = { account:'账户', study:'学习偏好', appearance:'外观设计', data:'数据与备份', library:'词库中心' };
+    /* v2.7.17 修复：平移期间「退场的那一层」绝不能被提前隐藏。
+       之前 renderSettings() 一上来就 index.hidden = !!cat，于是「索引 → 内容」的退场层直接
+       display:none —— 老界面不是滑出去，而是**瞬间消失**，屏幕上只剩新界面从下方升上来。
+       这正是用户最反感的「跳一下」。现在平移期间保留两层可见（_keepVisible），
+       等 slideLayers 落地回调里再执行真正的显隐（AppSettings.applyVis）。 */
+    const keepVis = !!AppSettings._keepVisible;
+    if(indexEl && !keepVis) indexEl.hidden = !!cat;
+    if(panesEl && !keepVis) panesEl.hidden = !cat;
+    const crumbEl = document.getElementById('set-crumb');
+    if(crumbEl) crumbEl.textContent = CAT_NAMES[cat] || '';
     $$('.set-cat').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
-    $$('.set-pane').forEach(p => { p.hidden = p.dataset.pane !== cat; });
+    const keepPane = keepVis ? AppSettings._keepPane : null;
+    $$('.set-pane').forEach(p => { p.hidden = keepPane ? (p !== keepPane) : (p.dataset.pane !== cat); });
     const libSec = document.getElementById('page-library');
     if(libSec) libSec.hidden = cat !== 'library';
     const syncEl = document.getElementById('sync-status');
@@ -6451,20 +6568,67 @@ const AppLibrary = {
 /* ================= 设置 ================= */
 const AppSettings = {
   catName: 'account',
+  /* v2.7.17：落地后才执行的「谁显示谁隐藏」。平移期间由 _keepVisible 冻结显隐，
+     否则退场层会被 display:none 掉，动效变成「瞬间消失 + 新界面升起」。 */
+  applyVis(){
+    const cat = this.catName || '';
+    const indexEl = document.getElementById('set-index');
+    const panesEl = document.getElementById('set-panes');
+    if(indexEl) indexEl.hidden = !!cat;
+    if(panesEl) panesEl.hidden = !cat;
+    $$('.set-pane').forEach(p => { p.hidden = p.dataset.pane !== cat; });
+  },
   cat(name){
     // v2.7.9：设置面板切换也是上下平移 —— 先记住当前面板，renderSettings() 渲染完新面板后，
     // 把旧面板放回来，两层在 .set-panes 里做纵向平移（内容早就渲染好了，不存在滑到一半才填）。
-    const panes = document.querySelector('.set-panes');
-    const before = panes ? Array.prototype.find.call(panes.children, el => !el.hidden) : null;
+    const views = document.getElementById('set-views');
+    const index = document.getElementById('set-index');
+    const panes = document.getElementById('set-panes');
+    const paneOf = el => !!(el && el.classList && el.classList.contains('set-pane'));
+    const before = panes ? Array.prototype.find.call(panes.children, el => paneOf(el) && !el.hidden) : null;
+    const fromIndex = !!(index && !index.hidden);
     this.catName = name;
     if(name !== 'library') AppLibrary._autoRan = false;   // 离开词库中心 → 允许下次进入再自动更新
+    this._keepVisible = true; this._keepPane = null;      // 平移期间：索引与内容页都不许被隐藏
     if(AppUI && typeof AppUI.renderSettings === 'function') AppUI.renderSettings();
-    const after = panes ? Array.prototype.find.call(panes.children, el => !el.hidden) : null;
-    if(panes && before && after && before !== after){
+    this._keepVisible = false; this._keepPane = null;
+    const after = panes ? Array.prototype.find.call(panes.children, el => paneOf(el) && !el.hidden) : null;
+    if(!views || !panes || !after) return;
+    if(fromIndex && index){
+      // v2.7.17：索引 → 内容，两层纵向平移（与全站切换同一套动效）
+      // 旧索引层保持可见地滑走，新内容层从下方升起；落地回调里再切换显隐。
+      index.setAttribute('data-no-in', '');
+      after.setAttribute('data-no-in', '');
+      panes.hidden = false;
+      index.hidden = false;
+      slideLayers(views, index, panes, layerDir(true), () => this.applyVis(), { keepCur: true });
+    } else if(before && before !== after){
+      // 内容 → 另一个内容：面板之间同样平移
       before.setAttribute('data-no-in', '');              // 面板自带 paneIn 入场动画，放回来前先关掉
       before.hidden = false;
-      slideLayers(panes, before, after, layerDir(true), null, { keepCur: true });
+      slideLayers(panes, before, after, layerDir(true), () => this.applyVis(), { keepCur: true });
+    } else {
+      this.applyVis();
     }
+  },
+  /* v2.7.17：从内容页返回索引页（返回键 / 面包屑都用它） */
+  back(){
+    const views = document.getElementById('set-views');
+    const index = document.getElementById('set-index');
+    const panes = document.getElementById('set-panes');
+    if(!views || !index || !panes) return;
+    if(!index.hidden && panes.hidden) return;             // 已经在索引页
+    const cur = Array.prototype.find.call(panes.children, el => el.classList && el.classList.contains('set-pane') && !el.hidden);
+    if(!cur || panes.hidden){ this.catName = null; this.applyVis(); if(AppUI && AppUI.renderSettings) AppUI.renderSettings(); return; }
+    this.catName = null;
+    this._keepVisible = true; this._keepPane = cur;       // 退场的那个内容面板必须继续可见
+    if(AppUI && typeof AppUI.renderSettings === 'function') AppUI.renderSettings();
+    this._keepVisible = false; this._keepPane = null;
+    cur.setAttribute('data-no-in', '');
+    index.setAttribute('data-no-in', '');
+    index.hidden = false;                                 // 进入层：可见地滑上来
+    panes.hidden = false;                                 // 退场层：可见地滑下去
+    slideLayers(views, panes, index, layerDir(false), () => this.applyVis(), { keepCur: true });
   },
   /* ---- 偏好自动保存（v2.6.2）----
      已删除「保存偏好 / 保存外观」按钮：所有开关、下拉、输入框改动即保存。
