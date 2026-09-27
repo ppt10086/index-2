@@ -1698,7 +1698,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.13</span>
+            <span hidden id="set-version">2.7.14</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -2038,6 +2038,15 @@ function slideLayers(container, cur, next, dir, done, opts){
     next.style.position = '';
     const hAfter = Math.max(cur.offsetHeight || 0, next.offsetHeight || 0, 220);
     h = hAfter;
+    /* v2.7.14（用户反馈：移动端完全不跳、桌面端最后一帧还有细微跳动）=====
+       真凶就是这里的单位：getBoundingClientRect() 返回的是**视觉像素**（已经被根元素 zoom 放大过），
+       而 style.left/width/top 认的是**CSS 像素**。
+       zoom = 1（移动端不自动缩放）时两者相等，所以移动端完美；
+       桌面端 zoom = 1.15 / 1.3 时，写进去的宽度会再被放大一次 ——
+       实测落地那一帧：1440 下宽度 1239 → 1077（差 162px = 1239×(1−1/1.15)），
+       1920 下 1880 → 1446（差 434px），图标位移更是差了 435px。
+       修法：把量到的视觉像素统统除以根缩放，换算回 CSS 像素再写。 */
+    const zRoot = _rootZoom();
     /* 行程取「内容高」与「容器可视高」的较大者：内容比视口矮时（概览页只有 508px），
        只按内容高走会让新层起点落在视口内 —— 用户会先看见新页从下方露一截。
        取一个可视高度后新层起点必然在视口外；两层又都撑到这个高度（.sc-tall），
@@ -2052,9 +2061,10 @@ function slideLayers(container, cur, next, dir, done, opts){
        浏览器因此有了「变更前样式」，若此时才一起加上 transition，它会从 0 补间到起始位移 ——
        表现就是新层先在原地出现、再慢慢滑下去（探针量到 tY 从 0 涨到 900）。 */
     next.classList.add('view-layer', 'sc-tall');
-    next.style.left = Math.round(nextGeo.left - cRect.left) + 'px';    // ← 用记录下来的位置
-    next.style.width = Math.round(nextGeo.width) + 'px';
-    next.style.top = Math.round(nextGeo.top - cRect.top) + 'px';
+    // 量到的是视觉像素 → 除以根缩放换算成 CSS 像素（zoom=1 时不变，移动端行为完全一致）
+    next.style.left = Math.round((nextGeo.left - cRect.left) / zRoot) + 'px';
+    next.style.width = Math.round(nextGeo.width / zRoot) + 'px';
+    next.style.top = Math.round((nextGeo.top - cRect.top) / zRoot) + 'px';
     next.style.zIndex = '2';                          // 新层在上，接缝处不会露出下层
     next.style.transform = 'translateY(' + (dir === 'up' ? travel : -travel) + 'px)';
     cur.classList.add('sc-tall');
@@ -4232,7 +4242,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.13', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.14', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4261,7 +4271,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.13', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.14', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
