@@ -1099,6 +1099,11 @@ html.sl-has-session #view-auth{display:none}
 
 /* 自适应排版标记：data-fit 元素由 Fit 引擎按可用宽度自动缩放字号 */
 [data-fit-nowrap]{white-space:nowrap}
+/* v2.7.19：窄屏 + 超长单词的兜底。线上实测（e2e-v22）：320px 视口下单词列只有 106px，
+   而 electroencephalographically 缩到下限 10px 仍有 138px —— 再怎么缩都放不下，
+   结果是文字戳出卡片（页面没有横向滚动，所以肉眼很难发现）。
+   缩到下限仍溢出时 fitOne 会给元素打 data-fit-break，这里允许它断行。 */
+[data-fit-nowrap][data-fit-break]{ white-space:normal; overflow-wrap:anywhere; word-break:break-word }
 [data-fit]{max-width:100%}
 
 /* v2.7.7：次级页（词表筛选/浏览/学习记录）与设置面板切换时淡入 + 轻微上移，
@@ -4174,6 +4179,16 @@ const Fit = {
       if(size <= this.MIN) break;
       m = this.measure(el, nowrap, size);
       if(m.unsettled) return 'unsettled';
+    }
+    /* v2.7.19：缩到下限还放不下的兜底（只在 nowrap 且已到 MIN 时才多量这一次，
+       正常路径一次都不多花）。320px 窄屏 + 28 字符长词就属于这种：
+       列宽 106px，10px 字号仍有 138px —— 此时允许这个单词断行，而不是戳出卡片。 */
+    if(nowrap && size <= this.MIN){
+      const last = this.measure(el, nowrap, size);
+      if(!last.unsettled && this.judge(last, nowrap) !== true) el.setAttribute('data-fit-break', '');
+      else el.removeAttribute('data-fit-break');
+    } else if(el.hasAttribute('data-fit-break')){
+      el.removeAttribute('data-fit-break');
     }
     if(changed && Math.abs(shownFs - size) >= 0.5){
       try{
