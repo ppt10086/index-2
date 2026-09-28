@@ -222,11 +222,22 @@ p,li,td,th{text-wrap:pretty}
 
 /* auth */
 .auth-wrap{min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:24px; background:radial-gradient(1100px 560px at 12% -12%, var(--amb-a), transparent 62%), radial-gradient(900px 520px at 108% 112%, var(--amb-b), transparent 60%), var(--bg)}
-.auth-card{width:100%; max-width:430px; background:var(--panel); border:1px solid var(--line); border-radius:26px; box-shadow:var(--shadow); padding:38px 34px 30px; position:relative; overflow:hidden}
+.auth-card{width:100%; max-width:430px; background:var(--panel); border:1px solid var(--line); border-radius:26px; box-shadow:var(--shadow); padding:34px 34px 22px; position:relative; overflow:hidden;
+  display:flex; flex-direction:column; min-height:min(560px, calc(var(--vpu, 100dvh) - 48px))}
 .auth-card::before{content:""; position:absolute; top:0; left:0; right:0; height:5px; background:var(--primary)}
-.auth-brand{display:flex; align-items:center; justify-content:center; gap:10px; font-size:24px; font-weight:800; letter-spacing:.24em; color:var(--text); margin-left:.24em}
-.auth-brand::before{content:""; width:26px; height:26px; border-radius:9px; background:var(--primary); box-shadow:0 6px 14px -8px rgba(0,0,0,.45); margin-right:4px; margin-left:.24em}
-.auth-tagline{text-align:center; color:var(--muted); font-size:11.5px; letter-spacing:.22em; margin-top:6px; margin-bottom:20px}
+/* v2.7.18：标题 = 之前画的那个应用图标 + 文字，一起居中最上面；标题要突出。 */
+.auth-head{display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:26px}
+.auth-logo{display:flex; align-items:center; justify-content:center; flex:none}
+.app-mark{display:block; border-radius:11px}
+.auth-brand{display:flex; align-items:center; justify-content:center; font-size:27px; font-weight:800; letter-spacing:.2em; color:var(--text); margin-left:.2em}
+.auth-brand::before{content:none}                       /* 去掉旧的方块占位图形，改用真正的应用图标 */
+/* 表单下面留白、唯一一行提示钉在卡片最底部（不突出） */
+#auth-forms{margin-top:2px}
+.auth-foot{margin-top:auto; padding-top:22px; text-align:center; font-size:12px; line-height:1.6;
+  color:color-mix(in srgb, var(--muted) 88%, transparent); letter-spacing:.02em}
+/* 登录界面不显示侧栏与移动端底部工具栏（底栏在 #view-main 之外，必须显式隐藏） */
+html.auth-mode #bottom-nav{display:none !important}
+html.auth-mode .side-toggle{display:none !important}
 .auth-card .lead{color:var(--muted); font-size:13.5px; margin-bottom:24px; text-align:center; line-height:1.75; text-wrap:pretty}
 .field{margin-bottom:15px}
 .field label{display:block; font-size:13px; font-weight:650; margin-bottom:7px; color:var(--muted)}
@@ -1459,31 +1470,94 @@ html{ overflow-anchor:none }
 .is-sliding .study-done{ box-shadow:none !important}
 .is-sliding .flow-band.compact{background:var(--panel2)}
 
-/* 页面内自绘的「返回」按钮：自绘 SVG 箭头 + 按下时旋转半圈，然后整屏向左平移退回上一级 */
-/* v2.7.5 重新设计：箭头在胶囊里「回卷」——轻回弹的旋转 + 向左滚动 + 一圈涟漪 + 柔和填充，
-   不再是一次生硬的 180° 翻转。 */
-.study-back{position:relative; display:inline-flex; align-items:center; gap:6px; font:inherit; font-size:12.5px;
-  font-weight:650; color:var(--muted); background:transparent; border:1px solid var(--line2); border-radius:999px;
-  padding:4px 13px 4px 9px; cursor:pointer; overflow:hidden;
-  transition:color .2s var(--ease), border-color .2s var(--ease), background .2s var(--ease),
-             transform .22s var(--ease-side), box-shadow .2s var(--ease)}
-.study-back .ico{display:flex; align-items:center}
-.study-back .ico-svg{width:16px; height:16px;
-  transition:transform .52s cubic-bezier(.34,1.42,.5,1), opacity .3s var(--ease)}   /* 略带回弹 */
-.study-back:hover{color:var(--primary); border-color:color-mix(in srgb, var(--primary) 46%, transparent);
-  background:var(--primary-soft); box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 10%, transparent)}
-.study-back:hover .ico-svg{transform:translateX(-2px)}
-.study-back:active{transform:scale(.94)}
-/* 涟漪：从胶囊中心扩散一圈，给「按下去」一个明确的触感 */
-.study-back::after{content:''; position:absolute; left:50%; top:50%; width:14px; height:14px; margin:-7px 0 0 -7px;
-  border-radius:50%; background:color-mix(in srgb, var(--primary) 26%, transparent); opacity:0; pointer-events:none}
-.study-back.pressing{color:var(--primary); border-color:var(--primary); background:var(--primary-soft);
-  box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent)}
-.study-back.pressing .ico-svg{transform:rotate(-180deg) translateX(-1px)}
-.study-back.pressing::after{animation:sbRipple .56s cubic-bezier(.22,.61,.36,1) forwards}
-.study-back.pressing .sb-txt{opacity:.72}
-.sb-txt{transition:opacity .3s var(--ease)}
-@keyframes sbRipple{0%{opacity:.85; transform:scale(.6)} 100%{opacity:0; transform:scale(4.2)}}
+/* ===== v2.7.18 统一返回键：全站所有「返回」都只留一个 < =====
+   要求：极简、主题色的淡化色调、背景透明、无边框无底（透明按钮）。
+   之前是一枚带描边的胶囊 + 「返回」二字 + 涟漪填充，视觉重量太大、和流水带抢注意力。 */
+.btn-back{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:34px; height:34px; padding:0; margin:0;
+  background:transparent; border:0; box-shadow:none; border-radius:12px;
+  color:color-mix(in srgb, var(--primary) 62%, var(--muted));      /* 主题色的淡化色调 */
+  cursor:pointer; -webkit-tap-highlight-color:transparent;
+  transition:color .18s var(--ease), transform .22s var(--ease-side), opacity .18s var(--ease)}
+.btn-back .ico{display:flex; align-items:center}
+.btn-back .ico-svg{width:22px; height:22px; stroke-width:2.3;
+  transition:transform .3s cubic-bezier(.34,1.3,.5,1)}
+.btn-back:hover{color:var(--primary); opacity:1}
+.btn-back:hover .ico-svg{transform:translateX(-2px)}
+.btn-back:active{transform:scale(.92)}
+.btn-back:focus-visible{outline:2px solid color-mix(in srgb, var(--primary) 55%, transparent); outline-offset:3px}
+/* 按下时的反馈只做「颜色加深 + 图标轻移」，不加底色、不加描边、不留涟漪 */
+.btn-back.pressing{color:var(--primary)}
+.btn-back.pressing .ico-svg{transform:translateX(-4px)}
+@media (prefers-reduced-motion: reduce){
+  .btn-back,.btn-back .ico-svg{transition-duration:.01ms}
+  .btn-back:hover .ico-svg,.btn-back.pressing .ico-svg{transform:none}
+}
+/* v2.7.18：手机上隐藏按键说明那一行（移动端没有物理键盘，这行只会占地方、把卡片挤扁） */
+@media (max-width: 860px){ .fc-keys{display:none !important} }
+
+/* ===== v2.7.18 移动端概览：把前几个元素压进一屏 =====
+   实测（390×844，底栏占 65px → 可视 779px）：改版前问候+主行动条 34–185、欢迎卡 211–486、
+   统计卡 510–874（超出 95px）、图表 890–1034、快捷入口 1050–1201 —— 要下滑两次才看完。
+   做法：手机档压掉卡片内外边距、统计卡改 2×2 无框紧凑布局（去掉图标）、欢迎卡只留一句话。 */
+@media (max-width: 860px){
+  #page-dashboard .topbar{margin-bottom:14px; gap:10px}
+  #page-dashboard .topbar h1{font-size:21px}
+  #page-dashboard .topbar .sub{font-size:12px}
+  #page-dashboard .topbar .flow-band.compact{min-height:64px; border-radius:18px}
+  #page-dashboard .topbar .flow-band.compact .fb-main{font-size:19px}
+  #page-dashboard .topbar .flow-band.compact .fb-sub{font-size:12.5px}
+  #page-dashboard .topbar .flow-band.compact .fb-arrows .arw{width:22px; height:22px}
+  #page-dashboard > .grid{margin-top:12px}
+  #page-dashboard .card{margin-top:10px !important; padding:14px 14px 12px}
+  #page-dashboard .card-title{margin-bottom:8px}
+  /* 统计卡：2×2、无图标、数字小一档 */
+  #dash-stats{grid-template-columns:1fr 1fr; gap:6px 0; margin-top:10px}
+  #dash-stats .stat{padding:6px 2px 8px}
+  #dash-stats .stat-ico{display:none}
+  #dash-stats .stat .v{font-size:26px}
+  #dash-stats .stat .k{font-size:11px; letter-spacing:.04em}
+  #dash-stats .stat .d{font-size:11px}
+  #dash-stats .stat:nth-child(2n){padding-left:12px}
+  /* 欢迎卡：手机上只留一句话（详细说明点开「开始使用」之后自然就懂了） */
+  .dash-welcome-list{display:none}
+  .dash-welcome-line{display:block !important}
+  .dash-welcome{padding:14px 14px 12px !important}
+  /* 三个快捷入口：等宽一行，压缩高度 */
+  .fb-row{gap:6px}
+  #dash-quick .flow-band.mini{min-height:38px; padding:0 6px 0 10px}
+  #dash-quick .flow-band.mini .fb-main{font-size:12.5px}
+  #dash-quick .fb-arrows .ico-svg{width:14px; height:14px}
+}
+.dash-welcome-line{display:none}      /* 只在手机档显示（桌面档看完整说明） */
+.set-index.minimal{grid-template-columns:1fr; gap:0; max-width:520px}
+.set-index.minimal .set-card{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:15px 2px; border-radius:0; background:transparent; border:0;
+  border-bottom:1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  font-size:15.5px; font-weight:650; color:var(--text); letter-spacing:.01em}
+.set-index.minimal .set-card:last-of-type{border-bottom:0}
+.set-index.minimal .set-card:hover{color:var(--primary); background:transparent}
+.set-index.minimal .set-card:active{transform:none; opacity:.72}
+/* 右侧一个极轻的指示箭头（只用字符，不引入图标，保持「极简」） */
+.set-index.minimal .set-card::after{
+  content:'›'; font-size:19px; line-height:1; font-weight:400;
+  color:color-mix(in srgb, var(--primary) 46%, var(--muted));
+  transition:transform .2s var(--ease-side), color .2s var(--ease)}
+.set-index.minimal .set-card:hover::after{transform:translateX(3px); color:var(--primary)}
+/* 底部居中的红色退出登录（透明底 → 只有文字，点击后弹确认） */
+.set-index-foot{display:flex; justify-content:center; margin:26px 0 8px}
+.logout-btn{
+  display:inline-flex; align-items:center; gap:7px;
+  background:transparent; border:0; box-shadow:none; cursor:pointer; font:inherit;
+  font-size:14.5px; font-weight:700; padding:8px 14px; border-radius:12px;
+  color:var(--danger); transition:opacity .18s var(--ease), transform .2s var(--ease-side)}
+.logout-btn .ico{display:flex; align-items:center}
+.logout-btn .ico-svg{width:17px; height:17px; stroke-width:2.2}
+.logout-btn:hover{color:var(--danger); opacity:.82}
+.logout-btn:active{transform:scale(.96)}
+.logout-btn:focus-visible{outline:2px solid color-mix(in srgb, var(--danger) 55%, transparent); outline-offset:3px}
 
 @media (prefers-reduced-motion: reduce){
   .flow-band::before,.flow-band::after,.fb-arrows .arw{animation:none !important}
@@ -1577,11 +1651,14 @@ html{ overflow-anchor:none }
   }catch(e){}
   try{
     var raw = localStorage.getItem('sl.session');
-    if(!raw) return;
-    var s = JSON.parse(raw);
-    if(s && s.user && s.user !== '__guest__'){
-      document.documentElement.className += ' sl-has-session';
+    var has = false;
+    if(raw){
+      var s = JSON.parse(raw);
+      if(s && s.user && s.user !== '__guest__') has = true;
     }
+    // v2.7.18：没有会话时立刻给 <html> 打 auth-mode —— 登录界面不显示侧栏与移动端底栏，
+    // 必须在解析期就定下来，否则底栏会先闪一下再消失。
+    document.documentElement.className += has ? ' sl-has-session' : ' auth-mode';
   }catch(e){}
 })();
 </script>
@@ -1599,12 +1676,15 @@ html{ overflow-anchor:none }
   </div>
 </div>
 
-<!-- ============ 登录页 ============ -->
+<!-- ============ 登录页（v2.7.18 极简化）============
+     只留：图标 + 标题（突出，在最上面）→ 表单 → 唯一一行提示（最底部，不突出）。
+     已按需求删除：「把已经会的词剔掉…」那句、换设备登录那段、在线优先相关文案与云端徽标。 -->
 <div id="view-auth" class="auth-wrap">
-    <div class="auth-card">
-    <div class="auth-brand" translate="no">STUDYLENS</div>
-    <div class="auth-tagline">把已经会的词剔掉，只背你不会的</div>
-    <p class="lead">面向大学生的英语词汇学习工具。选一个考试词库，系统会自动剔除你已经掌握的单词（含派生词），几分钟生成属于你的专属生词表。</p>
+  <div class="auth-card">
+    <div class="auth-head">
+      <span class="auth-logo" id="auth-logo" aria-hidden="true"></span>
+      <div class="auth-brand" translate="no">STUDYLENS</div>
+    </div>
     <div id="auth-forms">
       <div id="auth-err" class="auth-err"></div>
       <div id="auth-login">
@@ -1620,8 +1700,7 @@ html{ overflow-anchor:none }
       </div>
       <div class="auth-switch"><span id="auth-switch-tip">还没有账号？</span> <button id="auth-switch-btn" onclick="AppAuth.toggleMode()">注册新账号</button></div>
     </div>
-    <div id="cloud-badge" class="muted small" style="margin-top:10px;text-align:center"></div>
-    <div class="feature-hint">账号与学习进度保存在云端，换设备登录即可继续。请使用账号登录后开始学习。</div>
+    <p class="auth-foot">面向大学生的英语词汇学习工具</p>
     <noscript><div style="margin-top:14px;padding:12px;background:var(--warn-soft);border-radius:12px;font-size:13px;color:var(--warn)">当前浏览器禁用了 JavaScript，无法使用本应用。请在浏览器设置中开启 JavaScript 后刷新。</div></noscript>
   </div>
 </div>
@@ -1656,13 +1735,11 @@ html{ overflow-anchor:none }
         </button></div>
       <div id="dash-banner"></div>
       <div class="grid grid-4" id="dash-stats"></div>
-      <div class="card" style="margin-top:16px">
-        <div class="card-title"><span class="dot"></span>今日学习进度</div>
-        <div id="dash-progress"></div>
-      </div>
       <!-- v2.7.6：去掉「英语 · 下一步建议」标题；当前词表说明移到底部；
-           三个入口改成与「开始学习」同一条流带（保留各自图标 + >>>） -->
-      <div class="card" style="margin-top:16px">
+           三个入口改成与「开始学习」同一条流带（保留各自图标 + >>>）
+           v2.7.18：这一块提到「今日学习进度」之前 —— 手机上首屏要能放下问候、主行动条、
+           四张统计卡和这三个入口，图表放在它们下面（需要看再往下滑）。 -->
+      <div class="card" id="dash-quick" style="margin-top:16px">
         <div class="fb-row">
           <button class="flow-band mini" type="button" onclick="AppUI.startFlowTo(this,'english','filter')" aria-label="调整词表">
             <span class="fb-ic" data-icon="sliders"></span>
@@ -1681,6 +1758,10 @@ html{ overflow-anchor:none }
           </button>
         </div>
         <div id="dash-english-tip" class="muted" style="font-size:12.5px;margin-top:12px"></div>
+      </div>
+      <div class="card" id="dash-chart" style="margin-top:16px">
+        <div class="card-title"><span class="dot"></span>今日学习进度</div>
+        <div id="dash-progress"></div>
       </div>
     </section>
 
@@ -1701,7 +1782,7 @@ html{ overflow-anchor:none }
 
       <!-- 次级页面返回条（仅在进入「其他功能」时出现） -->
       <div id="english-back" hidden>
-        <button class="btn btn-sm btn-primary" onclick="AppUI.englishTab('study')">← 返回背单词</button>
+        <button class="btn-back" type="button" data-icon="arrowLeft" data-icon-size="22" onclick="AppUI.englishTab('study')" title="返回背单词（Esc）" aria-label="返回背单词"></button>
         <span class="crumb" id="en-crumb"></span>
       </div>
 
@@ -1739,36 +1820,20 @@ html{ overflow-anchor:none }
       <div class="topbar"><div><h1>设置</h1><div class="sub">账号、学习偏好与数据管理</div></div></div>
       <div class="set-views" id="set-views">
         <!-- v2.7.17：设置拆成「索引一屏 + 内容一屏」——这一屏只列大类，点进去才滑到具体内容 -->
-        <div class="set-index" id="set-index">
-          <button class="set-card" type="button" data-cat="account" onclick="AppSettings.cat('account')">
-            <span class="sc-ico" data-icon="user"></span>
-            <span class="sc-txt"><b>账户</b><span>当前登录账号与退出</span></span>
-            <span class="sc-chev" data-icon="chevRight"></span>
-          </button>
-          <button class="set-card" type="button" data-cat="study" onclick="AppSettings.cat('study')">
-            <span class="sc-ico" data-icon="bookOpen"></span>
-            <span class="sc-txt"><b>学习偏好</b><span>每日词数、顺序、发音与配图</span></span>
-            <span class="sc-chev" data-icon="chevRight"></span>
-          </button>
-          <button class="set-card" type="button" data-cat="appearance" onclick="AppSettings.cat('appearance')">
-            <span class="sc-ico" data-icon="grid"></span>
-            <span class="sc-txt"><b>外观设计</b><span>自动适配、界面缩放、主题与主题色</span></span>
-            <span class="sc-chev" data-icon="chevRight"></span>
-          </button>
-          <button class="set-card" type="button" data-cat="data" onclick="AppSettings.cat('data')">
-            <span class="sc-ico" data-icon="download"></span>
-            <span class="sc-txt"><b>数据与备份</b><span>导出、导入、自动备份与危险操作</span></span>
-            <span class="sc-chev" data-icon="chevRight"></span>
-          </button>
-          <button class="set-card" type="button" data-cat="library" onclick="AppSettings.cat('library')">
-            <span class="sc-ico" data-icon="cloud"></span>
-            <span class="sc-txt"><b>词库中心</b><span>词库列表、更新与数据来源</span></span>
-            <span class="sc-chev" data-icon="chevRight"></span>
-          </button>
+        <!-- v2.7.18：极简索引 —— 只有栏目名，无图标、无灰色注释；
+             「账户」条目删除，改成底部居中的红色「退出登录」（点击后弹确认）。 -->
+        <div class="set-index minimal" id="set-index">
+          <button class="set-card" type="button" data-cat="study" onclick="AppSettings.cat('study')">学习偏好</button>
+          <button class="set-card" type="button" data-cat="appearance" onclick="AppSettings.cat('appearance')">外观设计</button>
+          <button class="set-card" type="button" data-cat="data" onclick="AppSettings.cat('data')">数据与备份</button>
+          <button class="set-card" type="button" data-cat="library" onclick="AppSettings.cat('library')">词库中心</button>
+          <div class="set-index-foot">
+            <button class="logout-btn" type="button" data-icon="logout" data-icon-size="17" onclick="AppSettings.confirmLogout()">退出登录</button>
+          </div>
         </div>
         <div class="set-panes" id="set-panes" hidden>
           <div class="set-back-row">
-            <button class="set-back" type="button" data-icon="arrowLeft" onclick="AppSettings.back()">返回</button>
+            <button class="btn-back" type="button" data-icon="arrowLeft" data-icon-size="22" onclick="AppSettings.back()" title="返回设置索引" aria-label="返回设置索引"></button>
             <span class="crumb" id="set-crumb"></span>
           </div>
           <section class="set-pane" data-pane="account">
@@ -1799,7 +1864,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.17</span>
+            <span hidden id="set-version">2.7.18</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -1866,6 +1931,21 @@ html{ overflow-anchor:none }
       <div class="card">
         <div class="card-title"><span class="dot"></span>账号</div>
         <div class="kv"><span class="kk">账号名（登录用，不可改）</span><span class="vv" id="prof-user">—</span></div>
+      </div>
+
+      <!-- v2.7.18：跨设备同步的「手动拉齐」入口。
+           注意：**不显示**同步过程/最近更新这类状态行（那是早前按需求删掉的），
+           这里只留一个按钮 + 点击后才出现的一句话结果。 -->
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>云端同步</div>
+        <div class="muted" style="font-size:12.5px;line-height:1.7">
+          进度、词表与头像都保存在云端，登录同一账号就能在任意设备继续。
+          若这边显示的进度不是最新，点一下立刻从云端拉齐。
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" data-icon="refresh" onclick="AppProfile.syncNow(this)">立即从云端同步</button>
+          <span class="muted" id="prof-sync-result" style="font-size:12.5px"></span>
+        </div>
       </div>
 
       <div class="card">
@@ -1986,6 +2066,21 @@ const ICONS = {
 function icon(name, size){
   const p = ICONS[name] || ICONS.info;
   return '<svg class="ico-svg" viewBox="0 0 24 24" width="'+(size||18)+'" height="'+(size||18)+'" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';
+}
+
+/* v2.7.18：应用图标（浅灰折角卡）—— 登录页标题左侧那一枚。
+   与 PWA 图标（assets/icons/appicon.svg）是同一个形状，这里作为**唯一来源**，
+   以免在登录页里再手写一份内联 SVG（页面内「无手写 SVG」这条断言要继续成立）。 */
+const APP_MARK =
+  '<rect x="0" y="0" width="96" height="96" rx="22" fill="#e8e8eb"/>' +
+  '<path d="M30 22h24l12 12v40a6 6 0 0 1-6 6H30a6 6 0 0 1-6-6V28a6 6 0 0 1 6-6z" fill="#2f2f38"/>' +
+  '<path d="M54 22v10a2 2 0 0 0 2 2h10" fill="none" stroke="#e8e8eb" stroke-width="3.4" stroke-linecap="round"/>';
+function appMark(size){
+  return '<svg class="ico-svg app-mark" viewBox="0 0 96 96" width="'+(size||34)+'" height="'+(size||34)+'" aria-hidden="true">'+APP_MARK+'</svg>';
+}
+function paintAppMark(){
+  const box = document.getElementById('auth-logo');
+  if(box && !box.querySelector('svg')) box.innerHTML = appMark(34);
 }
 
 /* v2.7.2（需求 2）：学习/复习卡片底部按钮。
@@ -2322,20 +2417,52 @@ const Supa = {
   },
   async loginRemote(u, p){ return this.rpc('sl_login', { p_username: u, p_password: p }); },
   async registerRemote(u, p){ return this.rpc('sl_register', { p_username: u, p_password: p }); },
+  /* ===== v2.7.18：令牌自愈 =====
+     账号级令牌的坑：任何一次登录（含另一台设备登录、以及本机的静默续期）都会换新令牌，
+     旧令牌随即失效，之后 sl_save / sl_load 一律回 {"ok":false,"reason":"bad_token"}。
+     以前遇到这个只会重试同一个坏令牌，永远失败 —— 表现就是「另一台设备改的东西这边收不到，
+     这边的改动也传不上去」。现在：本机存着 salt/hash，用 sl_login_hash 静默换一条新令牌再重试一次。
+     （服务端也已升级为「每台设备一条令牌」，见 site/work/a5_multi_token.sql；这里是兜底自愈。） */
+  _isTokenError(r){ return !!(r && r.ok === false && /token/i.test(String(r.reason || ''))); },
+  async renewToken(){
+    const s = AppAuth.current();
+    if(!s) return '';
+    const rec = (Store.get('users', {}) || {})[s.user];
+    if(!rec || !rec.hash) return '';
+    try{
+      const r = await this.rpc('sl_login_hash', { p_username: s.user, p_hash: rec.hash });
+      if(r && r.ok && r.token){
+        s.token = r.token;
+        Store.set('session', s);
+        return r.token;
+      }
+    }catch(e){}
+    return '';
+  },
+  async withToken(fn){
+    let t = await this.sessionToken();
+    if(!t) throw new Error('云端未登录');
+    let r = await fn(t);
+    if(this._isTokenError(r)){
+      const nt = await this.renewToken();
+      if(nt) r = await fn(nt);
+    }
+    return r;
+  },
   async _load(token){
     const r = await this.rpc('sl_load', { p_token: token });
     if(r && r.ok && r.data !== undefined && r.data !== null) return r.data;
     return null;
   },
-  /* 读取云端数据 + 服务端时间戳（用于判断云端是否真的有更新） */
+  /* 读取云端数据 + 服务端时间戳（用于判断云端是否真的有更新）；令牌失效会自动换新再试一次 */
   async _loadMeta(token){
-    const r = await this.rpc('sl_load', { p_token: token });
+    const r = await this.withToken(t => this.rpc('sl_load', { p_token: t }));
     if(!r || r.ok !== true) return null;
     return { data: (r.data === undefined ? null : r.data), updatedAt: Number(r.updated_at) || 0 };
   },
   async _save(token, data){
-    const r = await this.rpc('sl_save', { p_token: token, p_data: data });
-    if(!r || r.ok !== true) throw new Error('云端保存失败');
+    const r = await this.withToken(t => this.rpc('sl_save', { p_token: t, p_data: data }));
+    if(!r || r.ok !== true) throw new Error('云端保存失败' + (r && r.reason ? '（' + r.reason + '）' : ''));
     this._hadRemote = true;
     if(r.updated_at) this._syncedAt = Number(r.updated_at) || this._syncedAt;
   },
@@ -2373,8 +2500,17 @@ const Supa = {
   async deleteRemote(token, username){
     if(!token) return;
     try{
-      const r = await this.rpc('sl_delete_account', { p_token: token, p_username: username });
+      const r = await this.withToken(t => this.rpc('sl_delete_account', { p_token: t, p_username: username }));
       if(r && r.ok) this._hadRemote = false;
+    }catch(e){}
+  },
+  /* v2.7.18：退出登录时顺手吊销「本机这一条」令牌（其它设备不受影响）；
+     服务端若还是旧的单令牌版本，这个调用会报 unknown function —— 忽略即可。 */
+  async revokeThisDevice(){
+    try{
+      const s = AppAuth.current();
+      if(!s || !s.token) return;
+      await this.rpc('sl_logout', { p_token: s.token });
     }catch(e){}
   },
   /* ---- 自动同步泵：每个必要动作后串行上传；失败静默重试，持续失败才交给 Net 判定 ----
@@ -2454,6 +2590,12 @@ const Supa = {
     if(!this.active()) return;
     const s = AppAuth.current();
     if(!s) return;
+    /* ===== v2.7.18 修复「换设备后进度只同步了一部分」=====
+       关页/刷新/切后台时原来会**无条件**把本机缓存整包推上云端。
+       可本机缓存可能已经过期（另一台设备刚改过、这边还没拉到），
+       于是「A 改完 → B 一刷新就把 A 的改动盖回去」——用户看到的就是「同步了一半」。
+       现在只在**本机确实有未上传的改动**时才推，纯关页不再写云端。 */
+    if(!this.hasPending()) return;
     const t = s.token || await this.sessionToken();
     if(!t) return;
     try{
@@ -2468,6 +2610,8 @@ const Supa = {
         keepalive: true
       });
       this._hadRemote = true;
+      this._dirty = false;
+      this._clearPending();
     }catch(e){}
   },
   async pullMerge(){
@@ -2498,14 +2642,53 @@ const Supa = {
       if(meta.updatedAt) this._syncedAt = meta.updatedAt;
       const resetChange = (local.allResetAt || 0) !== (cloud.allResetAt || 0) ||
         (local.wordResetAt || 0) !== (cloud.wordResetAt || 0);
+      /* v2.7.18：个人词表是按「主词库 + 次词库 + 衍生词」现场算出来的（AppFilter.result 只在内存里）。
+         原来每次云端覆盖都无条件把它清成 null —— 于是另一台设备每拉一次云端，
+         「我的词表」就没了，用户必须手动再点一次筛选（就是「移动端每次都要先自己同步一遍」）。
+         现在只在**筛选参数真的变了**时才清；参数没变就保留，交给 AppFilter.restoreIfNeeded() 兜底重建。 */
+      const listInvalid = resetChange ||
+        JSON.stringify(local.filter || {}) !== JSON.stringify(cloud.filter || {}) ||
+        JSON.stringify(local.presets || []) !== JSON.stringify(cloud.presets || []);
       const busy = (typeof AppStudy !== 'undefined' && AppStudy.state) || (typeof AppReview !== 'undefined' && AppReview.state);
       try{
         if(!document.hidden && typeof AppUI !== 'undefined'){
           if(resetChange && !busy){ AppUI.init(); }
-          else if(!busy){ WL.cache.clear(); AppFilter.result = null; AppUI.init(); }
+          else if(!busy){
+            WL.cache.clear();
+            if(listInvalid) AppFilter.result = null;
+            AppUI.init();
+          }
         }
       }catch(e){}
+      if(this.lastPullSyncedAt !== meta.updatedAt){
+        this.lastPullSyncedAt = meta.updatedAt;
+        try{ if(!busy) AppFilter.restoreIfNeeded(); }catch(e){}   // 词表被清掉时自动重建
+      }
     }catch(e){ Net.onCloudFailure(e); }
+  },
+  /* v2.7.18：用户中心那个「立即同步」按钮 —— 先把本机未上传的改动推上去，
+     再把云端最新的一份完整拉下来（强制应用，忽略「已同步过」的判断），最后重建词表。
+     返回一句人话，直接显示在按钮旁边，让用户看得见到底同步了什么。 */
+  async syncNow(){
+    if(!this.active()) return '未接入云端';
+    const s = AppAuth.current();
+    if(!s) return '未登录';
+    const before = JSON.stringify(AppAuth.data());
+    try{
+      await this._pump();                       // 先把自己的改动传上去（避免被云端旧版本覆盖）
+      this._syncedAt = 0;                       // 强制拉取：让 pullMerge 真的应用云端版本
+      this.lastPullSyncedAt = null;
+      await this.pullMerge();
+      await AppFilter.restoreIfNeeded();
+      const after = JSON.stringify(AppAuth.data());
+      const d = AppAuth.data();
+      const n = Object.keys(d.wordState || {}).length;
+      return before === after
+        ? ('已是最新 · 云端 ' + n + ' 条记录')
+        : ('已从云端更新 · 云端 ' + n + ' 条记录');
+    }catch(e){
+      return '同步失败：' + netErrText(e);
+    }
   }
 };
 
@@ -2720,6 +2903,8 @@ const AppAuth = {
   },
   showAuth(){
     try{ document.documentElement.classList.remove('sl-has-session'); }catch(e){}
+    try{ document.documentElement.classList.add('auth-mode'); }catch(e){}   // v2.7.18：登录界面隐藏侧栏与底栏
+    try{ paintAppMark(); }catch(e){}                                         // v2.7.18：标题左侧那枚应用图标
     $('#view-auth').hidden = false;
     $('#view-main').hidden = true;
     this.mode = 'login';
@@ -2736,6 +2921,7 @@ const AppAuth = {
   enter(session){
     Store.set('session', session);
     try{ document.documentElement.classList.add('sl-has-session'); }catch(e){}
+    try{ document.documentElement.classList.remove('auth-mode'); }catch(e){}   // v2.7.18：进应用后恢复侧栏与底栏
     $('#view-auth').hidden = true;
     $('#view-main').hidden = false;
     Net.hideGate();
@@ -2799,17 +2985,29 @@ const AppAuth = {
       try{ Store.remove('u.'+u); }catch(e){}
       try{ localStorage.removeItem('sl.backup.auto'); }catch(e){}
       let cloudData = null;
-      try{
-        const meta = await Supa._loadMeta(cl.token);
-        if(meta){
-          cloudData = meta.data;
-          Supa._syncedAt = meta.updatedAt || 0;   // 记住已同步到的服务端版本
-        }
-      }catch(e){ cloudData = null; }
+      /* ===== v2.7.18 修复「桌面端只有部分数据能同步」=====
+         原来的写法是 `try{ 读云端 }catch(e){ cloudData = null }`，紧接着
+         `if(!cloudData || 没字段){ await Supa._save(cl.token, data) }` ——
+         于是**弱网下一次读失败**就会被当成「云端还没有数据」，把默认空文档整包写回云端，
+         用户的进度/词表参数/头像就这样在云端被清掉（桌面端看起来正是「只有部分数据能同步」）。
+         现在区分三态：读到有数据 / 读到确实是空（新账号）/ 读取失败。
+         读取失败**中止登录**并让用户重试，绝不写云端。 */
+      let readOk = false, readErr = null;
+      for(let attempt = 1; attempt <= 2 && !readOk; attempt++){
+        try{
+          const meta = await Supa._loadMeta(cl.token);
+          if(meta){ cloudData = meta.data; Supa._syncedAt = meta.updatedAt || 0; readOk = true; }
+        }catch(e){ readErr = e; }
+        if(!readOk && attempt < 2) await new Promise(r => setTimeout(r, 500));
+      }
+      if(!readOk){
+        try{ Store.remove('session'); }catch(e){}
+        return this.err('云端数据读取失败（' + netErrText(readErr) + '）。已中止登录，避免覆盖你在云端的记录 —— 请检查网络后重试。');
+      }
       const data = (cloudData && typeof cloudData === 'object' && Object.keys(cloudData).length)
         ? cloudData : this.defaultData();
       if(!cloudData || !Object.keys(cloudData).length){
-        // 云端还没有数据（新账号或历史空行）：把默认结构写回云端
+        // 云端**确实**还没有数据（新账号或历史空行）：把默认结构写回云端
         try{ await Supa._save(cl.token, data); }catch(e){}
       }
       Store.set('u.'+u, data);
@@ -2841,6 +3039,7 @@ const AppAuth = {
     return true;
   },
   logout(){
+    try{ Supa.revokeThisDevice(); }catch(e){}      // v2.7.18：只吊销本机这条令牌
     Store.remove('session');
     this.showAuth();
     toast('已退出登录');
@@ -4330,7 +4529,52 @@ const AppFilter = {
     };
     return this.result;
   },
-  targetName(){ const r = this.result; return r ? (WL.byId(r.targetId)||{}).name : ''; }
+  targetName(){ const r = this.result; return r ? (WL.byId(r.targetId)||{}).name : ''; },
+  /* ===== v2.7.18：个人词表自动重建 =====
+     个人词表是按账号文档里的 filter（主词库 + 次词库 + 是否剔衍生词）现场算出来的，
+     只存在于内存（AppFilter.result）。所以换设备登录、或任何一次云端覆盖之后它就是空的 ——
+     用户看到的是「尚未生成个人词表」，必须自己再点一次筛选，这就是「移动端每次都要手动同步一遍」。
+     现在：只要账号里有筛选参数、而内存里没有结果，就自动重算一次（词库走在线源，与当初生成的完全一致）。 */
+  restoring: false,
+  needsRestore(){
+    const f = AppAuth.data().filter || {};
+    return !this.result && !!f.target && Array.isArray(f.bases);
+  },
+  async restoreIfNeeded(){
+    if(this.restoring || !this.needsRestore()) return false;
+    this.restoring = true;
+    try{
+      const st = document.getElementById('dash-list-state');
+      if(st) st.textContent = '正在为你重建词表…';
+      /* ⚠️ 顺序很重要：**先把词库准备好（这一步最耗时），再决定要不要写结果**。
+         踩过的坑：先 await 词库、后无条件 apply()，会在等待期间把别处刚建好的词表覆盖掉，
+         并把正在看的界面重画一遍（探针因此量到「已被替换掉」的节点，读出一堆 NaN）。
+         现在等词库期间只要发现有结果了就直接让位，既不覆盖也不重画。 */
+      const f = AppAuth.data().filter;
+      await WL.ensure(f.target, { network: true });
+      for(const id of f.bases) await WL.ensure(id, { network: true });
+      if(!this.needsRestore()) return false;
+      await this.apply(false);
+      /* 重建完成后**必须等界面空闲再重画**：
+         如果此刻正在做页面切换（.is-sliding）或正处在学习/复习会话里，重画会让正在跑的平移
+         突然多出一次布局变化 —— 逐帧探针量到的就是「某一帧多窜了 67/214px」（占行程 7%–24%）。
+         所以：忙就等，最多等 ~1.5s；等不到就干脆不重画（用户下次切页自然会看到新词表）。 */
+      const idle = (n) => {
+        const sliding = (typeof AppUI !== 'undefined' && AppUI._switching) || !!document.querySelector('#main-area.is-sliding');
+        const busy = (typeof AppStudy !== 'undefined' && AppStudy.state) || (typeof AppReview !== 'undefined' && AppReview.state);
+        if(sliding || busy){
+          if(n > 12) return;
+          return setTimeout(() => idle(n + 1), 120);
+        }
+        try{ if(AppUI.page === 'dashboard') AppUI.renderDashboard(); }catch(e){}
+        try{ if(AppUI.page === 'english') AppUI.renderEnglish(); }catch(e){}
+      };
+      idle(0);
+      return !!this.result;
+    }catch(e){
+      return false;
+    }finally{ this.restoring = false; }
+  }
 };
 
 /* ================= 模块框架（可扩展） ================= */
@@ -4347,7 +4591,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.17', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.18', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4376,7 +4620,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.17', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.18', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -4511,6 +4755,9 @@ const AppUI = {
     /* 首屏显示之后再打开「缩放过渡」：以后改缩放（设置项、窗口尺寸）都是平滑变化而不是一帧跳 */
     document.documentElement.classList.add('zoom-anim');
     this.maybeOnboard();
+    /* v2.7.18：换设备/刷新进来时，若账号里已有筛选参数但内存里没有词表，自动重建（不用用户手动点）。
+       放在外壳显示之后跑，避免拖慢首屏；重建完会自己重画概览与词汇页。 */
+    try{ AppFilter.restoreIfNeeded(); }catch(e){}
   },
   mountLibraryPane(){
     const pane = document.getElementById('set-pane-library');
@@ -4520,7 +4767,7 @@ const AppUI = {
   decorate(){
     // 静态按钮图标（有限装饰）
     $$('[data-icon]').forEach(b => {
-      if(!b.querySelector('.ico-svg')) b.insertAdjacentHTML('afterbegin', icon(b.dataset.icon, 15));
+      if(!b.querySelector('.ico-svg')) b.insertAdjacentHTML('afterbegin', icon(b.dataset.icon, parseInt(b.dataset.iconSize, 10) || 15));
     });
     // 英语页次级入口图标（背单词已升为主视图，不再有页签）
     const TAB_ICONS = { filter:'sliders', browse:'list', record:'file' };
@@ -4736,14 +4983,16 @@ const AppUI = {
     $('#dash-date').textContent = todayStr().replace(/-/g,' / ') + ' · ' + fmtDate(now()) + (streak ? ' · 连续 ' + streak + ' 天' : '');
     if(!Store.get('welcomeSeen', false)){
       $('#dash-banner').innerHTML =
-        '<div class="card" style="border-color:var(--primary);margin-bottom:16px">' +
+        '<div class="card dash-welcome" style="border-color:var(--primary);margin-bottom:16px">' +
         '<div class="card-title"><span class="dot"></span>欢迎使用 StudyLens</div>' +
-        '<div class="muted" style="font-size:13.5px;line-height:1.9">' +
+        '<div class="muted dash-welcome-list" style="font-size:13.5px;line-height:1.9">' +
         '这是你的个人学习空间，几个区域分别是：<br>' +
         '· <b>背单词</b>：今天要背的内容已经排好，直接开始即可；复习清单也在同一处；<br>' +
         '· <b>词库中心</b>：查看、更新各年级与四六级词库；<br>' +
         '· <b>设置</b>：账号、学习偏好、界面与云端同步。<br>' +
         '建议第一步：进入「词汇背诵 → 词表筛选」，选好主词库和次词库，生成词表后开始背单词。</div>' +
+        '<div class="muted dash-welcome-line" style="font-size:13.5px;line-height:1.9">' +
+        '先选好词库、生成你的专属词表，然后开始背今天的词。</div>' +
         '<div style="margin-top:14px"><button class="btn btn-primary" onclick="AppUI.dismissWelcome()">开始使用</button></div></div>';
     } else {
       $('#dash-banner').innerHTML = '';
@@ -5555,7 +5804,7 @@ const AppStudy = {
     if(!box || !this.state || this._flowing) return;
     this._flowing = true;
     const cur = box.querySelector('.study-wrap');
-    const btn = cur && cur.querySelector('.study-back');
+    const btn = cur && cur.querySelector('.btn-back');
     if(btn) btn.classList.add('pressing');               // 图标旋转半圈
     this.state = null;
     AppUI._keyHandler = null;
@@ -5775,8 +6024,8 @@ const AppStudy = {
     box.innerHTML =
       '<div class="study-wrap">' +
       '<div class="study-meta">' +
-        '<span class="sm-l"><button class="study-back" type="button" onclick="AppStudy.backToSetup()" title="返回上一级（Esc）">' +
-          '<span class="ico">' + icon('arrowLeft', 16) + '</span><span class="sb-txt">返回</span></button>' +
+        '<span class="sm-l"><button class="btn-back" type="button" onclick="AppStudy.backToSetup()" title="返回上一级（Esc）" aria-label="返回上一级">' +
+          icon('arrowLeft', 22) + '</button>' +
         '<span>第 '+(s.idx+1)+' / '+total+' 个</span></span>' +
         '<span class="tag '+stage.cls+'">'+stage.txt+'</span></div>' +
       '<div class="bar" style="margin-bottom:16px" role="progressbar" aria-valuemin="0" aria-valuemax="'+total+'" aria-valuenow="'+(s.idx+1)+'" aria-label="学习进度"><i style="width:'+Math.round(s.idx/total*100)+'%"></i></div>' +
@@ -5786,7 +6035,7 @@ const AppStudy = {
       '<div class="fc-img" id="fc-img"'+(imgEnabled() ? '' : ' hidden')+'></div>' +
       '<div id="fc-body" style="width:100%">'+(s.revealed ? '<div class="reveal-in">'+cardBody(e)+'</div>' : (s.idx < 3 ? '<div class="fc-preview"><div class="fc-preview-hint">先回忆它的意思与发音，再点下方按钮核对</div><button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示释义</button></div>' : '<button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示释义</button>'))+'</div></div>' +
       fcButtonsHtml('AppStudy', '不记得') +
-      '<div class="fc-hint">' + (s.againPending
+      '<div class="fc-hint fc-keys">' + (s.againPending
         ? '<span class="kbd">1</span> 下一个 · <span class="kbd">Esc</span> 结束本轮'
         : '<span class="kbd">空格</span> 显示释义 · <span class="kbd">·</span> 发音 · <span class="kbd">1</span> 不记得 · <span class="kbd">2</span> 记得 · <span class="kbd">Esc</span> 结束本轮') + '</div>' +
       '</div>';
@@ -6116,8 +6365,8 @@ const AppReview = {
     box.innerHTML =
       '<div class="study-wrap">' +
       '<div class="study-meta">' +
-        '<span class="sm-l"><button class="study-back" type="button" onclick="AppReview.backToList()" title="返回复习清单（Esc）">' +
-          '<span class="ico">' + icon('arrowLeft', 16) + '</span><span class="sb-txt">返回</span></button>' +
+        '<span class="sm-l"><button class="btn-back" type="button" onclick="AppReview.backToList()" title="返回复习清单（Esc）" aria-label="返回复习清单">' +
+          icon('arrowLeft', 22) + '</button>' +
         '<span>复习 '+(s.idx+1)+' / '+total+'</span></span>' +
         '<span class="tag '+stage.cls+'">第 '+Math.min((c && c.n || 0) + 1, SRS.ROUNDS)+' 遍</span></div>' +
       '<div class="bar" style="margin-bottom:16px" role="progressbar" aria-valuemin="0" aria-valuemax="'+total+'" aria-valuenow="'+(s.idx+1)+'" aria-label="复习进度"><i style="width:'+Math.round(s.idx/total*100)+'%"></i></div>' +
@@ -6127,7 +6376,7 @@ const AppReview = {
       '<div class="fc-img" id="fc-img"'+(imgEnabled() ? '' : ' hidden')+'></div>' +
       '<div id="fc-body" style="width:100%">'+(s.revealed ? cardBody(e) : '<button class="btn btn-primary btn-lg" onclick="AppReview.reveal()">显示释义</button>')+'</div></div>' +
       fcButtonsHtml('AppReview', '忘了') +
-      '<div class="fc-hint">' + (s.againPending
+      '<div class="fc-hint fc-keys">' + (s.againPending
         ? '<span class="kbd">1</span> 下一个 · <span class="kbd">Esc</span> 结束本轮'
         : '<span class="kbd">空格</span> 显示释义 · <span class="kbd">·</span> 发音 · <span class="kbd">1</span> 忘了 · <span class="kbd">2</span> 记得 · <span class="kbd">Esc</span> 结束本轮') + '</div></div>';
     fillPh(e);
@@ -6165,7 +6414,7 @@ const AppReview = {
     if(!box || !this.state || this._flowing) return;
     this._flowing = true;
     const cur = box.querySelector('.study-wrap');
-    const btn = cur && cur.querySelector('.study-back');
+    const btn = cur && cur.querySelector('.btn-back');
     if(btn) btn.classList.add('pressing');
     this.state = null;
     this.wantCount = 0;
@@ -6568,6 +6817,15 @@ const AppLibrary = {
 /* ================= 设置 ================= */
 const AppSettings = {
   catName: 'account',
+  /* v2.7.18：设置索引页底部那个红色「退出登录」——点击后弹确认（索引页上就一个红色动作，必须防误触） */
+  confirmLogout(){
+    const u = AppAuth.displayName() || '当前账号';
+    openModal('<h3 style="margin-bottom:10px">退出登录？</h3>' +
+      '<p class="muted" style="line-height:1.8">将退出账号「' + esc(u) + '」。<br>学习进度、词表参数与头像都已保存在云端，重新登录即可继续。</p>' +
+      '<div style="margin-top:20px;display:flex;gap:10px;justify-content:flex-end">' +
+      '<button class="btn" onclick="AppUI.closeModal()">取消</button>' +
+      '<button class="btn btn-danger" onclick="AppUI.closeModal();AppAuth.logout()">退出登录</button></div>');
+  },
   /* v2.7.17：落地后才执行的「谁显示谁隐藏」。平移期间由 _keepVisible 冻结显隐，
      否则退场层会被 display:none 掉，动效变成「瞬间消失 + 新界面升起」。 */
   applyVis(){
@@ -6972,6 +7230,17 @@ const AppProfile = {
     el._t = setTimeout(() => { el.classList.remove('saved'); el.textContent = el._orig; }, 1400);
   },
   /* ---- 头像：本机裁剪压缩后存进 profile.avatar ---- */
+  /* v2.7.18：用户中心「立即从云端同步」 */
+  async syncNow(btn){
+    const out = document.getElementById('prof-sync-result');
+    if(btn){ btn.disabled = true; btn.textContent = '同步中…'; }
+    if(out) out.textContent = '';
+    const msg = await Supa.syncNow();
+    if(out) out.textContent = msg;
+    if(btn){ btn.disabled = false; btn.textContent = '立即从云端同步'; }
+    this.render();
+    toast(msg, /失败/.test(msg) ? 'warn' : 'ok');
+  },
   paintAvatar(){
     const p = AppAuth.profile();
     const letter = (AppAuth.displayLabel()[0] || '?').toUpperCase();
@@ -7036,9 +7305,18 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
     hideSiteDBUI();
     if(document.readyState === 'loading') window.addEventListener('DOMContentLoaded', hideSiteDBUI);
     // 离开页面/切后台时，把最新学习进度立即上传云端（防打断丢失）
+    /* ⚠️ v2.7.18：这里**只在确实有未上传改动时**才推。
+       原实现无条件 `Supa.onDataChanged()` —— 它会把「本机缓存」当成权威整包上传，
+       于是另一台设备刚改完的数据会被这一台关页/刷新时盖回去（用户反馈的「只同步了一部分」）。
+       现在交给 Supa.hasPending() 判断：没有本机改动就只做只读的离开处理。 */
     function flushNow(){
-      Supa.onDataChanged();
-      Supa.flushKeepalive();
+      try{
+        if(!Supa.active()) return;
+        if(!Supa.hasPending()) return;
+        Supa._dirty = true;
+        Supa._markPending();
+        Supa.flushKeepalive();
+      }catch(e){}
     }
     window.addEventListener('pagehide', flushNow);
     window.addEventListener('beforeunload', () => Supa.flushKeepalive());
