@@ -4756,8 +4756,13 @@ const AppUI = {
     document.documentElement.classList.add('zoom-anim');
     this.maybeOnboard();
     /* v2.7.18：换设备/刷新进来时，若账号里已有筛选参数但内存里没有词表，自动重建（不用用户手动点）。
-       放在外壳显示之后跑，避免拖慢首屏；重建完会自己重画概览与词汇页。 */
-    try{ AppFilter.restoreIfNeeded(); }catch(e){}
+       放在外壳显示之后、并且**等浏览器空闲**再跑 —— 重建要拉词库并跑一遍筛选（几万次词形比较），
+       紧接着登录就跑会跟用户的第一下点击抢主线程（线上实测切换动画出现 4 帧 >16.7ms）。 */
+    try{
+      const kick = () => { try{ AppFilter.restoreIfNeeded(); }catch(e){} };
+      if(typeof requestIdleCallback === 'function') requestIdleCallback(kick, { timeout: 2500 });
+      else setTimeout(kick, 1200);
+    }catch(e){}
   },
   mountLibraryPane(){
     const pane = document.getElementById('set-pane-library');
