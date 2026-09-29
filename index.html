@@ -229,6 +229,50 @@ p,li,td,th{text-wrap:pretty}
 .auth-head{display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:26px}
 .auth-logo{display:flex; align-items:center; justify-content:center; flex:none}
 .app-mark{display:block; border-radius:11px}
+
+/* ===== v2.7.20 启动加载页：全屏亚克力 + 居中应用图标核心图形 =====
+   只在「进入应用 → 云端同步完成」这段时间出现（Splash.show / Splash.hide）。
+   ① 毛玻璃 + 半透明面板 = 亚克力质感；② 图标只取应用图标中间那个「折角页」概念图形
+   （几何与登录页那枚同源：APP_MARK_PAGE / APP_MARK_FOLD），颜色交给 CSS 跟随主题。
+   动画只动 transform / opacity —— 见 07-KNOWN-ISSUES 51：动 box-shadow/color-mix 会逐帧重算样式。 */
+#boot-splash{ position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center;
+  background:color-mix(in srgb, var(--panel) 74%, transparent);
+  -webkit-backdrop-filter:blur(26px) saturate(1.35); backdrop-filter:blur(26px) saturate(1.35);
+  opacity:0; transition:opacity .3s var(--ease);
+  /* 还没开始淡出时不拦事件，避免遮住登录页的按钮 */
+  pointer-events:none }
+#boot-splash.is-on{ opacity:1; pointer-events:auto }
+#boot-splash[hidden]{ display:none }
+.bs-stage{ display:flex; flex-direction:column; align-items:center; gap:24px }
+.bs-iconwrap{ position:relative; display:grid; place-items:center; width:150px; height:150px }
+.bs-halo{ position:absolute; inset:0; border-radius:50%; pointer-events:none;
+  background:radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--text) 23%, transparent), transparent 62%);
+  opacity:.5; animation:bsHalo 1.9s var(--ease) infinite }
+.bs-mark{ display:block; width:76px; height:76px; position:relative;
+  transform-origin:50% 50%; animation:bsCycle 1.9s infinite }
+.bs-mark .bs-page{ fill:var(--text) }
+.bs-mark .bs-fold{ stroke:var(--panel); stroke-width:3.4; stroke-linecap:round }
+.bs-text{ font-size:14px; letter-spacing:.08em; color:color-mix(in srgb, var(--text) 82%, transparent) }
+/* 一轮：快速向外呼吸一下 → 反向蓄力 → 动感旋转一整圈（带超调）→ 定住喘口气
+   每段单独给缓动，所以旋转不是「匀速转圈」，而是冲出去再收住。 */
+@keyframes bsCycle{
+  0%  { transform:scale(1) rotate(0deg);        animation-timing-function:cubic-bezier(.18,.9,.32,1.38) }
+  14% { transform:scale(1.20) rotate(0deg);     animation-timing-function:cubic-bezier(.5,0,.42,1) }
+  23% { transform:scale(.95) rotate(-17deg);    animation-timing-function:cubic-bezier(.22,.62,.2,1) }
+  60% { transform:scale(1.05) rotate(316deg);   animation-timing-function:cubic-bezier(.2,.72,.24,1) }
+  79% { transform:scale(1.02) rotate(375deg);   animation-timing-function:cubic-bezier(.36,0,.22,1) }
+  88% { transform:scale(1) rotate(360deg);      animation-timing-function:linear }
+  100%{ transform:scale(1) rotate(360deg) }
+}
+@keyframes bsHalo{
+  0%,100%{ transform:scale(.84); opacity:.28 }
+  16%    { transform:scale(1.08); opacity:.62 }
+  60%    { transform:scale(1.02); opacity:.44 }
+}
+@media (prefers-reduced-motion: reduce){
+  .bs-mark, .bs-halo{ animation:none }
+  .bs-halo{ opacity:.34 }
+}
 .auth-brand{display:flex; align-items:center; justify-content:center; font-size:27px; font-weight:800; letter-spacing:.2em; color:var(--text); margin-left:.2em}
 .auth-brand::before{content:none}                       /* 去掉旧的方块占位图形，改用真正的应用图标 */
 /* 表单下面留白、唯一一行提示钉在卡片最底部（不突出） */
@@ -1458,6 +1502,8 @@ html{ overflow-anchor:none }
 .study-wrap{ transition:height .26s var(--ease-side), max-height .26s var(--ease-side) }
 .fitting [data-fit]{ transition:none !important }
 .fitting .study-wrap{ transition:none !important }
+/* v2.7.20：量尺寸期间也一样 —— 否则「写完高度立刻读几何」读到的是过渡中间值 */
+.sl-measuring [data-fit], .sl-measuring .study-wrap{ transition:none !important }
 @media (prefers-reduced-motion: reduce){
   [data-fit], .study-wrap{ transition-duration:.01ms }
 }
@@ -1875,7 +1921,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.19</span>
+            <span hidden id="set-version">2.7.20</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -2082,10 +2128,14 @@ function icon(name, size){
 /* v2.7.18：应用图标（浅灰折角卡）—— 登录页标题左侧那一枚。
    与 PWA 图标（assets/icons/appicon.svg）是同一个形状，这里作为**唯一来源**，
    以免在登录页里再手写一份内联 SVG（页面内「无手写 SVG」这条断言要继续成立）。 */
+/* v2.7.20：几何拆成两段，供两处复用（登录页那枚 + 启动加载页中央那枚）——
+   仍然是**同一份几何**，只是外层的浅灰圆角卡只在登录页加。 */
+const APP_MARK_PAGE = 'M30 22h24l12 12v40a6 6 0 0 1-6 6H30a6 6 0 0 1-6-6V28a6 6 0 0 1 6-6z';
+const APP_MARK_FOLD = 'M54 22v10a2 2 0 0 0 2 2h10';
 const APP_MARK =
   '<rect x="0" y="0" width="96" height="96" rx="22" fill="#e8e8eb"/>' +
-  '<path d="M30 22h24l12 12v40a6 6 0 0 1-6 6H30a6 6 0 0 1-6-6V28a6 6 0 0 1 6-6z" fill="#2f2f38"/>' +
-  '<path d="M54 22v10a2 2 0 0 0 2 2h10" fill="none" stroke="#e8e8eb" stroke-width="3.4" stroke-linecap="round"/>';
+  '<path d="' + APP_MARK_PAGE + '" fill="#2f2f38"/>' +
+  '<path d="' + APP_MARK_FOLD + '" fill="none" stroke="#e8e8eb" stroke-width="3.4" stroke-linecap="round"/>';
 function appMark(size){
   return '<svg class="ico-svg app-mark" viewBox="0 0 96 96" width="'+(size||34)+'" height="'+(size||34)+'" aria-hidden="true">'+APP_MARK+'</svg>';
 }
@@ -2093,6 +2143,72 @@ function paintAppMark(){
   const box = document.getElementById('auth-logo');
   if(box && !box.querySelector('svg')) box.innerHTML = appMark(34);
 }
+/* 启动加载页中央那一枚：**只要中间的概念图形**（折角页），不带底部浅灰圆角卡。
+   带 ico-svg 类 = 属于图标家族（登录页那枚也是 ico-svg + app-mark），
+   站点「页面内不许出现手写内联 SVG」那条断言靠这个类认人。 */
+function appMarkCore(size){
+  return '<svg class="ico-svg bs-mark" viewBox="0 0 96 96" width="'+(size||76)+'" height="'+(size||76)+'" aria-hidden="true">' +
+    '<path d="' + APP_MARK_PAGE + '" class="bs-page"/>' +
+    '<path d="' + APP_MARK_FOLD + '" class="bs-fold" fill="none"/>' +
+    '</svg>';
+}
+
+/* ===== v2.7.20 启动加载页 =====
+   时机：进入应用（已有会话时就在首屏之前）→ 首次云端同步完成；登录/注册时从提交到进应用。
+   做法：整页 fixed 覆盖层（亚克力），中央是应用图标的核心图形 + 一行「加载中，请稍候......」。
+   用引用计数，保证「多处同时开着」时不会被其中一处提前关掉。 */
+const Splash = {
+  el: null,
+  _refs: 0,
+  _hideTimer: null,
+  ensure(){
+    if(this.el && this.el.isConnected) return this.el;
+    const d = document.createElement('div');
+    d.id = 'boot-splash';
+    d.hidden = true;
+    d.setAttribute('role', 'status');
+    d.setAttribute('aria-live', 'polite');
+    d.innerHTML =
+      '<div class="bs-stage">' +
+        '<div class="bs-iconwrap"><span class="bs-halo" aria-hidden="true"></span>' + appMarkCore(76) + '</div>' +
+        '<div class="bs-text">加载中，请稍候......</div>' +
+      '</div>';
+    (document.body || document.documentElement).appendChild(d);
+    this.el = d;
+    return d;
+  },
+  show(){
+    const d = this.ensure();
+    this._refs++;
+    if(this._refs > 1) return;
+    if(this._hideTimer){ clearTimeout(this._hideTimer); this._hideTimer = null; }
+    d.hidden = false;
+    try{ document.documentElement.classList.add('sl-splashing'); }catch(e){}
+    // 重新触发动画：先摘类 + 强制一次结算，再加回来
+    d.classList.remove('is-on');
+    void d.offsetWidth;
+    d.classList.add('is-on');
+  },
+  hide(){
+    if(this._refs > 0) this._refs--;
+    if(this._refs > 0) return;
+    const d = this.el;
+    if(!d){ return; }
+    d.classList.remove('is-on');
+    try{ document.documentElement.classList.remove('sl-splashing'); }catch(e){}
+    // 等淡出结束再真正藏起来（不阻塞任何流程）
+    this._hideTimer = setTimeout(() => {
+      this._hideTimer = null;
+      if(this._refs === 0 && this.el) this.el.hidden = true;
+    }, 320);
+  },
+  /* 包一个 Promise：期间显示加载页，无论成功失败都收掉（失败时也不能把用户挡在加载页后面） */
+  async during(promise){
+    this.show();
+    try{ return await promise; }
+    finally{ this.hide(); }
+  }
+};
 
 /* v2.7.2（需求 2）：学习/复习卡片底部按钮。
    两键始终渲染同一份 DOM，确认态只切 .pending 类，所以「记得」的收拢与「下一个」的展开
@@ -2952,6 +3068,7 @@ const AppAuth = {
     if(p !== p2) return this.err('两次输入的密码不一致');
     if(!this.cloudReady()) return;
     this.busy(true, 'reg');
+    Splash.show();                 // v2.7.20：注册同样从「提交」盖到「进应用」
     try{
       const cl = await Supa.registerRemote(u, p);
       if(cl && cl.ok){
@@ -2978,6 +3095,7 @@ const AppAuth = {
       this.err('无法连接云端：' + netErrText(e) + '（本应用为在线优先，请连上网络后重试）');
     }finally{
       this.busy(false, 'reg');
+      Splash.hide();               // v2.7.20：失败时也要收掉
     }
   },
   async login(){
@@ -2985,6 +3103,7 @@ const AppAuth = {
     if(!u || !p) return this.err('请输入用户名和密码');
     if(!this.cloudReady()) return;
     this.busy(true, 'login');
+    Splash.show();                 // v2.7.20：从「提交」到「云端数据读完并进应用」之间盖上加载页
     try{
       const cl = await Supa.loginRemote(u, p);
       if(!cl || !cl.ok){
@@ -3039,6 +3158,7 @@ const AppAuth = {
       Net.onCloudFailure(e);
     }finally{
       this.busy(false, 'login');
+      Splash.hide();               // v2.7.20：登录失败也要收掉，否则错误提示被加载页挡住
     }
   },
   /* 在线优先前置检查：必须接入云端且当前可连通 */
@@ -4441,7 +4561,27 @@ function _rootZoom(){
     return (z && z > 0 && isFinite(z)) ? z : 1;
   }catch(e){ return 1; }
 }
+/* ===== v2.7.20：量尺寸期间必须关掉 .study-wrap 的高度过渡 =====
+   这两个函数都是「写高度 → 立刻读几何」：`fitBodyHeight` 读 body.clientHeight，
+   `fitStudyViewport` 读 documentElement.scrollHeight 做溢出校正。
+   而 [data-fit] 与 .study-wrap 都带过渡（.26s），读到的会是**过渡中间值**：
+   实测「桌面端把窗口最大化」时，校正循环每一轮都读到同一个 1489px（其实 wrap 已经被写小了），
+   于是判定「还溢出 409px」一路往下压，最后停在下限 300px —— 卡片被压扁，下面空出一大片。
+   进入学习页时不容易复现，是因为那时的起点是 auto，auto→具体值本来就不能补间。
+   修法同 .fitting：量之前加类关过渡，落地后再摘掉。 */
+function _measuring(fn){
+  const host = document.documentElement;
+  let added = false;
+  try{ if(!host.classList.contains('sl-measuring')){ host.classList.add('sl-measuring'); added = true; } }catch(e){}
+  try{ return fn(); }
+  finally{
+    if(added){ try{ requestAnimationFrame(() => { try{ host.classList.remove('sl-measuring'); }catch(e){} }); }catch(e){} }
+  }
+}
 function fitStudyViewport(){
+  return _measuring(fitStudyViewportInner);
+}
+function fitStudyViewportInner(){
   try{
     const zoom = _rootZoom();
     const wraps = document.querySelectorAll('#tab-study .study-wrap, #tab-review .study-wrap');
@@ -4525,6 +4665,10 @@ function contentSig(){
    所以值真的变了就用 Web Animations 从「原值」滑到「新值」，用户看到的是过渡而不是硬跳。
    返回 true 表示这次确实改动了（调用方据此决定要不要再复核字号）。 */
 function fitBodyHeight(){
+  // v2.7.20：读 body.clientHeight 判是否放得下 —— 同样必须在「关过渡」的条件下量（见 _measuring 注释）
+  return _measuring(fitBodyHeightInner);
+}
+function fitBodyHeightInner(){
   try{
     let changed = false;
     const bodies = document.querySelectorAll('#tab-study #fc-body, #tab-review #fc-body');
@@ -4672,7 +4816,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.19', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.20', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4701,7 +4845,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.19', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.20', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7384,6 +7528,14 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
 /* ================= 启动 ================= */
 (async function boot(){
   try{
+    /* v2.7.20 加载页：只要有会话就**同步**盖上（本函数在解析期就会跑到这里，
+       所以首次绘制看到的就是加载页，不会先闪一下半截界面），等云端同步完再收掉。
+       —— 这就是用户要的「进入同步完成之前」那一段。 */
+    let splashOn = false;
+    try{
+      if(document.documentElement.classList.contains('sl-has-session')){ Splash.show(); splashOn = true; }
+    }catch(e){}
+    const dropSplash = () => { if(splashOn){ splashOn = false; try{ Splash.hide(); }catch(e){} } };
     // 部署器注入的用户中心与本应用登录重复，隐藏其悬浮按钮
     function hideSiteDBUI(){
       try{
@@ -7439,6 +7591,7 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
     WL.initIDB();
     // 在线优先 v2.0.0：进入应用前必须先确认云端可连通，否则硬拦
     if(!Supa.active()){
+      dropSplash();
       AppAuth.showAuth();
       AppAuth.err('未接入云端数据库。请从 https://ppt10086.github.io/index-2/ 打开本站（本应用为在线优先）。');
       return;
@@ -7447,6 +7600,7 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
     // v2.0.0 迁移：旧版本可能在本机残留「游客」会话，会导致绕过登录直接进入。
     // 游客模式已彻底移除，这里一律清除并要求登录。
     if(bootUser && bootUser.user === '__guest__'){
+      dropSplash();
       try{
         Store.remove('session');
         Store.remove('u.__guest__');
@@ -7462,13 +7616,16 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
       // （旧实现会先 await 探测最多 3 次 ≈5 秒，期间用户看到的是登录界面，
       //   表现为「先弹登录页、几秒后才被切进应用」）
       AppUI.init();
+      /* v2.7.20：加载页已经在 boot 开头同步盖上了，这里等「连通性确认 + 云端拉取」结束再收。
+         用户要的正是这段：同步没完成之前别让人看见半截界面。 */
       // 连通性确认与云端数据拉取放到后台；确实连不上时交给容忍期逻辑弹拦截层
       (async () => {
         try{
           const reachable = await Net.probe(true);
-          if(reachable) Supa.pullMerge();
+          if(reachable) await Promise.resolve(Supa.pullMerge());
           else Net.onCloudFailure(new Error('Failed to fetch'));
         }catch(e){ Net.onCloudFailure(e); }
+        finally{ dropSplash(); }        // 成功、失败、离线都收掉，绝不让加载页把人挡住
       })();
       // 后台预载词库（在线优先：优先加载站点托管的基础词库，再升级在线完整版）
       WL.ensure('primary').then(() => WL.ensure('middle')).then(() => WL.ensure('hs')).then(() => WL.ensure('cet4')).then(() => {
@@ -7480,6 +7637,7 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
       AppAuth.showAuth();
     }
   }catch(e){
+    try{ Splash.hide(); }catch(_){}          // v2.7.20：致命错误时也要把加载页收掉，否则错误页被它盖住
     showFatal(e && e.message ? e.message : String(e));
   }
 })();
