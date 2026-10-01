@@ -126,7 +126,9 @@ body{font-family:"Plus Jakarta Sans Variable","Plus Jakarta Sans","Segoe UI","Pi
 .card,.en-hero,.sidebar,.flashcard,.page,.stat,.modal,.sheet,.flow-band,.topbar,.study-meta,.rv-row,.lib-row,.kv{
   transition-property:background-color,border-color,color,box-shadow;
   transition-duration:var(--dur-2); transition-timing-function:var(--ease)}
-.skip-link{position:fixed; left:14px; top:-60px; z-index:1000; background:var(--primary); color:var(--btn-fg); padding:9px 16px; border-radius:var(--radius-sm); font-weight:700; font-size:var(--fs-body); box-shadow:var(--shadow); transition:top var(--dur-2) ease-out; text-decoration:none}
+/* v2.7.32：触控目标契约探针抓到的唯一越界项 —— 「跳到主内容」的高度只有 41px（差 3px）。
+   它是键盘/读屏用户真正会点的控件，所以一次性给到 44px（平时在视口外的 top:-60px，不影响版式）。 */
+.skip-link{position:fixed; left:14px; top:-60px; z-index:1000; background:var(--primary); color:var(--btn-fg); padding:9px 16px; border-radius:var(--radius-sm); font-weight:700; font-size:var(--fs-body); box-shadow:var(--shadow); transition:top var(--dur-2) ease-out; text-decoration:none; min-height:44px; box-sizing:border-box; display:inline-flex; align-items:center}
 .skip-link:focus{top:14px; color:var(--btn-fg); text-decoration:none}
 /* 移动端禁用双击缩放与 300ms 点击延迟（保留双指缩放） */
 html,body,button,input,select,textarea,a,label,.btn,.nav-btn,.bnav-btn,.book-opt,.lib-row,.flashcard,.pager button,[onclick]{touch-action:manipulation}
@@ -1999,7 +2001,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.31</span>
+            <span hidden id="set-version">2.7.32</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -4896,7 +4898,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.31', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.32', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4925,7 +4927,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.31', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.32', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
