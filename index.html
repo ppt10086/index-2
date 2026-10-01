@@ -967,15 +967,17 @@ li,td,th{text-wrap:normal}
 .fc-word-wrap{display:flex; align-items:center; justify-content:center; gap:10px 16px; flex-wrap:wrap; width:100%}
 .fc-word-wrap .fc-word{flex:0 1 auto; min-width:0}
 .fc-word-wrap .fc-speak{flex:0 0 auto}
-/* v2.7.21 光学居中：喇叭按钮在流内时，被 flex 居中缩短的是「单词 + 按钮」这一组，
-   于是单词本身会整体偏左半个按钮宽（实测 31px）。
-   ⚠️ v2.7.33 **撤回**了当时的修法（给单词加 margin-right:-62px 抵消占位）：
-   它让单词的布局宽度「借」了按钮的位置，而 Fit 量可用宽度时用的是父容器整宽、**没有把按钮算进去**，
-   于是按钮必然压在长单词的尾部（用户反馈「发音按键和文字重叠了」）。
-   现在恢复「整组居中」（单词偏左 31px 的观感可接受），正确做法见下方注释。 */
-/* TODO(v2.8)：要同时做到「按钮贴单词」+「单词真居中」+「绝不重叠」，需要把单词包进一个
-   shrink-to-fit 的 .fc-word-box（position:relative），按钮绝对定位挂在它右侧，
-   并让 Fit 用 data-fit-host 指向 .fc-word-wrap、用 data-fit-reserve 预留按钮宽度。 */
+/* v2.7.34 单词/发音键几何（把 v2.7.21 撤回的「真居中」用正确方式做回来）：
+   结构 = .fc-word-wrap[data-fit-host] > .fc-word-box > (.fc-word + .fc-speak)
+   · .fc-word-box 是 shrink-to-fit：flex 居中的就是**单词本身**，所以单词真居中；
+   · 按钮绝对定位挂在盒子右侧 → 不占布局宽度 → 不可能压住文字；
+   · Fit 用 data-fit-host 取父容器宽度、再减 data-fit-reserve（按钮宽 + 余量），
+     保证单词不会长到把按钮挤出卡片。
+   v2.7.21 那版用负外边距实现居中，等于让单词「借」按钮的位置 —— 正是重叠的根因。 */
+.fc-word-wrap{position:relative}
+.fc-word-wrap .fc-word-box{position:relative; display:inline-block; max-width:100%}
+.fc-word-wrap .fc-word{max-width:100%}
+.fc-word-wrap .fc-speak{position:absolute; left:calc(100% + 6px); top:50%; transform:translateY(-50%)}
 .fc-speak{width:var(--fc-speak); height:var(--fc-speak); border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
   color:var(--primary); background:var(--primary-soft); border:1px solid transparent;
   transition:background-color var(--dur) var(--ease), scale var(--dur) var(--ease)}
@@ -2006,7 +2008,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.33</span>
+            <span hidden id="set-version">2.7.34</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -4407,7 +4409,14 @@ const Fit = {
   },
   /* 一次「读几何」批处理：写完字号之后只在这里读一次，避免读写交替造成的多次强制布局 */
   measure(el, nowrap, curSize){
-    const avail = (el.parentElement ? el.parentElement.clientWidth : 0) || el.clientWidth || 0;
+    /* v2.7.34：可用宽度取「宿主容器」而不是直接父元素 —— 因为单词现在被包在 shrink-to-fit 的
+       .fc-word-box 里（它只有单词那么宽），拿它的 clientWidth 当可用宽度就永远不会缩字号。
+       宿主用 data-fit-host 显式指定；再用 data-fit-reserve 扣掉旁边那个绝对定位的按钮宽度。
+       没有 data-fit-host 时行为与以前完全一致（父元素宽度）。 */
+    const host = el.closest ? el.closest('[data-fit-host]') : null;
+    const base = host ? host.clientWidth : ((el.parentElement ? el.parentElement.clientWidth : 0) || el.clientWidth || 0);
+    const reserve = parseFloat(el.getAttribute('data-fit-reserve')) || 0;
+    const avail = Math.max(0, base - reserve);
     if(avail <= 0) return { unsettled: true };
     let textW = 0;
     try{
@@ -4797,6 +4806,14 @@ window.addEventListener('resize', () => { setTimeout(fitStudyViewport, 200); });
 window.addEventListener('orientationchange', () => { setTimeout(fitStudyViewport, 300); });
 
 
+/* v2.7.34：单词两侧要给发音键留出多少宽度（供 Fit 的 data-fit-reserve 用）。
+   值来自唯一来源 --fc-speak（按钮尺寸），再加 20px 余量（按钮与文字的间距 + 右侧呼吸）。
+   为什么要预留：按钮现在绝对定位挂在单词右侧，若不预留，长单词会把按钮推出卡片外。 */
+function fitReserve(){
+  let w = 46;
+  try{ w = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fc-speak')) || 46; }catch(e){}
+  return Math.round(w + 20);
+}
 function fcFontSize(w){
   const len = String(w || '').length;
   const base = (typeof window !== 'undefined' && window.innerWidth <= 720) ? 30 : 42;
@@ -4908,7 +4925,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.33', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.34', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4937,7 +4954,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.33', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.34', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -6365,7 +6382,7 @@ const AppStudy = {
         '<span>第 '+(s.idx+1)+' / '+total+' 张</span></span>' +
         '<span class="tag '+stage.cls+'">'+stage.txt+'</span></div>' +
       srsStripHtml(curState) +
-      '<div class="flashcard"><div class="fc-word-wrap"><span class="fc-word" data-fit data-fit-nowrap data-fit-max="'+fcFontSize(e.w)+'">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppStudy.speak()" aria-label="朗读 '+esc(e.w)+'（快捷键 ·）" title="朗读（快捷键 ·）">'+icon('volume2', 20)+'</button></div>' +
+      '<div class="flashcard"><div class="fc-word-wrap" data-fit-host><span class="fc-word-box"><span class="fc-word" data-fit data-fit-nowrap data-fit-reserve="'+fitReserve()+'" data-fit-max="'+fcFontSize(e.w)+'">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppStudy.speak()" aria-label="朗读 '+esc(e.w)+'（快捷键 ·）" title="朗读（快捷键 ·）">'+icon('volume2', 20)+'</button></span></div>' +
       '<div class="fc-ph" id="fc-ph"></div>' +
       passNote(curState) +
       '<div class="fc-img" id="fc-img"'+(imgEnabled() ? '' : ' hidden')+'></div>' +
@@ -6775,7 +6792,7 @@ const AppReview = {
         '<span>复习 '+(s.idx+1)+' / '+total+'</span></span>' +
         '<span class="tag '+stage.cls+'">第 '+Math.min((c && c.n || 0) + 1, SRS.ROUNDS)+' 遍</span></div>' +
       srsStripHtml(c) +
-      '<div class="flashcard"><div class="fc-word-wrap"><span class="fc-word" data-fit data-fit-nowrap data-fit-max="'+fcFontSize(e.w)+'">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppReview.speak()" aria-label="朗读 '+esc(e.w)+'（快捷键 ·）" title="朗读（快捷键 ·）">'+icon('volume2', 20)+'</button></div>' +
+      '<div class="flashcard"><div class="fc-word-wrap" data-fit-host><span class="fc-word-box"><span class="fc-word" data-fit data-fit-nowrap data-fit-reserve="'+fitReserve()+'" data-fit-max="'+fcFontSize(e.w)+'">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppReview.speak()" aria-label="朗读 '+esc(e.w)+'（快捷键 ·）" title="朗读（快捷键 ·）">'+icon('volume2', 20)+'</button></span></div>' +
       '<div class="fc-ph" id="fc-ph"></div>' +
       passNote(c) +
       '<div class="fc-img" id="fc-img"'+(imgEnabled() ? '' : ' hidden')+'></div>' +
