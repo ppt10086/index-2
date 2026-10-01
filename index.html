@@ -369,6 +369,13 @@ html.side-collapsed .side-toggle{left:12px}
 .side-user .ut{font-size:var(--fs-micro); color:var(--muted)}
 .main{flex:1; padding:28px 34px 70px; max-width:1180px; margin:0 auto; width:100%;
   transition:padding-left var(--dur-3) var(--ease-side)}
+/* v2.7.22 超宽重排：1180px 的内容上限在 1600 以上就封顶了 —— 实测 2560 与 1920 的主内容
+   同为 1446 视觉像素（zoom 1.3 封顶），等于超宽屏只是「更空的同一版」。
+   现在 ≥1600 放宽内容上限并加大左右留白，让宽屏真正用起来（而不是把内容拉长成一行）。 */
+@media (min-width:1600px){
+  .main{max-width:1360px; padding-left:44px; padding-right:44px}
+  #page-dashboard .grid-2{gap:56px}
+}
 #bottom-nav{display:none; position:fixed; left:0; right:0; bottom:0; z-index:800; background:var(--panel); border-top:1px solid var(--line); padding:4px 8px calc(4px + env(safe-area-inset-bottom, 0px)); backdrop-filter:blur(12px); background:color-mix(in srgb, var(--panel) 88%, transparent)}
 #bottom-nav .bnav-btn{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:7px 4px; min-height:56px; font-size:var(--fs-small); font-weight:600; color:var(--muted); border-radius:var(--radius); transition-property:background-color,color; transition-duration:var(--dur-1); transition-timing-function:ease-out}
 #bottom-nav .bnav-btn .ico{width:22px; height:22px; display:flex; align-items:center; justify-content:center}
@@ -812,7 +819,11 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
 #dash-stats .stat:hover{translate:none; box-shadow:none}
 #dash-stats .stat-body{gap:3px}
 #dash-stats .stat .k{font-size:var(--fs-small); letter-spacing:.08em; text-transform:uppercase}
-#dash-stats .stat .v{font-size:34px; font-weight:800; letter-spacing:-.03em}
+/* v2.7.22 层级收口：四个统计数字原来是 34px/800，与主行动条（26px/800）抢戏 ——
+   审计实测「字号 ≥20px 且字重 ≥700」的强调块一屏有 8 个，主角不明确。
+   现在数字降到 title 档（18px）/700，把「唯一的强强调」让给主行动条（26px/800）。
+   数据依然好读（18px 加粗 + 等宽数字），但不再和主行动争夺视线。 */
+#dash-stats .stat .v{font-size:var(--fs-title); font-weight:700; letter-spacing:-.01em}
 #dash-stats .stat .d{font-size:var(--fs-small)}
 #dash-stats .stat-ico{width:34px; height:34px; background:transparent; border-radius:0}
 #dash-stats .stat-ico .ico-svg{width:26px; height:26px}
@@ -1559,6 +1570,15 @@ html{ overflow-anchor:none }
 .btn-back:hover .ico-svg{transform:translateX(-2px)}
 .btn-back:active{transform:scale(.92)}
 .btn-back:focus-visible{outline:2px solid color-mix(in srgb, var(--primary) 55%, transparent); outline-offset:3px}
+/* v2.7.22 触控目标：审计实测 ≤860px 档有多个可交互元素小于 40px（返回键 34、色板 25）。
+   触屏上「看得见」不等于「点得着」—— 触控档统一抬到 44px（视觉图形尺寸不变，只放大热区）。
+   注：正文里那个 15px 的「?」提示图标不在此列 —— 它在文字流里，撑到 44px 会破坏行内排版；
+   它带 title 属性、且同一信息在主文案里都写了，保留小尺寸是刻意的。 */
+@media (max-width:1024px){
+  .btn-back{width:44px; height:44px}
+  .acc-sw{width:44px; height:44px}
+  .btn-sm{min-height:44px; padding-top:11px; padding-bottom:11px}
+}
 /* 按下时的反馈只做「颜色加深 + 图标轻移」，不加底色、不加描边、不留涟漪 */
 .btn-back.pressing{color:var(--primary)}
 .btn-back.pressing .ico-svg{transform:translateX(-4px)}
@@ -1603,6 +1623,9 @@ html{ overflow-anchor:none }
   #dash-quick .fb-arrows .ico-svg{width:14px; height:14px}
 }
 .dash-welcome-line{display:none}      /* 只在手机档显示（桌面档看完整说明） */
+/* v2.7.22 行宽上限：欢迎说明这类长文本实测在 1920 档排到 107 个汉字一行（远超可读行宽）。
+   1em ≈ 1 个汉字 / ≈0.5 个拉丁字符，所以 30em ≈ 30 汉字 ≈ 60 拉丁字符，两种语言都在舒适区。 */
+.dash-welcome-list, .dash-welcome-line{max-width:30em}
 .set-index.minimal{grid-template-columns:1fr; gap:0; max-width:520px}
 .set-index.minimal .set-card{
   display:flex; align-items:center; justify-content:space-between;
@@ -1937,7 +1960,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.21</span>
+            <span hidden id="set-version">2.7.22</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -4832,7 +4855,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.21', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.22', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4861,7 +4884,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.21', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.22', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
