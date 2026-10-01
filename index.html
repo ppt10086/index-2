@@ -449,6 +449,16 @@ html.side-collapsed .side-toggle{left:12px}
 .fc-btns{display:flex; gap:13px; margin-top:22px; justify-content:center; flex-wrap:wrap; position:relative}
 /* 页面内自绘的「返回」按钮：纯文字 + 描边胶囊，不用任何图标/遮罩 */
 .study-meta .sm-l{display:flex; align-items:center; gap:10px; min-width:0}
+/* v2.7.23 记忆节奏带：只属于这个产品的一条图形 —— 6 个刻度 = 6 轮记忆曲线，
+   间距按 NODES 天数差成比例（左密右疏），已完成填实、当前一轮强调色放大、未来留浅点。
+   它是这一屏唯一的「大胆处」，所以其余元素保持安静（小字、中性灰）。 */
+.srs-strip{display:flex; align-items:center; gap:0; margin:0 0 16px; min-height:14px; line-height:1; color:var(--muted); font-size:var(--fs-micro)}
+.srs-dot{display:block; width:6px; height:6px; border-radius:50%; background:transparent; box-shadow:inset 0 0 0 1.5px var(--line2); flex:none}
+.srs-dot.done{background:color-mix(in srgb, var(--primary) 55%, var(--line2)); box-shadow:none}
+.srs-dot.now{width:9px; height:9px; background:var(--primary); box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent)}
+.srs-txt{margin-left:12px; letter-spacing:.02em; font-variant-numeric:tabular-nums}
+.srs-due{margin-left:auto; color:color-mix(in srgb, var(--text) 62%, transparent); font-variant-numeric:tabular-nums}
+@media (max-width:480px){ .srs-dot{width:5px; height:5px} .srs-dot.now{width:9px; height:9px} }
 .study-back{font:inherit; font-size:var(--fs-small); font-weight:600; color:var(--muted); background:transparent;
   border:1px solid var(--line2); border-radius:var(--radius-full); padding:5px 14px; cursor:pointer;
   transition:color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease), background var(--dur-1) var(--ease)}
@@ -1960,7 +1970,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.22</span>
+            <span hidden id="set-version">2.7.23</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -4855,7 +4865,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.22', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.23', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4884,7 +4894,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.22', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.23', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -6298,9 +6308,9 @@ const AppStudy = {
       '<div class="study-meta">' +
         '<span class="sm-l"><button class="btn-back" type="button" onclick="AppStudy.backToSetup()" title="返回上一级（Esc）" aria-label="返回上一级">' +
           icon('arrowLeft', 22) + '</button>' +
-        '<span>第 '+(s.idx+1)+' / '+total+' 个</span></span>' +
+        '<span>第 '+(s.idx+1)+' / '+total+' 张</span></span>' +
         '<span class="tag '+stage.cls+'">'+stage.txt+'</span></div>' +
-      '<div class="bar" style="margin-bottom:16px" role="progressbar" aria-valuemin="0" aria-valuemax="'+total+'" aria-valuenow="'+(s.idx+1)+'" aria-label="学习进度"><i style="width:'+Math.round(s.idx/total*100)+'%"></i></div>' +
+      srsStripHtml(curState) +
       '<div class="flashcard"><div class="fc-word-wrap"><span class="fc-word" data-fit data-fit-nowrap data-fit-max="'+fcFontSize(e.w)+'">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppStudy.speak()" aria-label="朗读 '+esc(e.w)+'（快捷键 ·）" title="朗读（快捷键 ·）">'+icon('volume2', 20)+'</button></div>' +
       '<div class="fc-ph" id="fc-ph"></div>' +
       passNote(curState) +
@@ -6513,6 +6523,41 @@ function fillPh(e){
     put(ph);
   });
 }
+/* ===== v2.7.23 记忆节奏带：把这个产品自己的东西画出来 =====
+   产品题材是「词」，而真正只属于 StudyLens 的信息是**间隔重复的节奏**：1 / 2 / 4 / 7 / 15 / 21 天。
+   原来卡片上那条 8px 进度条是通用件（而且和「第 N / M 个」重复），换成这条节奏带：
+   · 6 个刻度 = 6 轮记忆曲线；已完成填实、当前一轮用强调色并放大、未来留浅点；
+   · 刻度**间距按 NODES 的天数差成比例**（1/2/3/8/6 → 左密右疏）—— 曲线是「算出来的」不是「装饰画的」，
+     这是本轮唯一一处「大胆」的地方，其余保持安静；
+   · 右侧一句话给出下一次复习时间（这才是用户真正想知道的事）。
+   `probe-rhythm.mjs` 会断言：6 个刻度、间距单调变宽、当前刻度位置 = 轮次、两侧文案与实际排期一致。 */
+function srsStripHtml(c){
+  const NODES = SRS.NODES, ROUNDS = SRS.ROUNDS;
+  const n = c && c.n ? Math.min(c.n, ROUNDS) : 0;            // 已完成的轮数
+  const cur = Math.min(n + 1, ROUNDS);                        // 正在进行的是第几轮
+  const done = (c && c.s === 'known' && n >= ROUNDS);
+  let dueTxt = '';
+  if(done){
+    dueTxt = '';                       // 已掌握：左侧标签已经写了，右侧不再重复
+  } else if(c && c.d0){
+    const days = SRS.dayDiff(SRS.today(), SRS.dueDay(c));
+    if(days === null || isNaN(days)) dueTxt = '按计划复习';
+    else if(days <= 0) dueTxt = '今天复习';
+    else dueTxt = days + ' 天后复习';
+  }
+  /* 新词（没有 d0）右侧留空：上面那枚阶段标签已经写了「新词」，
+     同一行里再写一遍就是重复信息（视觉复核指出过这一点）。 */
+  let dots = '';
+  for(let i = 0; i < ROUNDS; i++){
+    const gap = i === 0 ? 0 : (NODES[i] - NODES[i - 1]);      // 与上一轮之间的天数
+    const ml = i === 0 ? 0 : Math.min(26, 3 + gap * 2);       // 1 天≈5px、8 天≈19px（上限 26px）
+    const cls = i < n ? 'done' : (i === cur - 1 ? 'now' : (done ? 'done' : 'todo'));
+    dots += '<i class="srs-dot '+cls+'" style="margin-left:'+ml+'px"></i>';
+  }
+  return '<div class="srs-strip" role="img" aria-label="记忆节奏：第 '+cur+' / '+ROUNDS+' 轮，'+dueTxt+'">' +
+    dots + '<span class="srs-txt">'+(done ? '已掌握' : '第 '+cur+' / '+ROUNDS+' 轮')+'</span>' +
+    '<span class="srs-due">'+esc(dueTxt)+'</span></div>';
+}
 function burstFx(anchor, count){
   if(!anchor) return;
   const wrap = document.createElement('div');
@@ -6643,7 +6688,7 @@ const AppReview = {
           icon('arrowLeft', 22) + '</button>' +
         '<span>复习 '+(s.idx+1)+' / '+total+'</span></span>' +
         '<span class="tag '+stage.cls+'">第 '+Math.min((c && c.n || 0) + 1, SRS.ROUNDS)+' 遍</span></div>' +
-      '<div class="bar" style="margin-bottom:16px" role="progressbar" aria-valuemin="0" aria-valuemax="'+total+'" aria-valuenow="'+(s.idx+1)+'" aria-label="复习进度"><i style="width:'+Math.round(s.idx/total*100)+'%"></i></div>' +
+      srsStripHtml(c) +
       '<div class="flashcard"><div class="fc-word-wrap"><span class="fc-word" data-fit data-fit-nowrap data-fit-max="'+fcFontSize(e.w)+'">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppReview.speak()" aria-label="朗读 '+esc(e.w)+'（快捷键 ·）" title="朗读（快捷键 ·）">'+icon('volume2', 20)+'</button></div>' +
       '<div class="fc-ph" id="fc-ph"></div>' +
       passNote(c) +
