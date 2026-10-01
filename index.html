@@ -458,6 +458,17 @@ html.side-collapsed .side-toggle{left:12px}
 .srs-dot.now{width:9px; height:9px; background:var(--primary); box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent)}
 .srs-txt{margin-left:12px; letter-spacing:.02em; font-variant-numeric:tabular-nums}
 .srs-due{margin-left:auto; color:color-mix(in srgb, var(--text) 62%, transparent); font-variant-numeric:tabular-nums}
+/* v2.7.24 复习潮汐：14 格 = 未来两周，柱高按当日到期词数；今天那一格是唯一的强调点。
+   和学习卡的节奏带共用同一套「小刻度 + 一个重点」的语言，只是尺度不同。
+   为避免和上面那条「过去 7 天已学」的柱状图读成「两张一样的图」，潮汐画成**量线上的分布刻度**
+   （无圆角、更窄、带一条 baseline），语义差别一眼可见：上面是「已发生」，这条是「将要发生」。 */
+.tide-box{margin-top:16px; padding-top:14px; border-top:1px solid var(--line)}
+.tide{display:flex; align-items:flex-end; gap:4px; height:30px; border-bottom:1px solid var(--line2); padding-bottom:2px}
+.tide i{flex:1 1 0; min-width:2px; border-radius:1px; background:color-mix(in srgb, var(--primary) 34%, var(--line2))}
+.tide i.zero{background:var(--line); height:3px}
+.tide i.today{background:var(--primary)}
+.tide-lab{display:flex; justify-content:space-between; gap:12px; margin-top:7px; font-size:var(--fs-micro); color:var(--muted); font-variant-numeric:tabular-nums}
+.tide-lab b{color:var(--text); font-weight:700}
 @media (max-width:480px){ .srs-dot{width:5px; height:5px} .srs-dot.now{width:9px; height:9px} }
 .study-back{font:inherit; font-size:var(--fs-small); font-weight:600; color:var(--muted); background:transparent;
   border:1px solid var(--line2); border-radius:var(--radius-full); padding:5px 14px; cursor:pointer;
@@ -1970,7 +1981,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.23</span>
+            <span hidden id="set-version">2.7.24</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -4865,7 +4876,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.23', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.24', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4894,7 +4905,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.23', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.24', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -5331,6 +5342,7 @@ const AppUI = {
       '<div style="display:flex;justify-content:space-between;align-items:baseline;font-size:14px;margin-bottom:4px"><span class="muted">今日已认识</span><b>'+todayMarks+' 词</b></div>' +
       '<div class="bar" style="margin:8px 0 6px"><i style="width:'+Math.min(100, Math.round(todayMarks / Math.max(1, d.settings.daily) * 100))+'%"></i></div>' +
       '<div class="wk">'+bars+'</div>' +
+      '<div class="tide-box">'+tideHtml(AppFilter.result && AppFilter.result.kept)+'</div>' +
       '';   // v2.7.6：按需求删除「上次学习 · 每日目标 · 复习计划」这行提示
     const tip = $('#dash-english-tip');
     if(AppFilter.result){
@@ -6557,6 +6569,38 @@ function srsStripHtml(c){
   return '<div class="srs-strip" role="img" aria-label="记忆节奏：第 '+cur+' / '+ROUNDS+' 轮，'+dueTxt+'">' +
     dots + '<span class="srs-txt">'+(done ? '已掌握' : '第 '+cur+' / '+ROUNDS+' 轮')+'</span>' +
     '<span class="srs-due">'+esc(dueTxt)+'</span></div>';
+}
+/* ===== v2.7.24 复习潮汐：把节奏母题从「一个词」抬到「整个计划」 =====
+   学习卡上的节奏带回答「这个词在第几轮」，概览上这条回答「未来两周的量怎么分布」——
+   同一套图形语言（小刻度 + 唯一强调点），换一个尺度复用，界面才是「一套设计」而不是「几张拼图」。
+   数据是真算的：按每个词的 SRS 到期日分桶到未来 14 天（今天这一格含逾期）。 */
+function tideHtml(entries){
+  const DAYS = 14;
+  const list = entries || [];
+  const listId = AppFilter.result ? AppFilter.result.targetId : '';
+  const st = (AppAuth.data() && AppAuth.data().wordState) || {};
+  const today = SRS.today();
+  const buckets = new Array(DAYS).fill(0);
+  let overdue = 0;
+  for(const e of list){
+    const c = st[SRS.key(listId, e.w)];
+    if(!c || SRS.isMastered(c)) continue;
+    const d = SRS.dayDiff(today, SRS.dueDay(c));
+    if(d === null || isNaN(d)) continue;
+    if(d < 0){ overdue++; buckets[0]++; }
+    else if(d < DAYS) buckets[d]++;
+  }
+  const max = Math.max(1, ...buckets);
+  const total = buckets.reduce((a, b) => a + b, 0);
+  let ticks = '';
+  for(let i = 0; i < DAYS; i++){
+    const n = buckets[i];
+    const h = n ? Math.max(5, Math.round(n / max * 30)) : 3;
+    const dt = SRS.dayAdd(today, i);
+    ticks += '<i class="'+(i === 0 ? 'today' : (n ? '' : 'zero'))+'" style="height:'+h+'px" title="'+dt+' · '+n+' 词'+(i === 0 && overdue ? '（含逾期 '+overdue+'）' : '')+'"></i>';
+  }
+  return '<div class="tide" role="img" aria-label="未来两周到期分布：今日 '+buckets[0]+' 词，合计 '+total+' 词">'+ticks+'</div>' +
+    '<div class="tide-lab"><span>今日到期 <b>'+buckets[0]+'</b> 词'+(overdue ? '（含逾期 '+overdue+'）' : '')+'</span><span>未来两周共 '+total+' 词</span></div>';
 }
 function burstFx(anchor, count){
   if(!anchor) return;
