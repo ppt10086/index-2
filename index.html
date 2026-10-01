@@ -968,9 +968,14 @@ li,td,th{text-wrap:normal}
 .fc-word-wrap .fc-word{flex:0 1 auto; min-width:0}
 .fc-word-wrap .fc-speak{flex:0 0 auto}
 /* v2.7.21 光学居中：喇叭按钮在流内时，被 flex 居中缩短的是「单词 + 按钮」这一组，
-   于是单词本身会整体偏左半个按钮宽（实测 31px）。单词是这个界面的主角，得真的居中 ——
-   用负外边距把按钮的占位抵消掉（16px = 上面 .fc-word-wrap 的列间距）。 */
-.fc-word-wrap .fc-word{margin-right:calc(-1 * (var(--fc-speak) + 16px))}
+   于是单词本身会整体偏左半个按钮宽（实测 31px）。
+   ⚠️ v2.7.33 **撤回**了当时的修法（给单词加 margin-right:-62px 抵消占位）：
+   它让单词的布局宽度「借」了按钮的位置，而 Fit 量可用宽度时用的是父容器整宽、**没有把按钮算进去**，
+   于是按钮必然压在长单词的尾部（用户反馈「发音按键和文字重叠了」）。
+   现在恢复「整组居中」（单词偏左 31px 的观感可接受），正确做法见下方注释。 */
+/* TODO(v2.8)：要同时做到「按钮贴单词」+「单词真居中」+「绝不重叠」，需要把单词包进一个
+   shrink-to-fit 的 .fc-word-box（position:relative），按钮绝对定位挂在它右侧，
+   并让 Fit 用 data-fit-host 指向 .fc-word-wrap、用 data-fit-reserve 预留按钮宽度。 */
 .fc-speak{width:var(--fc-speak); height:var(--fc-speak); border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
   color:var(--primary); background:var(--primary-soft); border:1px solid transparent;
   transition:background-color var(--dur) var(--ease), scale var(--dur) var(--ease)}
@@ -2001,7 +2006,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.32</span>
+            <span hidden id="set-version">2.7.33</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -4714,6 +4719,11 @@ function fitStudyViewportInner(){
         const over = rest + h * zoom - window.innerHeight;
         if(over > 2){ h = Math.max(300, h - Math.ceil(over / zoom) - 2); w.style.height = h + 'px'; w.style.maxHeight = h + 'px'; }
       }
+      /* v2.7.33 兜底：如果算完掉在 300px 下限、而视口明显还有富余，说明这一轮的估算被污染了
+         （典型场景：侧栏宽度过渡中／进入动画中途量到被撑大的 scrollHeight）。
+         这时宁可回到「按视口直接估」的值 —— 用户反馈的「有概率展不开」就是卡死在这个下限。 */
+      const rawH = Math.max(300, Math.floor(availVisual / zoom));
+      if(h <= 302 && rawH > 420){ h = rawH; w.style.height = h + 'px'; w.style.maxHeight = h + 'px'; }
     }
     fitBodyHeight();    // 释义长就整体缩放压缩，缩到最小仍放不下才内部滚动
     // v2.7.7：这里不再额外 fitNow(document) —— 字号由调用方那次 Fit 一次算清；
@@ -4898,7 +4908,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.32', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.33', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4927,7 +4937,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.32', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.33', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -5007,6 +5017,12 @@ const AppUI = {
     document.documentElement.classList.toggle('side-collapsed', next);
     try{ Store.set('sideCollapsed', next); }catch(e){}
     this.applySide();
+    /* v2.7.33 修「有侧边栏时有概率展不开」：折叠/展开会改主区宽度 → 学习卡必须重新适配。
+       关键是**等宽度过渡结束再量**（320ms 过渡 + 余量）：过渡中量到的是中间宽度，
+       而层内路径（平移/预渲染）只能用 scrollHeight 估算高度，估算被污染就会把卡片一路收到
+       300px 下限。定时兜底比只挂 transitionend 稳（事件可能因为元素被替换而丢失）。 */
+    clearTimeout(this._sideFitT);
+    this._sideFitT = setTimeout(() => { try{ if(typeof fitStudyViewport === 'function') fitStudyViewport(); }catch(e){} }, 380);
     return next;
   },
 
