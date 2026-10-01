@@ -1215,13 +1215,13 @@ html.sl-has-session #view-auth{display:none}
 /* 设置面板本身没有 .card 直接子元素，直接给面板做淡入 */
 .set-pane:not([hidden]){ animation:paneIn var(--dur-3) var(--ease-side) both }
 @keyframes paneIn{from{opacity:0; transform:translateY(7px)} to{opacity:1; transform:none}}
-.rv-row,.lib-row,.wlist tbody tr{animation:rowIn var(--dur-2) var(--ease) both}
-.rv-row:nth-child(2),.lib-row:nth-child(2),.wlist tbody tr:nth-child(2){animation-delay:.03s}
-.rv-row:nth-child(3),.lib-row:nth-child(3),.wlist tbody tr:nth-child(3){animation-delay:.06s}
-.rv-row:nth-child(4),.lib-row:nth-child(4),.wlist tbody tr:nth-child(4){animation-delay:.09s}
-.rv-row:nth-child(5),.lib-row:nth-child(5),.wlist tbody tr:nth-child(5){animation-delay:.12s}
-.rv-row:nth-child(n+6),.lib-row:nth-child(n+6),.wlist tbody tr:nth-child(n+6){animation-delay:.15s}
-@keyframes rowIn{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none}}
+/* v2.7.35 清套路痕迹（三）：原来**每一行**都各自淡入、还按 nth-child 级联错开（.03s 递增到 .15s）。
+   这套「行级联入场」是最容易读成模板/AI 生成感的动效之一，而且它不是在首屏出现一次 ——
+   列表每次重绘（切换、筛选、翻页）都会重播一遍，于是变成一种反复的抽搐。
+   改成：**整块列表一次淡入**（只动 opacity），行本身不再动。
+   「内容换了」的反馈由容器承担，层级由排版承担 —— 动效不再给每个元素发一张入场券。 */
+.rv-list,.lib-list,.wlist tbody{animation:listIn var(--dur-2) var(--ease) both}
+@keyframes listIn{from{opacity:0} to{opacity:1}}
 @media (prefers-reduced-motion: reduce){
   .rv-row,.lib-row,.wlist tbody tr,.set-pane,.fc-img img.on,
   #tab-filter>.card,#tab-browse>.card,#tab-record>.card{animation:none}
@@ -2008,7 +2008,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.34</span>
+            <span hidden id="set-version">2.7.35</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -4925,7 +4925,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.34', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.35', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4954,7 +4954,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.34', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.35', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
