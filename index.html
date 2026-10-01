@@ -1399,11 +1399,14 @@ html.sl-has-session #view-auth{display:none}
   background:color-mix(in srgb, var(--primary) 9%, transparent) }
 #page-dashboard .topbar .flow-band.compact .fb-txt{ flex-direction:column; align-items:center; text-align:center; gap:8px }
 #page-dashboard .topbar .flow-band.compact .fb-main{ font-size:var(--fs-h1); font-weight:800; letter-spacing:.005em;
-  color:var(--primary); animation:heroTextPulse 2.6s var(--ease) infinite }
+  color:var(--primary) }
+/* v2.7.26 清套路痕迹（二）：原来主行动条的文字与箭头各自挂着一条**无限呼吸动画**
+   （heroTextPulse ×2 + heroArrowBreath，2.2–2.6s 循环）。文字反复明暗闪动是「廉价吸睛」的典型手法，
+   而且它一直在跑。现在只留唯一一处「动」——流带本身的光带扫过（fbFlow），
+   文字与箭头保持静止：注意力由**层级**（字号/字重/颜色）负责，不由闪烁负责。 */
 #page-dashboard .topbar .flow-band.compact .fb-sub{ font-size:var(--fs-body);
-  color:color-mix(in srgb, var(--primary) 66%, var(--muted)); animation:heroTextPulse 2.6s var(--ease) infinite }
-#page-dashboard .topbar .flow-band.compact .fb-arrows{ color:var(--primary); padding:0 0 0 2px;
-  animation:heroArrowBreath 2.2s var(--ease) infinite }
+  color:color-mix(in srgb, var(--primary) 66%, var(--muted)) }
+#page-dashboard .topbar .flow-band.compact .fb-arrows{ color:var(--primary); padding:0 0 0 2px }
 #page-dashboard .topbar .flow-band.compact .fb-arrows .arw{ width:30px; height:30px }
 #page-dashboard .topbar .flow-band.compact:hover{ background:color-mix(in srgb, var(--primary) 15%, transparent) }
 #page-dashboard .topbar .flow-band.compact::before{
@@ -1417,11 +1420,9 @@ html.sl-has-session #view-auth{display:none}
 #page-dashboard .topbar .flow-band.compact.go .fb-sub,
 #page-dashboard .topbar .flow-band.compact.go .fb-arrows{ color:var(--btn-fg) }
 /* v2.7.19：heroBandBreath 已删除（它动 box-shadow/border-color，每帧重算样式）。
-   呼吸感由上面 ::before 的 heroHaloBreath 承担。 */
-@keyframes heroTextPulse{ 0%,100%{ opacity:.72 } 50%{ opacity:1 } }
-/* 》 组：容器做极轻的缩放呼吸（transform 不能和 arw 的 fbFlow 抢，所以放在容器上） */
-@keyframes heroArrowBreath{ 0%,100%{ opacity:.66; transform:scale(.94) translateX(-2px) }
-  50%{ opacity:1; transform:scale(1.06) translateX(3px) } }
+   呼吸感由上面 ::before 的 heroHaloBreath 承担。
+   v2.7.26：heroTextPulse / heroArrowBreath 也删除 —— 文字与箭头不再各自无限呼吸，
+   这一屏只留 fbFlow（流带扫光）一处动效；未使用的 keyframes 一并清掉，不留死代码。 */
 @media (prefers-reduced-motion: reduce){
   #page-dashboard .topbar .flow-band.compact,
   #page-dashboard .topbar .flow-band.compact::before,
@@ -1981,7 +1982,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.25</span>
+            <span hidden id="set-version">2.7.26</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -4876,7 +4877,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.25', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.26', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4905,7 +4906,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.25', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.26', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -5273,7 +5274,10 @@ const AppUI = {
     const d = AppAuth.data();
     $('#dash-name').textContent = AppAuth.displayLabel();
     const streak = calcStreak(d.stats);
-    $('#dash-date').textContent = todayStr().replace(/-/g,' / ') + ' · ' + fmtDate(now()) + (streak ? ' · 连续 ' + streak + ' 天' : '');
+    /* v2.7.26 清套路痕迹（二）：原来这里是「2026 / 10 / 01 · 十月 1日 · 连续 1 天」——
+       同一个日期被写了两种格式（ISO 与中文），中间靠两个 `·` 硬连。现在只留一种人读的写法，
+       连续天数用 `·` 分隔保留（它确实是另一条信息）。 */
+    $('#dash-date').textContent = fmtDate(now()) + (streak ? ' · 连续 ' + streak + ' 天' : '');
     if(!Store.get('welcomeSeen', false)){
       $('#dash-banner').innerHTML =
         '<div class="card dash-welcome" style="border-color:var(--primary);margin-bottom:16px">' +
@@ -6011,7 +6015,8 @@ const AppStudy = {
       '<div class="en-hero">' +
         '<div class="en-hero-head">' +
           '<span class="en-hero-k">今天要背的新词</span>' +
-          '<span class="en-hero-sub">'+SRS.mind(today)+' · 词表「'+esc(r.targetName)+'」共 '+r.kept.length+' 词 · 每轮 '+modeLabel+'</span>' +
+          /* v2.7.26：去掉重复的日期（顶栏已经写了今天），并把「每轮 每日 20 词」这种套话收成一句 */
+          '<span class="en-hero-sub">词表「'+esc(r.targetName)+'」共 '+r.kept.length+' 词 · '+modeLabel+'</span>' +
         '</div>' +
         '<div class="en-hero-nums">' +
           '<div class="en-num"><b>'+newN+'</b><span>新单词</span></div>' +
