@@ -851,9 +851,14 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
 #page-dashboard .grid-2{gap:44px; align-items:start}
 #page-dashboard .grid-2 .card{min-width:0}
 @media (max-width:640px){
-  #dash-stats .stat .v{font-size:var(--fs-display)}
+  /* v2.7.28：手机档原来把统计数字放大到 display 档（30px）—— 4 个数字一起「喊」，
+     一屏强调块变成 6 个（审计口径：字号 ≥20px 且字重 ≥700），主角反而被淹掉。
+     数据在什么尺寸都是 18px/700：需要「被看见」的是主行动条，不是这四个数。 */
+  #dash-stats .stat .v{font-size:var(--fs-title)}
   #page-dashboard .grid-2{gap:36px}
 }
+/* 个人中心的四个统计与概览同源（同一份数据语言）：也用 18px/700，不再用 26px 抢戏 */
+#prof-stats .stat .v{font-size:var(--fs-title); font-weight:700; letter-spacing:-.01em}
 
 /* 通用指标卡、汇总带同样无框 */
 .stat{background:transparent; border:0; box-shadow:none; border-radius:0; padding:6px 8px}
@@ -1626,11 +1631,12 @@ html{ overflow-anchor:none }
   #page-dashboard > .grid{margin-top:12px}
   #page-dashboard .card{margin-top:10px !important; padding:14px 14px 12px}
   #page-dashboard .card-title{margin-bottom:8px}
-  /* 统计卡：2×2、无图标、数字小一档 */
+  /* 统计卡：2×2、无图标、数字小一档（v2.7.28：原来这里写 h1=26px，比桌面档的 18px 还大，
+     与注释「小一档」正好相反 —— 现在两端一致，数据永远 18px/700） */
   #dash-stats{grid-template-columns:1fr 1fr; gap:6px 0; margin-top:10px}
   #dash-stats .stat{padding:6px 2px 8px}
   #dash-stats .stat-ico{display:none}
-  #dash-stats .stat .v{font-size:var(--fs-h1)}
+  #dash-stats .stat .v{font-size:var(--fs-title)}
   #dash-stats .stat .k{font-size:var(--fs-micro); letter-spacing:.04em}
   #dash-stats .stat .d{font-size:var(--fs-micro)}
   #dash-stats .stat:nth-child(2n){padding-left:12px}
@@ -1982,7 +1988,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.27</span>
+            <span hidden id="set-version">2.7.28</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -4877,7 +4883,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.27', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.28', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4906,7 +4912,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.27', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.28', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
