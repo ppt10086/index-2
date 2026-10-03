@@ -158,6 +158,13 @@ html[data-theme="dark"][data-accent="violet"] {--primary:#bda0ec; --primary2:#cf
   .cad-timeline .ct-day:nth-of-type(even){top:34px}
 }
 .wk-cmp{margin-top:14px; padding-top:12px; border-top:1px solid var(--line)}
+/* v2.7.63 可见新增：词表筛选页的「预估」行（选择时就能看到后果） */
+.fp{display:flex; align-items:center; gap:8px; margin:14px 0 0; padding:11px 14px;
+  border:1px solid var(--line); border-left:3px solid var(--primary); border-radius:var(--radius);
+  background:var(--panel2); color:var(--muted); font-size:var(--fs-small); line-height:1.6}
+.fp .fp-i{display:inline-flex; color:var(--primary); flex:0 0 auto}
+.fp b{color:var(--text); font-variant-numeric:tabular-nums}
+@media (max-width:480px){ .fp{font-size:var(--fs-micro); padding:10px 12px} }
 /* v2.7.60：掌握进度条（记录页）—— 把"已掌握 / 已学习"画成一段可比的长度 */
 .mst{margin-top:14px; padding-top:12px; border-top:1px solid var(--line)}
 .mst-bar{height:10px; border-radius:var(--radius-full); background:color-mix(in srgb, var(--line2) 60%, transparent); overflow:hidden}
@@ -2255,7 +2262,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.62</span>
+            <span hidden id="set-version">2.7.63</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5172,7 +5179,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.62', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.63', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5201,7 +5208,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.62', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.63', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -5853,6 +5860,9 @@ const AppUI = {
       '<button class="btn" onclick="AppFilterUI.savePreset()">'+icon('save')+' 保存方案</button>' +
       (d.presets.length ? '<span class="preset-row"><select id="preset-sel"><option value="">选择已保存方案…</option>'+presetOpts+'</select><button class="btn btn-sm" onclick="AppFilterUI.loadPreset()">加载</button><button class="btn btn-sm btn-danger" onclick="AppFilterUI.delPreset()">删除</button></span>' : '') +
       '</div></div>' +
+      /* v2.7.63：预估放在**独立容器**里 —— 早先写进 #filter-result 会被"自动应用筛选"的重渲染覆盖掉
+         （探针第一次读就报"缺失"，后两次显式调用才有），所以分开两个容器，各管各的。 */
+      '<div id="filter-preview"></div>' +
       '<div id="filter-result"></div>';
     // 绑定交互
     $$('#tab-filter [data-book]').forEach(cb => cb.addEventListener('change', () => {
@@ -5868,13 +5878,40 @@ const AppUI = {
       d.filter = f; AppAuth.save(d);
       AppUI.renderFilterTab();
     }));
-    $('#f-deriv').addEventListener('change', () => { f.deriv = $('#f-deriv').checked; d.filter = f; AppAuth.save(d); });
+    $('#f-deriv').addEventListener('change', () => { f.deriv = $('#f-deriv').checked; d.filter = f; AppAuth.save(d); AppUI.renderFilterPreview(); });
+    /* v2.7.63 可见新增：**选择时就能看到后果**。
+       这一页原来是「先应用、再看结果」——想比较两个词库组合就得来回点两次「应用筛选」，
+       而且"已学过的词会被剔除多少"完全看不到。现在复选框一动就更新一行预估：
+       主词库 N 词 − 已学 M 词 ≈ 可背 K 词（衍生词剔除只给"会再少一些"，不假装精确）。 */
+    $$('#tab-filter [data-book]').forEach(cb => cb.addEventListener('change', () => { try{ AppUI.renderFilterPreview(); }catch(e){} }));
+    try{ AppUI.renderFilterPreview(); }catch(e){}
     // 自动应用一次（若尚未生成结果）
     if(!AppFilter.result || AppFilter.result.targetId !== f.target || AppFilter.result.deriv !== f.deriv){
       AppFilterUI.apply(true, true);
     } else {
       AppUI.renderResult();
     }
+  },
+  /* 预估预览：只报告**能算准**的部分（主词库总量、已学词数、可用词数），
+     衍生词剔除的影响规模不定，就明说"会再少一些"，不编一个数字出来。 */
+  renderFilterPreview(){
+    const box = document.getElementById('filter-preview');
+    if(!box) return;
+    const d = AppAuth.data(), f = d.filter || {};
+    const id = f.target || '';
+    const name = (WL.byId(id) || {}).name || '';
+    if(!id){ box.innerHTML = ''; return; }
+    const total = WL.count(id) || 0;
+    let learned = 0;
+    const pre = SRS.key(id, ''), ws = d.wordState || {};
+    for(const k in ws){ if(k.indexOf(pre) === 0) learned++; }
+    const usable = Math.max(0, total - learned);
+    const line = '主词库 <b>' + total + '</b> 词'
+      + (learned ? ' − 已学 <b>' + learned + '</b> 词' : '')
+      + ' ≈ <b>' + usable + '</b> 词可背'
+      + (f.deriv ? '（再剔除衍生词后会更少一些）' : '');
+    box.innerHTML = '<div class="fp" role="status" aria-label="当前选择的预估：' + line.replace(/<[^>]+>/g, '') + '">'
+      + '<span class="fp-i" aria-hidden="true">' + icon('sliders', 15) + '</span><span>' + line + '</span></div>';
   },
   renderResult(){
     const r = AppFilter.result;
