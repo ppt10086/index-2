@@ -563,6 +563,12 @@ html.side-collapsed .side-toggle{left:12px}
 .goal-ring .gr-fill{fill:none; stroke:var(--primary); stroke-width:6; stroke-linecap:round;
   animation:grFill .5s var(--ease) both}
 .goal-ring.done .gr-fill{stroke:var(--accent)}
+/* v2.7.53：可点击的环（概览的今日目标环）—— 明确的悬停/聚焦反馈，让人知道"这个能点" */
+.goal-ring.act{padding:0; border:0; background:transparent; font:inherit; color:inherit; cursor:pointer;
+  border-radius:var(--radius); transition:transform var(--dur-1) var(--ease), background-color var(--dur-1) var(--ease)}
+.goal-ring.act:hover{background:var(--panel3); transform:scale(1.04)}
+.goal-ring.act:active{transform:scale(.98)}
+.goal-ring.act:focus-visible{outline:2px solid color-mix(in srgb, var(--primary) 55%, transparent); outline-offset:3px}
 /* v2.7.46：复习页顶部的今日进度环（与概览目标环共用 .goal-ring / ringHtml，只是横排布局） */
 .rv-ring{display:flex; align-items:center; gap:16px; margin:0 0 14px; padding-bottom:14px; border-bottom:1px solid var(--line)}
 .rv-ring .goal-ring{margin:0; flex:0 0 auto}
@@ -2181,7 +2187,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.52</span>
+            <span hidden id="set-version">2.7.53</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5098,7 +5104,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.52', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.53', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5127,7 +5133,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.52', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.53', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -5575,7 +5581,11 @@ const AppUI = {
        环的画法：stroke-dasharray = 周长，dashoffset = 周长 ×(1-达成率)，一次填充动效，数据驱动。 */
     const goalPct = Math.min(100, Math.round(todayMarks / Math.max(1, d.settings.daily) * 100));
     const ring = ringHtml({ pct: goalPct, num: todayMarks, label: '今日已认识',
-      aria: '今日目标完成 ' + goalPct + '%（' + todayMarks + ' / ' + d.settings.daily + ' 词）' });
+      aria: '今日目标完成 ' + goalPct + '%（' + todayMarks + ' / ' + d.settings.daily + ' 词）',
+      /* v2.7.53 可见微交互：点一下环就能改每日目标（10 → 20 → 30 → 50 → 100 循环）。
+         原来改目标只能进设置页翻到「学习与背诵」，这是最常用的数字之一，值得就地可改。 */
+      on: 'cycleDaily()',
+      title: '点一下改每日目标（当前 ' + d.settings.daily + ' 词）' });
     /* v2.7.49：把三个快捷入口的「现状」写进去（原来是空的/只有标题）。
        全部来自真实数据：当前词表与词数、今日到期数、词库总量。用 try 包住，绝不能让概览因为这段渲染不出来。 */
     try{
@@ -6822,13 +6832,20 @@ function ringHtml(o){
   const pct = Math.max(0, Math.min(100, Math.round(o.pct || 0)));
   const R = 30, CIRC = Math.round(2 * Math.PI * R * 10) / 10;
   const off = Math.round(CIRC * (1 - pct / 100) * 10) / 10;
-  return '<div class="goal-ring' + (pct >= 100 ? ' done' : '') + '">' +
-    '<svg viewBox="0 0 72 72" role="img" aria-label="' + esc(o.aria || (o.label + ' ' + pct + '%')) + '">' +
+  /* v2.7.53：环可以被点（用于概览的「点一下改每日目标」）。
+     传了 on 就渲染成真正的 <button>（可 Tab 到、可 Enter/Space 触发），不传则还是普通容器 ——
+     保持一个实现两种用法，不另写一份可交互版本。 */
+  const tag = o.on ? 'button' : 'div';
+  const attrs = o.on
+    ? ' type="button" onclick="' + o.on + '" title="' + esc(o.title || '') + '" aria-label="' + esc(o.aria || '') + '"'
+    : ' role="img" aria-label="' + esc(o.aria || (o.label + ' ' + pct + '%')) + '"';
+  return '<' + tag + ' class="goal-ring' + (pct >= 100 ? ' done' : '') + (o.on ? ' act' : '') + '"' + attrs + '>' +
+    '<svg viewBox="0 0 72 72" aria-hidden="true" focusable="false">' +
       '<circle class="gr-track" cx="36" cy="36" r="' + R + '"></circle>' +
       '<circle class="gr-fill" cx="36" cy="36" r="' + R + '" style="--circ:' + CIRC + '; stroke-dasharray:' + CIRC + '; stroke-dashoffset:' + off + '"></circle>' +
     '</svg>' +
-    '<div class="gr-txt"><b>' + (o.num === undefined ? pct + '%' : esc(String(o.num))) + '</b><span>' + esc(o.label || '') + '</span></div>' +
-  '</div>';
+    '<span class="gr-txt"><b>' + (o.num === undefined ? pct + '%' : esc(String(o.num))) + '</b><span>' + esc(o.label || '') + '</span></span>' +
+  '</' + tag + '>';
 }
 /* v2.7.51 可见新增：本轮进度点阵。
    idx = 已经过的张数（0-based 当前张的下标），total = 本轮总张数。
@@ -6905,6 +6922,23 @@ function doneHtml(o){
    原来结束页只报**这一轮**（过了几张、记得/忘了几个），没有"今天整体"的视角 ——
    而这正是学习者最想知道的一句（今天一共认了多少 / 复习了多少 / 连着第几天）。
    三个数字全部取自真实统计：stats.dayLog[today]、stats.reviewDays[today]、calcStreak(stats)。 */
+/* v2.7.53 可见微交互：点概览的「今日目标环」即可改每日目标。
+   档位 10 → 20 → 30 → 50 → 100 → 回到 10（都是人会真用的整数，不用输入框）；
+   改完立刻保存 + 重渲染概览（环的百分比与题目都跟着变）。
+   为什么不弹输入框：这是「顺手调一下」的动作，多一次弹窗就多一次打断。 */
+const DAILY_STEPS = [10, 20, 30, 50, 100];
+function cycleDaily(){
+  try{
+    const d = AppAuth.data();
+    const cur = parseInt(d.settings.daily, 10) || 20;
+    let i = DAILY_STEPS.indexOf(cur);
+    const next = DAILY_STEPS[(i + 1) % DAILY_STEPS.length];
+    d.settings.daily = next;
+    AppAuth.save(d, true);
+    try{ const el = document.getElementById('set-daily'); if(el) el.value = next; }catch(e){}
+    try{ AppUI.renderDashboard(); }catch(e){}
+  }catch(e){}
+}
 function todaySummaryHtml(){
   const d = AppAuth.data(), st = d.stats || {}, today = SRS.today();
   const learned = (st.dayLog || {})[today] || 0;
