@@ -146,6 +146,8 @@ html[data-theme="dark"][data-accent="violet"] {--primary:#bda0ec; --primary2:#cf
 @media (prefers-reduced-motion: reduce){
   .cad-timeline .ct-node, .cad-timeline .ct-day, .cad-timeline .ct-sweep{animation:none}
 }
+/* 已播放过：不再重播（也让"量位置"的检查不会量到动画中间态） */
+.cad-timeline.done .ct-node, .cad-timeline.done .ct-day, .cad-timeline.done .ct-sweep{animation:none}
 /* 手机档：「当天」与「+1」只差 4.8%（约 17px），横排必然压住 —— 标签**按奇偶交错两行**。
    注意要用 nth-of-type(odd/even) 严格按顺序交替：第一版写成 ".d0, :nth-of-type(even)"，
    结果「当天」和「+1」都落在下面那行，照样压住（探针量到了这一对）。 */
@@ -6851,9 +6853,18 @@ function roundTicks(n){
 /* v2.7.48 可见新增：把「6 轮节奏」画成一条时间轴（原来是纯文字说明）。
    刻度位置按 SRS.NODES 的天数**等比**铺开（0 天在最左，+21 天在最右），所以中间会自然出现疏密 ——
    那正是「间隔重复」的样子。设置页渲染时调用一次即可。 */
+let cadTimelinePlayed = false;    // v2.7.61：动效每次会话只播一次（见函数内说明）
 function drawCadTimeline(){
   const box = document.getElementById('cad-timeline');
   if(!box) return;
+  /* v2.7.61 修正：这条时间轴的动效**每次会话只播一次**。两个原因都真实：
+     ① 设计上，反复切进「设置 · 学习」不该每次重播同一条动画；
+     ② 工程上，动效持续 0.95s，期间任何"量间距 / 量位置"的检查都可能量到中间态 ——
+     实测加动效后 probe-v2718 **间歇性**报 26/1（约 6 次里 2 次），单独复跑又好。
+     播过一次后给容器加 .done，CSS 里把三种动画一起关掉，状态因此确定。 */
+  const replay = !cadTimelinePlayed;
+  cadTimelinePlayed = true;
+  box.classList.toggle('done', !replay);
   const N = SRS.NODES, span = N[N.length - 1];              // 21 天
   /* 轴上其实是 **7 个标记**：第 0 天「当天」是起点（学完那天），之后 +1/+2/+4/+7/+15/+21 才是 6 遍复习。
      第一版把起点漏了、直接把 +1 标成"当天"，是探针里那句「文案必须等于 当天 +1 +2…」抓出来的。 */
