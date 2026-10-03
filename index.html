@@ -633,6 +633,17 @@ html.side-collapsed .side-toggle{left:12px}
 .done-mark .dm-check{fill:none; stroke:var(--accent); stroke-width:6.4; stroke-linecap:round; stroke-linejoin:round;
   animation:dmDraw .3s var(--ease) both; animation-delay:.7s}
 .done-cap{font-size:var(--fs-micro); color:var(--muted); letter-spacing:.02em; margin-bottom:10px}
+/* v2.7.52 可见新增：结束页「今天」小结条（三格：已认识 / 已复习 / 连续天数） */
+.done-today{display:flex; align-items:stretch; justify-content:center; gap:0; margin:16px auto 4px;
+  max-width:420px; border:1px solid var(--line); border-radius:var(--radius); background:var(--panel2); overflow:hidden}
+.done-today .dt-cell{flex:1 1 0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:1px; padding:11px 8px; min-width:0}
+.done-today .dt-cell + .dt-cell{border-left:1px solid var(--line)}
+.done-today .dt-cell b{font-size:var(--fs-h2); font-weight:700; line-height:1; font-variant-numeric:tabular-nums}
+.done-today .dt-cell i{font-style:normal; font-size:var(--fs-micro); color:var(--muted); margin-left:1px}
+.done-today .dt-cell span{font-size:var(--fs-micro); color:var(--muted); margin-top:2px; white-space:nowrap}
+.done-today .dt-cell.hot b{color:var(--accent)}
+@media (max-width:400px){ .done-today .dt-cell{padding:9px 4px} .done-today .dt-cell b{font-size:var(--fs-title)} }
 @keyframes dmPop{from{opacity:0; transform:scale(.9)} to{opacity:1; transform:none}}
 @keyframes dmDraw{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none}}
 @media (prefers-reduced-motion: reduce){ .done-mark .dm-seg, .done-mark .dm-check{animation:none} }
@@ -2170,7 +2181,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.51</span>
+            <span hidden id="set-version">2.7.52</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5087,7 +5098,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.51', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.52', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5116,7 +5127,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.51', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.52', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -6887,7 +6898,26 @@ function doneHtml(o){
     '<div class="done-cap">6 轮记忆曲线 · 全部走完</div>' +
     '<h3>' + title + '</h3>' +
     '<p class="muted" role="status">' + stat + tail + '</p>' +
+    todaySummaryHtml() +
     '<div class="done-acts">' + acts + '</div></div>';
+}
+/* v2.7.52 可见新增：结束页的「今天」小结条。
+   原来结束页只报**这一轮**（过了几张、记得/忘了几个），没有"今天整体"的视角 ——
+   而这正是学习者最想知道的一句（今天一共认了多少 / 复习了多少 / 连着第几天）。
+   三个数字全部取自真实统计：stats.dayLog[today]、stats.reviewDays[today]、calcStreak(stats)。 */
+function todaySummaryHtml(){
+  const d = AppAuth.data(), st = d.stats || {}, today = SRS.today();
+  const learned = (st.dayLog || {})[today] || 0;
+  const reviewed = (st.reviewDays || {})[today] || 0;
+  const streak = (() => { try { return calcStreak(st) || 0; } catch (e) { return 0; } })();
+  if(!learned && !reviewed && !streak) return '';
+  const cell = (num, unit, label, hot) =>
+    '<span class="dt-cell' + (hot ? ' hot' : '') + '"><b>' + num + '</b>' + (unit ? '<i>' + unit + '</i>' : '') + '<span>' + label + '</span></span>';
+  return '<div class="done-today" role="group" aria-label="今天累计：认识 ' + learned + ' 个、复习 ' + reviewed + ' 个、连续 ' + streak + ' 天">' +
+    cell(learned, '词', '今天已认识', learned > 0) +
+    cell(reviewed, '词', '今天已复习', false) +
+    cell(streak, '天', '连续学习', streak > 1) +
+    '</div>';
 }
 
 function cardBody(e){
