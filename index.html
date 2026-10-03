@@ -1450,6 +1450,10 @@ html.sl-has-session #view-auth{display:none}
 /* v2.7.62：折叠后的多天空缺行稍微抬起一点存在感（它代表的不再是"某一天"，而是一段） */
 .rv-gap-multi{opacity:.72}
 .rv-gap-multi .rv-day{color:var(--text)}
+/* v2.7.65：折叠的空缺段点开后，每天一枚小片（日期 + 当天已复习数） */
+.rv-days{align-items:center}
+.rv-days .rv-daychip{display:inline-flex; align-items:baseline; gap:6px}
+.rv-days .rv-daychip i{font-style:normal; font-size:var(--fs-micro); color:var(--muted); font-variant-numeric:tabular-nums}
 .rv-gap .rv-day{color:var(--muted)}
 .rv-gap .rv-desc{color:var(--muted); font-style:italic}
 @media (max-width:560px){
@@ -2279,7 +2283,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.64</span>
+            <span hidden id="set-version">2.7.65</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5196,7 +5200,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.64', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.65', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5225,7 +5229,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.64', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.65', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7341,10 +7345,22 @@ const AppReview = {
         const n = x.span.length, multi = n > 1;
         const from = x.span[0], to = x.span[n - 1];
         const label = multi ? (SRS.mind(from) + ' – ' + SRS.mind(to)) : SRS.mind(from);
-        return '<div class="rv-row rv-gap'+(multi ? ' rv-gap-multi' : '')+'" title="'+x.span.join('、')+'">'
+        const rev = ((AppAuth.data().stats || {}).reviewDays) || {};
+        const openGap = AppReview.expanded && AppReview.expanded[from];
+        /* v2.7.65：折叠行可以**点开看那几天** —— 各天的已复习数原来只进了汇总，分布看不到。
+           复用与"看这批词"同一套按钮/展开结构（同一个 toggleWords 状态 + 同一套 .rv-words 样式）。 */
+        const daysHtml = !multi ? '' :
+          '<div class="rv-words rv-days" id="rvw-'+from+'"'+(openGap ? '' : ' hidden')+'>' +
+            x.span.map(day => '<span class="rv-w rv-daychip">' + SRS.mind(day) +
+              '<i>' + (rev[day] ? ('已复习 ' + rev[day]) : '未复习') + '</i></span>').join('') +
+          '</div>';
+        return '<div class="rv-row rv-gap'+(multi ? ' rv-gap-multi' : '')+(openGap ? ' open' : '')+'" title="'+x.span.join('、')+'">'
           + '<span class="rv-day">'+label+(multi ? '<i>连续 '+n+' 天</i>' : '')+'</span>'
           + '<span class="rv-desc">空缺 · 这'+(multi ? '几天' : '天')+'没有复习内容</span>'
-          + '<span class="rv-n">—</span><span class="rv-tag muted">'+(x.done ? ('已复习 '+x.done+' 词') : '未复习')+'</span></div>';
+          + '<span class="rv-n">—</span><span class="rv-tag muted">'+(x.done ? ('已复习 '+x.done+' 词') : '未复习')+'</span>'
+          + (multi ? '<button class="rv-toggle" type="button" aria-expanded="'+(openGap ? 'true' : 'false')+'" aria-controls="rvw-'+from+'"'
+              + ' onclick="AppReview.toggleWords(\''+from+'\')">'+(openGap ? '收起' : '看这几天')+'</button>' : '')
+          + daysHtml + '</div>';
       }
       const c0 = AppAuth.data().wordState[SRS.key(r.targetId, x.words[0].w)] || {};
       const round = Math.min((c0.n || 0) + 1, SRS.ROUNDS);
