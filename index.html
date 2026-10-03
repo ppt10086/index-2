@@ -110,6 +110,25 @@ html[data-theme="dark"][data-accent="violet"] {--primary:#bda0ec; --primary2:#cf
 .acc-sw:active{transform:scale(.95)}
 .acc-sw.on{border-color:currentColor; box-shadow:0 0 0 2px var(--panel), 0 0 0 3.5px currentColor}
 .acc-name{font-size:var(--fs-small); color:var(--muted); min-width:54px}
+/* v2.7.43 可见新增：主题色的**实时预览**。
+   原来这里用一句话解释「主题色改的是主按钮/选中态/进度/标签/点缀图标」——
+   好的界面应该把这句话**演出来**：预览里的五种元素全部直接引用主题变量，
+   所以点色板时它们跟着变（纯 CSS 变量联动，不需要一行 JS）。 */
+.acc-prev{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:2px 0 10px;
+  padding:12px 14px; border:1px dashed var(--line2); border-radius:var(--radius); background:var(--panel2)}
+.acc-prev .ap-btn{display:inline-flex; align-items:center; padding:7px 14px; border-radius:var(--radius-sm);
+  background:var(--btn-solid); color:var(--btn-fg); font-size:var(--fs-small); font-weight:700}
+.acc-prev .ap-chip{display:inline-flex; align-items:center; padding:6px 12px; border-radius:var(--radius-full);
+  font-size:var(--fs-small); font-weight:600; color:var(--muted); border:1px solid var(--line2)}
+.acc-prev .ap-chip.on{color:var(--primary); border-color:color-mix(in srgb, var(--primary) 45%, transparent);
+  background:var(--primary-soft)}
+.acc-prev .ap-bar{width:74px; height:8px; border-radius:var(--radius-full); background:var(--line); overflow:hidden}
+.acc-prev .ap-bar i{display:block; height:100%; border-radius:var(--radius-full); background:var(--primary)}
+.acc-prev .ap-tag{display:inline-flex; align-items:center; padding:3px 9px; border-radius:var(--radius-full);
+  font-size:var(--fs-micro); font-weight:700; letter-spacing:.02em; color:var(--primary); background:var(--primary-soft)}
+.acc-prev .ap-dot{width:14px; height:14px; border-radius:50%; background:var(--primary)}
+
+/* 移动端禁用双击缩放与 300ms 点击延迟（保留双指缩放） */
 .acc-sw[data-accent="graphite"]{color:#4a4a52} .acc-sw[data-accent="indigo"]{color:#4a54c8}
 .acc-sw[data-accent="blue"]{color:#2563c9} .acc-sw[data-accent="green"]{color:#1f7a52}
 .acc-sw[data-accent="amber"]{color:#8f5410} .acc-sw[data-accent="rose"]{color:#ab3d61}
@@ -2069,8 +2088,8 @@ html{ overflow-anchor:none }
             <div class="card-title"><span class="dot"></span>外观设计</div>
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
-            <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.42</span>
+            <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
+            <span hidden id="set-version">2.7.43</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -4987,7 +5006,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.42', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.43', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5016,7 +5035,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.42', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.43', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
