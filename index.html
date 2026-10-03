@@ -1246,6 +1246,11 @@ html.sl-has-session #view-auth{display:none}
 .rv-row:nth-child(odd){background:var(--panel2)}
 .rv-day{min-width:88px; font-weight:700; display:flex; flex-direction:column; line-height:1.3}
 .rv-day i{font-style:normal; font-size:var(--fs-micro); font-weight:600; color:var(--muted)}
+/* v2.7.42：行内 6 格节奏标记（复习清单专用 —— 这一行的主信息就是「第几遍」） */
+.rv-ticks{display:inline-flex; align-items:center; gap:3px; margin-right:8px; vertical-align:-1px}
+.rv-tick{width:6px; height:6px; border-radius:2px; background:var(--line2)}
+.rv-tick.on{background:var(--primary)}
+@media (max-width:480px){ .rv-tick{width:5px; height:5px} }
 .rv-desc{flex:1; min-width:120px; color:var(--text)}
 .rv-n{min-width:56px; text-align:right; font-weight:700; color:var(--primary)}
 .rv-tag{min-width:62px; text-align:right; font-size:var(--fs-micro); font-weight:700}
@@ -2065,7 +2070,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.41</span>
+            <span hidden id="set-version">2.7.42</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -4982,7 +4987,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.41', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.42', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5011,7 +5016,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.41', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.42', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -6612,6 +6617,16 @@ const AppStudy = {
    所以圆环本身就是"间隔重复"的形状 —— 与学习卡节奏带、概览潮汐同一套数据来源。
    为什么不用上一版的「弧线 + 点」：两次视觉复核都说它「偏小、不协调、对勾与弧线脱节」，
    而圆环天生对称、体量足、对勾落在环心即成一体的构图。 */
+/* v2.7.42 可见新增：复习清单行内的「6 格节奏标记」。
+   为什么**这里**该有、而词汇列表不该有：复习清单的每一行讲的就是「这是第 N 遍复习」——
+   节奏是这一行的主信息，所以它是信息而不是装饰；词汇列表讲的是词义，塞节奏就是装饰（当时拒绝是对的）。
+   也顺便让「第 N 遍」这个纯文本有了可扫视的形状：6 格里点亮前 N 格。 */
+function roundTicks(n){
+  const ROUNDS = SRS.ROUNDS, on = Math.max(0, Math.min(n || 0, ROUNDS));
+  let s = '<span class="rv-ticks" aria-hidden="true">';
+  for(let i = 0; i < ROUNDS; i++) s += '<i class="rv-tick'+(i < on ? ' on' : '')+'"></i>';
+  return s + '</span>';
+}
 function doneMark(){
   const NODES = SRS.NODES, ROUNDS = SRS.ROUNDS;
   const C = 60, R = 46, GAP = 11;                      // 圆心/半径/段间留白（度；留白要够大才读得出"6 段"）
@@ -6825,7 +6840,7 @@ const AppReview = {
       const dRel = SRS.dayDiff(x.day, today);
       const rel = dRel === 0 ? '今天' : (dRel === 1 ? '昨天' : dRel + ' 天前');
       return '<div class="rv-row"><span class="rv-day">'+SRS.mind(x.day)+'<i>'+rel+'</i></span>'
-        + '<span class="rv-desc">第 '+round+' 遍复习'+(late ? ' · 逾期顺延，并入今天' : '')+'</span>'
+        + '<span class="rv-desc">'+roundTicks(round)+'第 '+round+' 遍复习'+(late ? ' · 逾期顺延，并入今天' : '')+'</span>'
         + '<span class="rv-n">'+wc+' 词</span>'
         + '<span class="rv-tag '+(late ? 'tag-orange' : 'tag-green')+'">'+(late ? '顺延' : '今日到期')+'</span></div>';
     }).join('');
