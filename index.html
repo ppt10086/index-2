@@ -555,6 +555,12 @@ html.side-collapsed .side-toggle{left:12px}
 .tide i.today{background:var(--primary)}
 .tide-lab{display:flex; justify-content:space-between; gap:12px; margin-top:6px; font-size:var(--fs-micro); color:var(--muted); font-variant-numeric:tabular-nums}
 .tide-lab b{color:var(--text); font-weight:700}
+/* v2.7.59：潮汐的轴标签（今天 / +7 天 / +13 天）—— 让"哪一格是哪天"读得出来，而不是只能看出形状。
+   三格用同一套 flex 分配（首格左对齐、末格右对齐、中间居中），与上面 14 格的疏密大致对应。 */
+.tide-axis{display:flex; justify-content:space-between; align-items:baseline; margin-top:5px;
+  font-size:var(--fs-micro); color:var(--muted); font-variant-numeric:tabular-nums}
+.tide-axis span:first-child{color:var(--primary); font-weight:600}
+@media (max-width:420px){ .tide-axis{font-size:9px} }
 /* v2.7.39 可见新增：今日目标环（把通用进度条换成产品自己的「环」语言，与结束页六轮环同源）。
    一次填充动效（dashoffset，500ms 一次性）；环里放数字与说明；达标后转成强调色。 */
 .goal-ring{position:relative; width:72px; height:72px; margin:2px auto 12px}
@@ -2212,7 +2218,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.58</span>
+            <span hidden id="set-version">2.7.59</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5129,7 +5135,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.58', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.59', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5158,7 +5164,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.58', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.59', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7118,7 +7124,11 @@ function tideHtml(entries){
     const dt = SRS.dayAdd(today, i);
     ticks += '<i class="'+(i === 0 ? 'today' : (n ? '' : 'zero'))+'" style="height:'+h+'px" title="'+dt+' · '+n+' 词'+(i === 0 && overdue ? '（含逾期 '+overdue+'）' : '')+'"></i>';
   }
+  /* v2.7.59 可见新增：给潮汐加一行**轴标签**（今天 / +7 天 / +14 天）。
+     原来 14 格只有相对高低，看不出哪一格是今天、哪一格是一周后 ——
+     图能"看出形状"但读不出**位置**，等于只完成了一半。 */
   return '<div class="tide" role="img" aria-label="未来两周到期分布：今日 '+buckets[0]+' 词，合计 '+total+' 词">'+ticks+'</div>' +
+    '<div class="tide-axis" aria-hidden="true"><span>今天</span><span>+7 天</span><span>+'+(DAYS - 1)+' 天</span></div>' +
     '<div class="tide-lab"><span>今日到期 <b>'+buckets[0]+'</b> 词'+(overdue ? '（含逾期 '+overdue+'）' : '')+'</span><span>未来两周共 '+total+' 词</span></div>';
 }
 function burstFx(anchor, count){
