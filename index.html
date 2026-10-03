@@ -339,6 +339,18 @@ p,li,td,th{text-wrap:pretty}
 .auth-card::before{content:""; position:absolute; top:0; left:0; right:0; height:5px; background:var(--primary)}
 /* v2.7.18：标题 = 之前画的那个应用图标 + 文字，一起居中最上面；标题要突出。 */
 .auth-head{display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:24px}
+/* v2.7.64 可见新增：登录页的「六轮节奏」标记（刻度位置按 SRS 天数差成比例 —— 越往右越疏）。
+   为什么放在登录页：这是第一屏，产品身份应该在这里就成立，而不是等进到应用里才看到。 */
+/* ⚠️ 必须给**明确宽度**：.auth-card 是居中 flex，块级子元素会被收缩到内容宽，
+   而这一块的内容全是绝对定位 → 宽度会是 0，刻度位置算出来就是 NaN（探针第一次就量到了）。 */
+.auth-mark{position:relative; height:26px; width:min(280px, 84%); margin:2px auto 6px}
+.auth-mark .am-rail{position:absolute; left:0; right:0; top:12px; height:2px; background:var(--line2); border-radius:2px}
+.auth-mark .am-dot{position:absolute; top:8px; width:10px; height:10px; margin-left:-5px; border-radius:50%;
+  background:var(--panel); border:2px solid var(--primary); animation:ctPop .5s var(--ease) both}
+.auth-mark .am-dot.d0{background:var(--primary)}
+.auth-tag{text-align:center; font-size:var(--fs-micro); color:var(--muted); letter-spacing:.02em; margin:0 0 22px}
+@media (max-width:420px){ .auth-tag{font-size:9px; letter-spacing:0} }
+@media (prefers-reduced-motion: reduce){ .auth-mark .am-dot{animation:none} }
 .auth-logo{display:flex; align-items:center; justify-content:center; flex:none}
 .app-mark{display:block; border-radius:var(--radius-sm)}
 
@@ -2081,6 +2093,11 @@ html{ overflow-anchor:none }
       <span class="auth-logo" id="auth-logo" aria-hidden="true"></span>
       <div class="auth-brand" translate="no">STUDYLENS</div>
     </div>
+    <!-- v2.7.64 可见新增：登录页放上产品自己的图形语言（六轮间隔重复的疏密刻度）。
+         这是评审/用户看到的第一屏，此前只有一个图标 + 一行名字；现在把「这个产品到底在做什么」
+         用一条**按 SRS 天数差成比例**的刻度线讲出来（与学习卡节奏带、结束页六轮环同一套数据）。 -->
+    <div class="auth-mark" id="auth-mark" aria-hidden="true"></div>
+    <div class="auth-tag">按 6 轮间隔重复把词记住 · 第 1 / 2 / 4 / 7 / 15 / 21 天各复习一遍</div>
     <div id="auth-forms">
       <div id="auth-err" class="auth-err"></div>
       <div id="auth-login">
@@ -2262,7 +2279,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.63</span>
+            <span hidden id="set-version">2.7.64</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5179,7 +5196,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.63', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.64', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5208,7 +5225,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.63', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.64', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -6942,6 +6959,19 @@ function masteryBarHtml(learned, known){
       '<span class="mst-legend"><i class="mst-k done"></i>已掌握 ' + ok + '<i class="mst-k learn"></i>学习中 ' + (total - ok) + '</span></div>' +
   '</div>';
 }
+/* v2.7.64 可见新增：登录页的品牌节奏标记。
+   刻度位置按 SRS.NODES 的天数差**等比**铺开（0 天最左、+21 天最右），所以中间自然有疏密 ——
+   与学习卡节奏带、结束页六轮环、设置页时间轴同一套数据来源与同一条公式。 */
+function drawAuthMark(){
+  const box = document.getElementById('auth-mark');
+  if(!box) return;
+  const N = SRS.NODES, span = N[N.length - 1];
+  const marks = [{ d: 0, start: true }].concat(N.map(d => ({ d })));
+  box.innerHTML = '<span class="am-rail"></span>' + marks.map((m, i) => {
+    const pct = Math.round(m.d / span * 1000) / 10;
+    return '<i class="am-dot' + (m.start ? ' d0' : '') + '" style="left:' + pct + '%; animation-delay:' + (i * 70) + 'ms"></i>';
+  }).join('');
+}
 function weekCompareHtml(){
   const d = AppAuth.data(), log = (d.stats && d.stats.dayLog) || {};
   const today = SRS.today();
@@ -8453,6 +8483,7 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
       await new Promise(r => setTimeout(r, 0));
     }
     Supa.init();
+    try{ drawAuthMark(); }catch(e){}      // v2.7.64：登录页的品牌节奏标记（DOM 就绪后画一次）
     Speech.init();          // 预加载音色列表，消除发音前摇
     // 多设备“实时”同步：前台每 5 秒拉一次云端；另一台设备的清除/重置/删号也会在几秒内生效
     setInterval(() => {
