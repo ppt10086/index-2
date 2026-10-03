@@ -452,7 +452,7 @@ html.side-collapsed .side-toggle{left:12px}
 /* v2.7.2（需求 2、3）：底部两键常驻同一份 DOM，只切类 —— 确认时「记得」向中间收拢消失、
    「不记得」原地变宽并把「下一个」交叉淡入，读起来就是两键平滑融成一个。
    同时两键改为半透明玻璃质感：语义色只作 8–14% 底色，文字仍是语义色（对比度红 5.3:1 / 绿 4.8:1）。 */
-.fc-btns{display:flex; gap:12px; margin-top:20px; justify-content:center; flex-wrap:wrap; position:relative}
+.fc-btns{display:flex; gap:var(--gap-between); margin-top:20px; justify-content:center; flex-wrap:wrap; position:relative}
 /* 页面内自绘的「返回」按钮：纯文字 + 描边胶囊，不用任何图标/遮罩 */
 .study-meta .sm-l{display:flex; align-items:center; gap:var(--gap-between); min-width:0}
 /* v2.7.23 记忆节奏带：只属于这个产品的一条图形 —— 6 个刻度 = 6 轮记忆曲线，
@@ -521,6 +521,22 @@ html.side-collapsed .side-toggle{left:12px}
 .fc-hint{font-size:var(--fs-small); color:var(--muted); margin-top:16px; text-align:center}
 .study-done{padding:56px 20px; text-align:center}
 .study-done .big{font-size:54px}
+/* v2.7.38 可见新增：本轮结束页的「六轮曲线」收尾图形。
+   原来这里只有一个 46px 的对勾图标 —— 收尾画面和「操作成功」长得一样，没有产品感。
+   现在把它画成产品自己的东西：六个点 = 记住这个词要走的 6 轮，**横向点位仍按 SRS 天数差成比例**
+   （与学习卡上那条节奏带同一个数据来源、同一套疏密语言），逐个点亮后停在「已完成」。
+   动效规范：一次性（animation-iteration-count:1）、只动 opacity/transform（合成层），
+   并且自带 reduced-motion 关闭——不依赖别处的兜底规则。 */
+.done-mark{display:block; margin:0 auto 4px; width:200px; height:74px; overflow:visible}
+.done-mark .dm-line{stroke:var(--line2); stroke-width:1.5; fill:none}
+.done-mark .dm-dot{fill:var(--line); stroke:none; transform-box:fill-box; transform-origin:center;
+  animation:dmPop .34s var(--ease) both}
+.done-mark .dm-dot.on{fill:var(--accent)}
+.done-mark .dm-check{fill:none; stroke:var(--accent); stroke-width:3; stroke-linecap:round; stroke-linejoin:round;
+  animation:dmDraw .3s var(--ease) both; animation-delay:.62s}
+@keyframes dmPop{from{opacity:0; transform:scale(.35)} to{opacity:1; transform:none}}
+@keyframes dmDraw{from{opacity:0; transform:translateY(3px)} to{opacity:1; transform:none}}
+@media (prefers-reduced-motion: reduce){ .done-mark .dm-dot, .done-mark .dm-check{animation:none} }
 .study-done h3{font-size:var(--fs-h2); margin:12px 0 6px; letter-spacing:-.01em}
 .fx-burst{position:absolute; left:50%; top:50%; width:0; height:0; pointer-events:none; z-index:60}
 .fx-spark{position:absolute; left:0; top:0; transform:translate(-50%,-50%); animation:fx-float .72s ease-out forwards; opacity:0}
@@ -2015,7 +2031,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">只改变强调色（主按钮、选中态、进度、标签与点缀图标），底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.37</span>
+            <span hidden id="set-version">2.7.38</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -4932,7 +4948,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.37', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.38', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -4961,7 +4977,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.37', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.38', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -6541,6 +6557,24 @@ const AppStudy = {
 /* ================= 本轮结束页（学习/复习/抽测共用，v2.7.0） =================
    需求：Esc 退出要回到「一开始那个界面」（一圈图标 + 一行字说明过了几个词），
    复习端原来缺这个界面，这里统一。 */
+/* v2.7.38 可见新增：收尾图形「六轮曲线」。
+   六个点 = 记住一个词要走的 6 轮；横向间距按 SRS.NODES 的天数差成比例 ——
+   与学习卡上那条节奏带**同一数据来源、同一套「左密右疏」语言**，只是放大成收尾画面。 */
+function doneMark(){
+  const NODES = SRS.NODES, ROUNDS = SRS.ROUNDS;
+  const W = 200, H = 74, STEP = 2.1;
+  const pts = []; let x = 8;
+  for(let i = 0; i < ROUNDS; i++){
+    if(i) x += 3 + (NODES[i] - NODES[i - 1]) * STEP;
+    const y = 46 - Math.sin(i / (ROUNDS - 1) * Math.PI) * 16;
+    pts.push([Math.round(x), Math.round(y)]);
+  }
+  const line = '<polyline class="dm-line" points="' + pts.map(p => p[0] + ',' + p[1]).join(' ') + '"></polyline>';
+  const dots = pts.map((p, i) => '<circle class="dm-dot on" cx="' + p[0] + '" cy="' + p[1] + '" r="4" style="animation-delay:' + (i * 70) + 'ms"></circle>').join('');
+  const last = pts[pts.length - 1];
+  const check = '<polyline class="dm-check" points="' + (last[0] - 7) + ',' + (last[1] + 1) + ' ' + (last[0] - 2) + ',' + (last[1] + 6) + ' ' + (last[0] + 8) + ',' + (last[1] - 7) + '"></polyline>';
+  return '<svg class="done-mark" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="六轮记忆曲线已完成">' + line + dots + check + '</svg>';
+}
 function doneHtml(o){
   const c = o || {};
   const marks = c.marks || {};
@@ -6564,7 +6598,9 @@ function doneHtml(o){
     : '<button class="btn btn-primary" onclick="AppStudy.start()">再来一轮</button>' +
       '<button class="btn" onclick="AppUI.englishTab(\'record\')">查看学习记录</button>' +
       '<button class="btn" onclick="AppUI.englishTab(\'review\')">去复习旧单词</button>';
-  return '<div class="study-done"><div class="big">' + icon('checkCircle', 46) + '</div>' +
+  /* v2.7.38 可见新增：收尾图形替代原来的纯图标 —— 六个点按 SRS 天数差成比例排布
+     （与学习卡节奏带同一数据来源），逐个点亮后落一个对勾；全部一次性、只动 opacity/transform。 */
+  return '<div class="study-done">' + doneMark() +
     '<h3>' + title + '</h3>' +
     '<p class="muted" role="status">' + stat + tail + '</p>' +
     '<div class="done-acts">' + acts + '</div></div>';
