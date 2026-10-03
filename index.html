@@ -114,6 +114,31 @@ html[data-theme="dark"][data-accent="violet"] {--primary:#bda0ec; --primary2:#cf
    学习记录页原来只有四个数字（总数/学习中/已掌握/今日需复习）——数字说明不了「最近在变好还是变差」。
    这里用与概览潮汐同一套刻度语言画 14 格（左 7 格=前 7 天，右 7 格=近 7 天），并给出两段合计与变化。
    数据全部来自 stats.dayLog（真实每天学了多少词）。 */
+/* v2.7.48 可见新增：设置页的「6 轮复习节奏」时间轴。
+   核心机制（学完当天 = 第 0 天，之后 +1/+2/+4/+7/+15/+21 天各复习一遍）此前只有文字说明。
+   现在画成一条轴：刻度按天数差定位（所以有疏密），底下标天号 —— 让「间隔重复」一眼看明白。
+   刻度取值同样来自 SRS.NODES（唯一数据来源）。 */
+.cad-timeline{margin:16px 0 4px; padding:14px 16px 12px; border:1px solid var(--line); border-radius:var(--radius); background:var(--panel2)}
+.cad-timeline .ct-title{font-size:var(--fs-small); font-weight:700; color:var(--text); margin-bottom:14px}
+.cad-timeline .ct-title span{font-weight:400; color:var(--muted); margin-left:6px}
+.cad-timeline .ct-axis{position:relative; height:38px; margin:0 8px}
+.cad-timeline .ct-rail{position:absolute; left:0; right:0; top:9px; height:2px; background:var(--line2); border-radius:2px}
+.cad-timeline .ct-node{position:absolute; top:4px; width:12px; height:12px; margin-left:-6px; border-radius:50%;
+  background:var(--panel); border:2px solid var(--primary)}
+.cad-timeline .ct-node.d0{background:var(--primary)}
+.cad-timeline .ct-day{position:absolute; top:20px; font-size:var(--fs-micro); color:var(--muted);
+  transform:translateX(-50%); white-space:nowrap; font-variant-numeric:tabular-nums}
+.cad-timeline .ct-day.d0{color:var(--text); font-weight:700}
+.cad-timeline .ct-note{font-size:var(--fs-micro); color:var(--muted); margin-top:10px; line-height:1.6}
+/* 手机档：「当天」与「+1」只差 4.8%（约 17px），横排必然压住 —— 标签**按奇偶交错两行**。
+   注意要用 nth-of-type(odd/even) 严格按顺序交替：第一版写成 ".d0, :nth-of-type(even)"，
+   结果「当天」和「+1」都落在下面那行，照样压住（探针量到了这一对）。 */
+@media (max-width:520px){
+  .cad-timeline .ct-axis{height:54px}
+  .cad-timeline .ct-day{font-size:9px}
+  .cad-timeline .ct-day:nth-of-type(odd){top:19px}
+  .cad-timeline .ct-day:nth-of-type(even){top:34px}
+}
 .wk-cmp{margin-top:14px; padding-top:12px; border-top:1px solid var(--line)}
 .wc-top{display:flex; align-items:baseline; justify-content:space-between; gap:10px; font-size:var(--fs-small); color:var(--muted); font-variant-numeric:tabular-nums}
 .wc-top b{color:var(--text); font-size:var(--fs-lead); font-weight:700}
@@ -2109,13 +2134,15 @@ html{ overflow-anchor:none }
               <span>配图会调用站外图片搜索，可能出现卡顿、图片与词义不符或页面异常；默认关闭，建议保持关闭。</span>
             </div>
             <div class="kv"><span class="kk">默认剔除衍生词 <button class="tip" onclick="termTip(&quot;deriv&quot;)" aria-label="什么是衍生词" title="什么是衍生词">?</button></span><span class="vv"><label class="switch"><input type="checkbox" id="set-deriv"><span class="sl"></span></label></span></div>
+            <!-- v2.7.48 可见新增：把「6 轮节奏」画出来（原来是纯文字说明，现在给一条时间轴）。 -->
+            <div class="cad-timeline" id="cad-timeline"></div>
           </section>
           <section class="set-pane" data-pane="appearance" hidden>
             <div class="card-title"><span class="dot"></span>外观设计</div>
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.47</span>
+            <span hidden id="set-version">2.7.48</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5032,7 +5059,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.47', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.48', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5061,7 +5088,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.47', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.48', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -6669,6 +6696,26 @@ function roundTicks(n){
    学习记录页原来只有四个数字（总数/学习中/已掌握/今日需复习）——数字说明不了「最近在变好还是变差」。
    这里用与概览潮汐同一套刻度语言画 14 格（左 7 格=前 7 天，右 7 格=近 7 天），中间一条分隔线，
    上面两行给出两个区间的合计与变化。数据全部来自 stats.dayLog（真实每天学了多少词）。 */
+/* v2.7.48 可见新增：把「6 轮节奏」画成一条时间轴（原来是纯文字说明）。
+   刻度位置按 SRS.NODES 的天数**等比**铺开（0 天在最左，+21 天在最右），所以中间会自然出现疏密 ——
+   那正是「间隔重复」的样子。设置页渲染时调用一次即可。 */
+function drawCadTimeline(){
+  const box = document.getElementById('cad-timeline');
+  if(!box) return;
+  const N = SRS.NODES, span = N[N.length - 1];              // 21 天
+  /* 轴上其实是 **7 个标记**：第 0 天「当天」是起点（学完那天），之后 +1/+2/+4/+7/+15/+21 才是 6 遍复习。
+     第一版把起点漏了、直接把 +1 标成"当天"，是探针里那句「文案必须等于 当天 +1 +2…」抓出来的。 */
+  const marks = [{ d: 0, txt: '当天', start: true }].concat(N.map(d => ({ d, txt: '+' + d })));
+  const nodes = marks.map(m => {
+    const pct = Math.round(m.d / span * 1000) / 10;
+    return '<i class="ct-node' + (m.start ? ' d0' : '') + '" style="left:' + pct + '%" title="' + (m.start ? '第 0 天 · 学完当天' : '复习 +' + m.d + ' 天') + '"></i>' +
+           '<span class="ct-day' + (m.start ? ' d0' : '') + '" style="left:' + pct + '%">' + m.txt + '</span>';
+  }).join('');
+  box.innerHTML = '<div class="ct-title">6 轮复习节奏<span>走完即自动「已掌握」</span></div>' +
+    '<div class="ct-axis"><span class="ct-rail"></span>' + nodes + '</div>' +
+    '<div class="ct-note">学完当天记为第 0 天，之后第 1 / 2 / 4 / 7 / 15 / 21 天各复习一遍（共 6 遍）。<br>' +
+    '逾期完成的词会以当天为新起点重排后续节点；轴上刻度按天数等比铺开，越往右越疏。</div>';
+}
 function weekCompareHtml(){
   const d = AppAuth.data(), log = (d.stats && d.stats.dayLog) || {};
   const today = SRS.today();
@@ -7515,6 +7562,7 @@ const AppSettings = {
     const before = panes ? Array.prototype.find.call(panes.children, el => paneOf(el) && !el.hidden) : null;
     const fromIndex = !!(index && !index.hidden);
     this.catName = name;
+    if(name === 'study') setTimeout(() => { try { drawCadTimeline(); } catch (e) {} }, 0);   // v2.7.48 节奏轴（渲染完再画）
     if(name !== 'library') AppLibrary._autoRan = false;   // 离开词库中心 → 允许下次进入再自动更新
     this._keepVisible = true; this._keepPane = null;      // 平移期间：索引与内容页都不许被隐藏
     if(AppUI && typeof AppUI.renderSettings === 'function') AppUI.renderSettings();
