@@ -456,6 +456,16 @@ html.side-collapsed .side-toggle{left:12px}
 .nav-btn.active{background:var(--primary-soft); color:var(--primary); font-weight:700}
 .nav-sep{height:1px; background:var(--line); margin:12px 8px}
 .side-foot{margin-top:auto; padding:10px 8px 4px; font-size:var(--fs-small); color:var(--muted); line-height:1.6; font-variant-numeric:tabular-nums}
+/* v2.7.66 可见新增：侧边栏「今日进度」迷你条（环境式反馈；数据与概览目标环同源） */
+.side-goal{padding:0 10px 10px}
+.side-goal .sg-top{display:flex; align-items:baseline; justify-content:space-between; gap:8px;
+  font-size:var(--fs-micro); color:var(--muted); margin-bottom:4px}
+.side-goal .sg-top b{color:var(--text); font-variant-numeric:tabular-nums}
+.side-goal .sg-bar{display:block; height:6px; border-radius:var(--radius-full); background:var(--line); overflow:hidden}
+.side-goal .sg-bar i{display:block; height:100%; border-radius:var(--radius-full); background:var(--primary);
+  transition:width var(--dur-3) var(--ease)}
+.side-goal.done .sg-bar i{background:var(--accent)}
+@media (prefers-reduced-motion: reduce){ .side-goal .sg-bar i{transition:none} }
 .side-user{display:flex; align-items:center; gap:var(--gap-between); padding:10px; border-radius:var(--radius); background:var(--panel2); margin-top:10px; border:1px solid var(--line); width:100%; text-align:left; color:inherit; cursor:pointer; transition:background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease)}
 .side-user:hover{background:var(--panel3); border-color:var(--line2)}
 .side-user.active{background:var(--primary-soft); border-color:var(--line2)}
@@ -2134,6 +2144,12 @@ html{ overflow-anchor:none }
     <button class="nav-btn" data-page="english" onclick="AppUI.go('english')"><span class="ico" data-icon="bookOpen"></span>词汇背诵</button>
     <button class="nav-btn" data-page="settings" onclick="AppUI.go('settings')"><span class="ico" data-icon="settings"></span>设置</button>
     <div class="nav-sep"></div>
+    <!-- v2.7.66 可见新增：侧边栏的「今日进度」迷你条 —— 不管你在哪一页，都能看到今天走了多少。
+         概览页有目标环，但离开概览就看不见了；这一条把同样的信息变成**环境式反馈**（数据同源）。 -->
+    <div class="side-goal" id="side-goal" title="今日目标进度">
+      <div class="sg-top"><span>今日</span><b id="sg-num">0 / 0</b></div>
+      <span class="sg-bar"><i id="sg-fill" style="width:0%"></i></span>
+    </div>
     <button class="side-user" id="side-user-btn" type="button" data-page="profile"
             onclick="AppUI.go('profile')" title="用户中心：头像、昵称与个人信息">
       <span class="avatar" id="side-avatar">?</span>
@@ -2283,7 +2299,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.65</span>
+            <span hidden id="set-version">2.7.66</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5200,7 +5216,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.65', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.66', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5229,7 +5245,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.65', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.66', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -5415,6 +5431,7 @@ const AppUI = {
      opts.back = true 表示返回上一级（方向反过来：旧页整屏下退出、新页自上方降下）。 */
   go(page, fromHash, opts){
     const o = opts || {};
+    updateSideGoal();     // v2.7.66：切页时刷新侧边栏的今日进度（环境式反馈，不该只在概览更新）
     const prev = document.querySelector('#main-area > section:not([hidden])');
     const targetEl = document.getElementById('page-' + page);
     const canSlide = !o.noSlide && prev && targetEl && prev !== targetEl &&
@@ -6966,6 +6983,24 @@ function masteryBarHtml(learned, known){
 /* v2.7.64 可见新增：登录页的品牌节奏标记。
    刻度位置按 SRS.NODES 的天数差**等比**铺开（0 天最左、+21 天最右），所以中间自然有疏密 ——
    与学习卡节奏带、结束页六轮环、设置页时间轴同一套数据来源与同一条公式。 */
+/* v2.7.66 可见新增：更新侧边栏的「今日进度」迷你条。
+   数据与概览的目标环**同源**（stats.dayLog[今天] / settings.daily），所以在任何页面都能看到同一个数。
+   调用点：进入任意页面时（AppUI.go）与启动后各一次 —— 它是环境式反馈，不该只在概览页更新。 */
+function updateSideGoal(){
+  try{
+    const box = document.getElementById('side-goal');
+    if(!box) return;
+    const d = AppAuth.data(), st = d.stats || {};
+    const done = (st.dayLog || {})[SRS.today()] || 0;
+    const goal = Math.max(1, parseInt((d.settings || {}).daily, 10) || 20);
+    const pct = Math.min(100, Math.round(done / goal * 100));
+    const num = document.getElementById('sg-num'), fill = document.getElementById('sg-fill');
+    if(num) num.textContent = done + ' / ' + goal;
+    if(fill) fill.style.width = pct + '%';
+    box.classList.toggle('done', pct >= 100);
+    box.setAttribute('aria-label', '今日进度 ' + done + ' / ' + goal + ' 词，' + pct + '%');
+  }catch(e){}
+}
 function drawAuthMark(){
   const box = document.getElementById('auth-mark');
   if(!box) return;
@@ -8500,6 +8535,7 @@ window.addEventListener('unhandledrejection', function(e){ showFatal(String((e.r
     }
     Supa.init();
     try{ drawAuthMark(); }catch(e){}      // v2.7.64：登录页的品牌节奏标记（DOM 就绪后画一次）
+    try{ updateSideGoal(); }catch(e){}    // v2.7.66：侧边栏今日进度（启动即有一份）
     Speech.init();          // 预加载音色列表，消除发音前摇
     // 多设备“实时”同步：前台每 5 秒拉一次云端；另一台设备的清除/重置/删号也会在几秒内生效
     setInterval(() => {
