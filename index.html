@@ -1361,6 +1361,19 @@ html.sl-has-session #view-auth{display:none}
 @media (max-width:480px){ .rv-tick{width:5px; height:5px} }
 .rv-desc{flex:1; min-width:120px; color:var(--text)}
 .rv-n{min-width:56px; text-align:right; font-weight:700; color:var(--primary)}
+/* v2.7.54 可见新增：复习批次「展开看这批词」 */
+.rv-toggle{appearance:none; border:1px solid var(--line2); background:var(--panel); color:var(--muted);
+  font:inherit; font-size:var(--fs-micro); font-weight:600; padding:4px 9px; border-radius:var(--radius-full);
+  cursor:pointer; white-space:nowrap; transition:background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease)}
+.rv-toggle:hover{background:var(--primary-soft); color:var(--primary); border-color:transparent}
+.rv-toggle:focus-visible{outline:2px solid color-mix(in srgb, var(--primary) 55%, transparent); outline-offset:2px}
+.rv-row.open{background:var(--panel)}
+.rv-words{flex:1 1 100%; display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:8px;
+  padding-left:88px; animation:fxRise var(--dur-2) var(--ease) both}
+.rv-words .rv-w{font-size:var(--fs-small); color:var(--text); background:var(--panel2); border:1px solid var(--line);
+  border-radius:var(--radius-sm); padding:3px 9px}
+.rv-words .rv-more{font-size:var(--fs-micro); color:var(--muted)}
+@media (max-width:640px){ .rv-words{padding-left:0} }
 .rv-tag{min-width:62px; text-align:right; font-size:var(--fs-micro); font-weight:700}
 .rv-gap{opacity:.6}
 .rv-gap .rv-day{color:var(--muted)}
@@ -2187,7 +2200,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.53</span>
+            <span hidden id="set-version">2.7.54</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5104,7 +5117,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.53', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.54', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5133,7 +5146,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.53', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.54', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7082,6 +7095,12 @@ function burstFx(anchor, count){
 /* ================= 复习（先出清单，再开始复习） ================= */
 const AppReview = {
   state: null,
+  expanded: null,                       // v2.7.54：{ 'YYYY-MM-DD': true }，只记「哪些批次展开着」（会话内，不入库）
+  toggleWords(day){
+    this.expanded = this.expanded || {};
+    if(this.expanded[day]) delete this.expanded[day]; else this.expanded[day] = true;
+    this.render();
+  },
   render(){
     const box = $('#tab-review');
     const r = AppFilter.result;
@@ -7115,10 +7134,27 @@ const AppReview = {
       const late = x.day < today;
       const dRel = SRS.dayDiff(x.day, today);
       const rel = dRel === 0 ? '今天' : (dRel === 1 ? '昨天' : dRel + ' 天前');
-      return '<div class="rv-row"><span class="rv-day">'+SRS.mind(x.day)+'<i>'+rel+'</i></span>'
+      /* v2.7.54 可见新增：每批可以展开看「具体是哪些词」。
+         原来每行只有「N 词」这个数字 —— 想知道是哪几个词就得点进去开始复习，看不到就先背上了。
+         展开是**就地**的（不跳页、不进弹层），并且只把这一批的词列出来（默认 12 个，多的给一句"还有 X 个"）。 */
+      const open = AppReview.expanded && AppReview.expanded[x.day];
+      const words = x.words || [];
+      const shown = words.slice(0, 12);
+      const expandable = words.length > 0;
+      const wordsHtml = !expandable ? '' :
+        '<div class="rv-words" id="rvw-'+x.day+'"'+(open ? '' : ' hidden')+'>' +
+          shown.map(wd => '<span class="rv-w">'+esc(wd.w)+'</span>').join('') +
+          (words.length > shown.length ? '<span class="rv-more">还有 '+(words.length - shown.length)+' 个</span>' : '') +
+        '</div>';
+      return '<div class="rv-row'+(open ? ' open' : '')+'"><span class="rv-day">'+SRS.mind(x.day)+'<i>'+rel+'</i></span>'
         + '<span class="rv-desc">'+roundTicks(round)+'第 '+round+' 遍复习'+(late ? ' · 逾期顺延，并入今天' : '')+'</span>'
         + '<span class="rv-n">'+wc+' 词</span>'
-        + '<span class="rv-tag '+(late ? 'tag-orange' : 'tag-green')+'">'+(late ? '顺延' : '今日到期')+'</span></div>';
+        + '<span class="rv-tag '+(late ? 'tag-orange' : 'tag-green')+'">'+(late ? '顺延' : '今日到期')+'</span>'
+        + (expandable
+            ? '<button class="rv-toggle" type="button" aria-expanded="'+(open ? 'true' : 'false')+'" aria-controls="rvw-'+x.day+'"'
+              + ' onclick="AppReview.toggleWords(\''+x.day+'\')">'+(open ? '收起' : '看这批词')+'</button>'
+            : '')
+        + wordsHtml + '</div>';
     }).join('');
     box.innerHTML =
       '<div class="card"><div class="card-title"><span class="dot"></span>今日复习清单 · '+SRS.mind(today)+'</div>'
