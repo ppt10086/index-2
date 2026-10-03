@@ -639,6 +639,13 @@ html.side-collapsed .side-toggle{left:12px}
 .done-mark .dm-check{fill:none; stroke:var(--accent); stroke-width:6.4; stroke-linecap:round; stroke-linejoin:round;
   animation:dmDraw .3s var(--ease) both; animation-delay:.7s}
 .done-cap{font-size:var(--fs-micro); color:var(--muted); letter-spacing:.02em; margin-bottom:10px}
+/* v2.7.57 可见新增：结束页「下一轮什么时候」一行（只在新词学习轮出现） */
+.done-next{display:inline-flex; align-items:center; gap:8px; margin:2px auto 2px; padding:8px 14px;
+  border:1px solid color-mix(in srgb, var(--primary) 22%, var(--line)); border-radius:var(--radius-full);
+  background:var(--primary-soft); color:var(--text); font-size:var(--fs-small); max-width:92%}
+.done-next .dn-i{display:inline-flex; color:var(--primary); flex:0 0 auto}
+.done-next b{font-variant-numeric:tabular-nums}
+@media (max-width:420px){ .done-next{font-size:var(--fs-micro); padding:7px 11px; gap:6px} }
 /* v2.7.52 可见新增：结束页「今天」小结条（三格：已认识 / 已复习 / 连续天数） */
 .done-today{display:flex; align-items:stretch; justify-content:center; gap:0; margin:16px auto 4px;
   max-width:420px; border:1px solid var(--line); border-radius:var(--radius); background:var(--panel2); overflow:hidden}
@@ -2200,7 +2207,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.56</span>
+            <span hidden id="set-version">2.7.57</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5117,7 +5124,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.56', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.57', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5146,7 +5153,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.56', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.57', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -6928,8 +6935,24 @@ function doneHtml(o){
     '<div class="done-cap">6 轮记忆曲线 · 全部走完</div>' +
     '<h3>' + title + '</h3>' +
     '<p class="muted" role="status">' + stat + tail + '</p>' +
+    nextReviewHtml(c) +
     todaySummaryHtml() +
     '<div class="done-acts">' + acts + '</div></div>';
+}
+/* v2.7.57 可见新增：结束页的「下一轮什么时候」。
+   间隔重复的关键信息是"**下一步**"，而结束页原来只报过去（过了几张、记得几个）。
+   只在新词学习轮给出：这一轮新学的词，下一轮复习就是明天（SRS.NODES[0] = +1 天）——
+   复习轮不显示，因为那一批词各自的节点不同，笼统写一句"明天"会是**错的**（宁可不说）。 */
+function nextReviewHtml(c){
+  if(!c || c.mode === 'review' || c.mode === 'quiz') return '';
+  const step = (SRS.NODES && SRS.NODES[0]) || 1;
+  const d = AppAuth.data();
+  const known = c.marks && c.marks.good ? c.marks.good : 0;
+  if(!known) return '';                                  // 一个都没记住 → 谈不上"下一轮"
+  return '<div class="done-next" role="status">' +
+    '<span class="dn-i" aria-hidden="true">' + icon('refresh', 16) + '</span>' +
+    '<span>这 <b>' + known + '</b> 个词已排入复习：<b>明天</b>（第 ' + step + ' 天）回来过一遍</span>' +
+    '</div>';
 }
 /* v2.7.52 可见新增：结束页的「今天」小结条。
    原来结束页只报**这一轮**（过了几张、记得/忘了几个），没有"今天整体"的视角 ——
