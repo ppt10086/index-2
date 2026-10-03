@@ -5554,8 +5554,10 @@ const AppUI = {
       const tgt = f.target || res.targetId || '';
       const tname = (WL.byId(tgt) || {}).name || res.targetName || (tgt ? tgt : '未选择');
       const keptN = res.kept ? res.kept.length : (tgt ? (WL.count(tgt) || 0) : 0);
-      /* 到期数用**应用自己的** SRS.dueCount（它会按词表条目集合规整、并与复习清单同源）——
-         原来我在这里手抄了一遍同样的循环，既重复又可能与规整规则不一致（铁律 4：只改一处真相）。 */
+      /* 到期数用**应用自己的** SRS.dueCount(listId, entries) —— 与复习清单同源、同样按词表条目规整。
+         它比手抄一份 for-in 循环贵（每次会 _normSet），但正确性优先：手抄版在渲染那一刻数不准（#58）。
+         注意：换回它之后我曾怀疑它拖垮学习流程（e2e-v26 稳定失败），后来查明那其实是 **e2e-prep prep 状态过期**，
+         与这里无关（跑 prep 后 89/0）。记在这里免得下次又被同一个假线索带走。 */
       const entriesOfTarget = (WL.cache.get(tgt) || {}).entries || [];
       const dueN = tgt ? (SRS.dueCount(tgt, entriesOfTarget) || 0) : 0;
       const setSub = (id, html, hot) => {
@@ -5570,9 +5572,7 @@ const AppUI = {
          为什么保守：探针在合成数据下量到「渲染时数出来是 0，而同一份数据稍后独立重算得到 6」
          （概览渲染早于筛选流程对 wordState 的规整），我没有在预算内查清这条时序，
          于是宁可少报也不报错 —— 具体见 07-KNOWN-ISSUES #58。 */
-      /* 复习入口：现在数字来自**应用自己的** SRS.dueCount（与复习清单同源、同样规整），
-         所以可以恢复完整契约 —— 有到期报数字；没有到期时报「今天没有到期的词」；一个词都没学过才说「还没有开始学」。
-         （v2.7.49 那轮因为手抄的计数在渲染时数不准，曾临时降级为中性指引；v2.7.50 换成同源计数后恢复。） */
+      /* 三态：有到期报数字（加重 + 提示态）→ 没有到期说「今天没有到期的词」→ 一个词都没学过才说「还没有开始学」 */
       const learnedN = (() => { const ws = d.wordState || {}, pre = SRS.key(tgt, ''); let n = 0; for(const k in ws){ if(k.indexOf(pre) === 0) n++; } return n; })();
       setSub('fb-sub-review', dueN ? '今日 <b>' + dueN + '</b> 词到期' : (learnedN ? '今天没有到期的词' : '还没有开始学'), dueN > 0);
       let libs = 0, words = 0;
