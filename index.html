@@ -514,6 +514,27 @@ html.side-collapsed .side-toggle{left:12px}
 .fc-btns{display:flex; gap:var(--gap-between); margin-top:20px; justify-content:center; flex-wrap:wrap; position:relative}
 /* 页面内自绘的「返回」按钮：纯文字 + 描边胶囊，不用任何图标/遮罩 */
 .study-meta .sm-l{display:flex; align-items:center; gap:var(--gap-between); min-width:0}
+/* v2.7.51 可见新增：本轮进度点阵（与学习卡的节奏带同一套「点」语言） */
+.round-dots{display:flex; align-items:center; gap:4px; justify-content:center; flex-wrap:wrap;
+  margin:-4px 0 10px; min-height:16px}
+.round-dots .rd{width:7px; height:7px; border-radius:50%; background:var(--line2); flex:0 0 auto}
+.round-dots .rd.done{background:var(--primary)}
+.round-dots .rd.now{background:var(--panel); border:2px solid var(--primary); width:9px; height:9px;
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent)}
+.round-dots .rd-num{font-size:var(--fs-micro); color:var(--muted); font-variant-numeric:tabular-nums; margin-left:6px}
+.round-dots.bar{gap:10px}
+.round-dots.bar .rd-bar{flex:1 1 auto; max-width:280px; height:8px; border-radius:var(--radius-full);
+  background:var(--line); overflow:hidden}
+.round-dots.bar .rd-bar i{display:block; height:100%; border-radius:var(--radius-full); background:var(--primary);
+  transition:width var(--dur-2) var(--ease)}
+/* 手机档：点阵**强制单行**（16 点 × 5px + 2px 间距 ≈ 110px，任何手机都放得下），不允许换行 ——
+   换行会让「一排进度」变成两排，反而更难读（第一版就是 wrap 后跑到第二行）。 */
+@media (max-width:520px){
+  .round-dots{flex-wrap:nowrap; gap:2px; overflow:hidden}
+  .round-dots .rd{width:5px; height:5px}
+  .round-dots .rd.now{width:7px; height:7px}
+  .round-dots .rd-num{margin-left:5px; flex:0 0 auto}
+}
 /* v2.7.23 记忆节奏带：只属于这个产品的一条图形 —— 6 个刻度 = 6 轮记忆曲线，
    间距按 NODES 天数差成比例（左密右疏），已完成填实、当前一轮强调色放大、未来留浅点。
    它是这一屏唯一的「大胆处」，所以其余元素保持安静（小字、中性灰）。 */
@@ -2149,7 +2170,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.50</span>
+            <span hidden id="set-version">2.7.51</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5066,7 +5087,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.50', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.51', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5095,7 +5116,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.50', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.51', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -6564,6 +6585,10 @@ const AppStudy = {
         '<span>第 '+(s.idx+1)+' / '+total+' 张</span></span>' +
         '<span class="tag '+stage.cls+'">'+stage.txt+'</span></div>' +
       srsStripHtml(curState) +
+      /* v2.7.51 可见新增：本轮进度点阵（在最常用的屏幕上回答「这一轮还剩几个、我在哪」）。
+         一张卡一个点：已过=实心主题色，当前=描边加粗，未到=浅色空心。卡片太多（>24）时退化成进度条+计数，
+         避免点阵排成两行挤压卡片。放在 fc-body 之外，所以不会影响 Fit 对卡片的测量。 */
+      roundDotsHtml(s.idx, total) +
       '<div class="flashcard"><div class="fc-word-wrap" data-fit-host><span class="fc-word-box"><span class="fc-word" data-fit data-fit-nowrap data-fit-reserve="'+fitReserve()+'" data-fit-max="'+fcFontSize(e.w)+'">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppStudy.speak()" aria-label="朗读 '+esc(e.w)+'（快捷键 ·）" title="朗读（快捷键 ·）">'+icon('volume2', 20)+'</button></span></div>' +
       '<div class="fc-ph" id="fc-ph"></div>' +
       passNote(curState) +
@@ -6793,6 +6818,26 @@ function ringHtml(o){
     '</svg>' +
     '<div class="gr-txt"><b>' + (o.num === undefined ? pct + '%' : esc(String(o.num))) + '</b><span>' + esc(o.label || '') + '</span></div>' +
   '</div>';
+}
+/* v2.7.51 可见新增：本轮进度点阵。
+   idx = 已经过的张数（0-based 当前张的下标），total = 本轮总张数。
+   · total ≤ 24：一排点，已过实心（主题色）、当前描边加重、未到浅色空心；
+   · total > 24：退化成一条进度条 + 「idx+1 / total」，避免点阵换行挤压卡片。
+   放在卡片外壳（fc-body 之外），因此不会进入 Fit 的测量范围。 */
+function roundDotsHtml(idx, total){
+  const n = Math.max(0, total | 0), cur = Math.max(0, Math.min(idx | 0, Math.max(0, n - 1)));
+  if(!n) return '';
+  /* 手机档一律用进度条：点阵在窄屏上要么换行、要么挤成一条线，都不如「条 + 计数」清楚（探针量到换行过两次）。 */
+  const narrow = typeof window !== 'undefined' && window.innerWidth <= 520;
+  if(n > 16 || narrow){
+    const pct = Math.round((cur + 1) / n * 100);
+    return '<div class="round-dots bar" role="img" aria-label="本轮进度 ' + (cur + 1) + ' / ' + n + '">' +
+      '<span class="rd-bar"><i style="width:' + pct + '%"></i></span>' +
+      '<span class="rd-num">' + (cur + 1) + ' / ' + n + '</span></div>';
+  }
+  let s = '<div class="round-dots" role="img" aria-label="本轮进度 ' + (cur + 1) + ' / ' + n + '，已完成 ' + cur + ' 张">';
+  for(let i = 0; i < n; i++) s += '<i class="rd' + (i < cur ? ' done' : (i === cur ? ' now' : '')) + '"></i>';
+  return s + '<span class="rd-num">' + (cur + 1) + ' / ' + n + '</span></div>';
 }
 function doneMark(){
   const NODES = SRS.NODES, ROUNDS = SRS.ROUNDS;
