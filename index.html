@@ -527,16 +527,16 @@ html.side-collapsed .side-toggle{left:12px}
    （与学习卡上那条节奏带同一个数据来源、同一套疏密语言），逐个点亮后停在「已完成」。
    动效规范：一次性（animation-iteration-count:1）、只动 opacity/transform（合成层），
    并且自带 reduced-motion 关闭——不依赖别处的兜底规则。 */
-.done-mark{display:block; margin:0 auto 4px; width:200px; height:74px; overflow:visible}
-.done-mark .dm-line{stroke:var(--line2); stroke-width:1.5; fill:none}
-.done-mark .dm-dot{fill:var(--line); stroke:none; transform-box:fill-box; transform-origin:center;
-  animation:dmPop .34s var(--ease) both}
-.done-mark .dm-dot.on{fill:var(--accent)}
-.done-mark .dm-check{fill:none; stroke:var(--accent); stroke-width:3; stroke-linecap:round; stroke-linejoin:round;
-  animation:dmDraw .3s var(--ease) both; animation-delay:.62s}
-@keyframes dmPop{from{opacity:0; transform:scale(.35)} to{opacity:1; transform:none}}
-@keyframes dmDraw{from{opacity:0; transform:translateY(3px)} to{opacity:1; transform:none}}
-@media (prefers-reduced-motion: reduce){ .done-mark .dm-dot, .done-mark .dm-check{animation:none} }
+.done-mark{display:block; margin:0 auto 6px; width:136px; max-width:52%; height:auto}
+.done-mark .dm-seg{fill:none; stroke:var(--line2); stroke-width:9; stroke-linecap:butt;
+  transform-box:fill-box; transform-origin:center; animation:dmPop .36s var(--ease) both}
+.done-mark .dm-seg.on{stroke:color-mix(in srgb, var(--accent) 52%, var(--line2))}
+.done-mark .dm-check{fill:none; stroke:var(--accent); stroke-width:6.4; stroke-linecap:round; stroke-linejoin:round;
+  animation:dmDraw .3s var(--ease) both; animation-delay:.7s}
+.done-cap{font-size:var(--fs-micro); color:var(--muted); letter-spacing:.02em; margin-bottom:10px}
+@keyframes dmPop{from{opacity:0; transform:scale(.9)} to{opacity:1; transform:none}}
+@keyframes dmDraw{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none}}
+@media (prefers-reduced-motion: reduce){ .done-mark .dm-seg, .done-mark .dm-check{animation:none} }
 .study-done h3{font-size:var(--fs-h2); margin:12px 0 6px; letter-spacing:-.01em}
 .fx-burst{position:absolute; left:50%; top:50%; width:0; height:0; pointer-events:none; z-index:60}
 .fx-spark{position:absolute; left:0; top:0; transform:translate(-50%,-50%); animation:fx-float .72s ease-out forwards; opacity:0}
@@ -6560,20 +6560,29 @@ const AppStudy = {
 /* v2.7.38 可见新增：收尾图形「六轮曲线」。
    六个点 = 记住一个词要走的 6 轮；横向间距按 SRS.NODES 的天数差成比例 ——
    与学习卡上那条节奏带**同一数据来源、同一套「左密右疏」语言**，只是放大成收尾画面。 */
+/* v2.7.38 可见新增：收尾图形「六轮环」。
+   六段 = 记住一个词要走的 6 轮；**每段的角宽 ∝ 该轮的间隔天数**（1/2/4/7/15/21 的差），
+   所以圆环本身就是"间隔重复"的形状 —— 与学习卡节奏带、概览潮汐同一套数据来源。
+   为什么不用上一版的「弧线 + 点」：两次视觉复核都说它「偏小、不协调、对勾与弧线脱节」，
+   而圆环天生对称、体量足、对勾落在环心即成一体的构图。 */
 function doneMark(){
   const NODES = SRS.NODES, ROUNDS = SRS.ROUNDS;
-  const W = 200, H = 74, STEP = 2.1;
-  const pts = []; let x = 8;
-  for(let i = 0; i < ROUNDS; i++){
-    if(i) x += 3 + (NODES[i] - NODES[i - 1]) * STEP;
-    const y = 46 - Math.sin(i / (ROUNDS - 1) * Math.PI) * 16;
-    pts.push([Math.round(x), Math.round(y)]);
-  }
-  const line = '<polyline class="dm-line" points="' + pts.map(p => p[0] + ',' + p[1]).join(' ') + '"></polyline>';
-  const dots = pts.map((p, i) => '<circle class="dm-dot on" cx="' + p[0] + '" cy="' + p[1] + '" r="4" style="animation-delay:' + (i * 70) + 'ms"></circle>').join('');
-  const last = pts[pts.length - 1];
-  const check = '<polyline class="dm-check" points="' + (last[0] - 7) + ',' + (last[1] + 1) + ' ' + (last[0] - 2) + ',' + (last[1] + 6) + ' ' + (last[0] + 8) + ',' + (last[1] - 7) + '"></polyline>';
-  return '<svg class="done-mark" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="六轮记忆曲线已完成">' + line + dots + check + '</svg>';
+  const C = 60, R = 46, GAP = 11;                      // 圆心/半径/段间留白（度；留白要够大才读得出"6 段"）
+  const deltas = NODES.map((v, i) => i ? v - NODES[i - 1] : v);   // 1/2/3/8/6 的间隔
+  const total = deltas.reduce((a, b) => a + b, 0);
+  const usable = 360 - GAP * ROUNDS;
+  let a0 = -90;                                        // 从正上方开始
+  const segs = deltas.map((d, i) => {
+    const span = usable * d / total;
+    const a1 = a0 + span;
+    const p = (a) => [Math.round((C + R * Math.cos(a * Math.PI / 180)) * 10) / 10, Math.round((C + R * Math.sin(a * Math.PI / 180)) * 10) / 10];
+    const [x1, y1] = p(a0), [x2, y2] = p(a1);
+    const large = span > 180 ? 1 : 0;
+    a0 = a1 + GAP;
+    return '<path class="dm-seg on" data-days="' + d + '" d="M' + x1 + ' ' + y1 + ' A' + R + ' ' + R + ' 0 ' + large + ' 1 ' + x2 + ' ' + y2 + '" style="animation-delay:' + (i * 70) + 'ms"></path>';
+  }).join('');
+  return '<svg class="done-mark" viewBox="0 0 120 120" role="img" aria-label="六轮记忆曲线已完成：' + ROUNDS + ' 轮全部走完">' +
+    segs + '<path class="dm-check" d="M45 62 l10 11 l22 -26"></path></svg>';
 }
 function doneHtml(o){
   const c = o || {};
@@ -6601,6 +6610,7 @@ function doneHtml(o){
   /* v2.7.38 可见新增：收尾图形替代原来的纯图标 —— 六个点按 SRS 天数差成比例排布
      （与学习卡节奏带同一数据来源），逐个点亮后落一个对勾；全部一次性、只动 opacity/transform。 */
   return '<div class="study-done">' + doneMark() +
+    '<div class="done-cap">6 轮记忆曲线 · 全部走完</div>' +
     '<h3>' + title + '</h3>' +
     '<p class="muted" role="status">' + stat + tail + '</p>' +
     '<div class="done-acts">' + acts + '</div></div>';
