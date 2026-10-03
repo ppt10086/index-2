@@ -140,6 +140,22 @@ html[data-theme="dark"][data-accent="violet"] {--primary:#bda0ec; --primary2:#cf
   .cad-timeline .ct-day:nth-of-type(even){top:34px}
 }
 .wk-cmp{margin-top:14px; padding-top:12px; border-top:1px solid var(--line)}
+/* v2.7.60：掌握进度条（记录页）—— 把"已掌握 / 已学习"画成一段可比的长度 */
+.mst{margin-top:14px; padding-top:12px; border-top:1px solid var(--line)}
+.mst-bar{height:10px; border-radius:var(--radius-full); background:color-mix(in srgb, var(--line2) 60%, transparent); overflow:hidden}
+.mst-bar .mst-done{display:block; height:100%; border-radius:var(--radius-full); background:var(--accent);
+  animation:mstFill var(--dur-3) var(--ease) both}
+.mst-lab{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px;
+  font-size:var(--fs-small); color:var(--muted); font-variant-numeric:tabular-nums}
+.mst-lab b{color:var(--accent); font-size:var(--fs-lead)}
+.mst-legend{display:inline-flex; align-items:center; gap:6px; font-size:var(--fs-micro)}
+.mst-k{width:8px; height:8px; border-radius:2px; display:inline-block; margin-left:8px}
+.mst-k:first-child{margin-left:0}
+.mst-k.done{background:var(--accent)}
+.mst-k.learn{background:var(--line2)}
+@keyframes mstFill{from{opacity:.2} to{opacity:1}}
+@media (prefers-reduced-motion: reduce){ .mst-bar .mst-done{animation:none} }
+@media (max-width:480px){ .mst-lab{font-size:var(--fs-micro)} .mst-legend{display:none} }
 .wc-top{display:flex; align-items:baseline; justify-content:space-between; gap:10px; font-size:var(--fs-small); color:var(--muted); font-variant-numeric:tabular-nums}
 .wc-top b{color:var(--text); font-size:var(--fs-lead); font-weight:700}
 .wc-top .wc-d{color:color-mix(in srgb, var(--accent) 82%, var(--text)); font-weight:600}
@@ -2218,7 +2234,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.59</span>
+            <span hidden id="set-version">2.7.60</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5135,7 +5151,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.59', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.60', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5164,7 +5180,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.59', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.60', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -6836,6 +6852,21 @@ function drawCadTimeline(){
     '<div class="ct-note">学完当天记为第 0 天，之后第 1 / 2 / 4 / 7 / 15 / 21 天各复习一遍（共 6 遍）。<br>' +
     '逾期完成的词会以当天为新起点重排后续节点；轴上刻度按天数等比铺开，越往右越疏。</div>';
 }
+/* v2.7.60 可见新增：学习记录的「掌握进度条」。
+   记录页有四个数字（已学习 / 学习中 / 已掌握 / 今日需复习），但**数字说不出比例**——
+   "已掌握 180、学习中 240" 得心算才知道走到哪了。这条把两者画成一段可比的长度。
+   全 0 时不画（没有可比的基数）。 */
+function masteryBarHtml(learned, known){
+  const total = Math.max(0, learned | 0), ok = Math.max(0, Math.min(known | 0, total));
+  if(!total) return '';
+  const pct = Math.round(ok / total * 100);
+  const w = Math.round(ok / total * 1000) / 10;
+  return '<div class="mst" role="img" aria-label="掌握进度：已掌握 ' + ok + ' / 已学习 ' + total + ' 词，' + pct + '%">' +
+    '<div class="mst-bar"><i class="mst-done" style="width:' + w + '%"></i></div>' +
+    '<div class="mst-lab"><span><b>' + pct + '%</b> 已掌握</span>' +
+      '<span class="mst-legend"><i class="mst-k done"></i>已掌握 ' + ok + '<i class="mst-k learn"></i>学习中 ' + (total - ok) + '</span></div>' +
+  '</div>';
+}
 function weekCompareHtml(){
   const d = AppAuth.data(), log = (d.stats && d.stats.dayLog) || {};
   const today = SRS.today();
@@ -7491,7 +7522,7 @@ const AppRecord = {
       '<div class="stat"><span class="stat-ico stat-orange">'+icon('clock')+'</span><div class="stat-body"><span class="k">学习中</span><span class="v">'+learning+'</span><span class="d">尚未走完 6 遍复习</span></div></div>' +
       '<div class="stat"><span class="stat-ico stat-green">'+icon('checkCircle')+'</span><div class="stat-body"><span class="k" style="color:var(--accent)">已掌握</span><span class="v" style="color:var(--accent)">'+done+'</span><span class="d">已走完全部 6 遍（+1/2/4/7/15/21 天）</span></div></div>' +
       '<div class="stat"><span class="stat-ico stat-red">'+icon('refresh')+'</span><div class="stat-body"><span class="k">今日需复习</span><span class="v">'+dueList.length+'</span><span class="d">'+(dueList.length ? '含之前顺延未复习的' : '今日无到期单词')+'</span></div></div>' +
-      '</div>' + weekCompareHtml() + '</div>' +
+      '</div>' + masteryBarHtml(recs.length, done) + weekCompareHtml() + '</div>' +
       '<div class="card"><div class="card-title"><span class="dot" style="background:var(--accent)"></span>单词状态明细</div>' +
       '<div class="search-row">' +
       '<select id="record-scope" onchange="AppRecord.scope=this.value;AppRecord.page=1;AppRecord.render()">'+scopeOpts+'</select>' +
