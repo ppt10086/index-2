@@ -1204,7 +1204,12 @@ li,td,th{text-wrap:normal}
 }
 
 /* ============ UI v6.1 · 数据可见性 ============ */
-.wk{display:flex; gap:12px; align-items:flex-end; margin:16px 0 12px; padding:18px 2px 0; border-top:1px dashed var(--line)}
+.wk{display:flex; gap:12px; align-items:flex-end; margin:16px 0 12px; padding:18px 2px 0; border-top:1px dashed var(--line); position:relative}
+/* v2.7.58 可见新增：7 天柱状图的**日均参考线** —— 原来只有裸柱子，看不出"今天算多还是算少"。
+   线的位置由渲染后的真实柱高反推（不靠写死的 CSS 数学），全 0 时不画。 */
+.wk-avg{position:absolute; left:2px; right:2px; height:0; border-top:1px dashed color-mix(in srgb, var(--primary) 55%, transparent); pointer-events:none}
+.wk-avg b{position:absolute; right:0; top:-15px; font-size:var(--fs-micro); font-weight:600; color:var(--primary);
+  background:var(--panel); padding:0 4px; border-radius:var(--radius-sm); font-variant-numeric:tabular-nums}
 .wk-col{flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; min-width:0}
 .wk-bar{width:100%; max-width:34px; min-height:6px; border-radius:8px 8px 4px 4px;
   background:var(--primary); opacity:.92; position:relative}
@@ -2207,7 +2212,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.57</span>
+            <span hidden id="set-version">2.7.58</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5124,7 +5129,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.57', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.58', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5153,7 +5158,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.57', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.58', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -5646,6 +5651,7 @@ const AppUI = {
       '<div class="wk">'+bars+'</div>' +
       '<div class="tide-box">'+tideHtml(AppFilter.result && AppFilter.result.kept)+'</div>' +
       '';   // v2.7.6：按需求删除「上次学习 · 每日目标 · 复习计划」这行提示
+    drawWeekAvg();   // v2.7.58：柱状图渲染完再画日均线（要用真实柱高反推刻度）
     const tip = $('#dash-english-tip');
     if(AppFilter.result){
       const r = AppFilter.result;
@@ -6973,6 +6979,33 @@ function cycleDaily(){
     AppAuth.save(d, true);
     try{ const el = document.getElementById('set-daily'); if(el) el.value = next; }catch(e){}
     try{ AppUI.renderDashboard(); }catch(e){}
+  }catch(e){}
+}
+/* v2.7.58 可见新增：给 7 天柱状图画一条「日均参考线」。
+   为什么需要：只有柱子时，用户看不出"今天这根算高还是算低"——一条均值线把这个判断变成一眼的事。
+   实现要点：**用渲染后的真实柱高反推刻度**（最高柱 = max 词 = 其像素高），再把线放在 mean 对应的高度，
+   而不是在 CSS 里复算一遍公式（公式改了也不会错位）。全 0 时不画（没有可参照的平均）。 */
+function drawWeekAvg(){
+  try{
+    const wk = document.querySelector('#dash-progress .wk');
+    if(!wk) return;
+    const bars = [...wk.querySelectorAll('.wk-col .wk-bar')];
+    if(bars.length < 2) return;
+    const nums = bars.map(b => parseInt(((b.querySelector('i') || {}).textContent || '0').trim(), 10) || 0);
+    const max = Math.max(...nums);
+    const mean = nums.reduce((a, b) => a + b, 0) / nums.length;
+    const old = wk.querySelector('.wk-avg'); if(old) old.remove();
+    if(max <= 0) return;                                   // 全 0：不画（否则等于给空数据加戏）
+    const ref = bars[nums.indexOf(max)];                   // 最高柱 = 刻度参照（其像素高对应 max 词）
+    const rr = ref.getBoundingClientRect(), wr = wk.getBoundingClientRect();
+    const unit = rr.height / max;                          // px / 词
+    const top = Math.round((rr.bottom - mean * unit - wr.top) * 10) / 10;
+    const line = document.createElement('span');
+    line.className = 'wk-avg';
+    line.style.top = top + 'px';
+    line.innerHTML = '<b>日均 ' + (Math.round(mean * 10) / 10) + '</b>';
+    line.setAttribute('aria-hidden', 'true');
+    wk.appendChild(line);
   }catch(e){}
 }
 function todaySummaryHtml(){
