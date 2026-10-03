@@ -121,7 +121,7 @@ html[data-theme="dark"][data-accent="violet"] {--primary:#bda0ec; --primary2:#cf
 .cad-timeline{margin:16px 0 4px; padding:14px 16px 12px; border:1px solid var(--line); border-radius:var(--radius); background:var(--panel2)}
 .cad-timeline .ct-title{font-size:var(--fs-small); font-weight:700; color:var(--text); margin-bottom:14px}
 .cad-timeline .ct-title span{font-weight:400; color:var(--muted); margin-left:6px}
-.cad-timeline .ct-axis{position:relative; height:38px; margin:0 8px}
+.cad-timeline .ct-axis{position:relative; height:38px; margin:0 8px; overflow:hidden}
 .cad-timeline .ct-rail{position:absolute; left:0; right:0; top:9px; height:2px; background:var(--line2); border-radius:2px}
 .cad-timeline .ct-node{position:absolute; top:4px; width:12px; height:12px; margin-left:-6px; border-radius:50%;
   background:var(--panel); border:2px solid var(--primary)}
@@ -130,6 +130,22 @@ html[data-theme="dark"][data-accent="violet"] {--primary:#bda0ec; --primary2:#cf
   transform:translateX(-50%); white-space:nowrap; font-variant-numeric:tabular-nums}
 .cad-timeline .ct-day.d0{color:var(--text); font-weight:700}
 .cad-timeline .ct-note{font-size:var(--fs-micro); color:var(--muted); margin-top:10px; line-height:1.6}
+/* v2.7.61 动效：刻度逐个亮起 + 一个光点沿线走过（各一次，只动 opacity/transform；
+   走过距离由渲染后量到的真实轴宽给到 --sweep，所以窗口怎么变都走到头）。 */
+.cad-timeline .ct-node, .cad-timeline .ct-day{animation:ctPop .34s var(--ease) both}
+/* 标签只用**淡入**（不缩放）：缩放会让标签的包围盒在动画期间变大，
+   手机档「当天 / +1」本来只差 4.8%，一缩放就量到相交（探针抓的）。 */
+.cad-timeline .ct-day{animation-name:ctFade}
+.cad-timeline .ct-sweep{position:absolute; left:0; top:2px; width:12px; height:12px; border-radius:50%;
+  background:color-mix(in srgb, var(--primary) 35%, transparent);
+  box-shadow:0 0 0 5px color-mix(in srgb, var(--primary) 14%, transparent);
+  animation:ctSweep .95s var(--ease) both}
+@keyframes ctPop{from{opacity:0; transform:scale(.5)} to{opacity:1; transform:none}}
+@keyframes ctFade{from{opacity:0} to{opacity:1}}
+@keyframes ctSweep{from{opacity:0; transform:translateX(0)} 12%{opacity:1} to{opacity:0; transform:translateX(var(--sweep, 0px))}}
+@media (prefers-reduced-motion: reduce){
+  .cad-timeline .ct-node, .cad-timeline .ct-day, .cad-timeline .ct-sweep{animation:none}
+}
 /* 手机档：「当天」与「+1」只差 4.8%（约 17px），横排必然压住 —— 标签**按奇偶交错两行**。
    注意要用 nth-of-type(odd/even) 严格按顺序交替：第一版写成 ".d0, :nth-of-type(even)"，
    结果「当天」和「+1」都落在下面那行，照样压住（探针量到了这一对）。 */
@@ -2234,7 +2250,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.60</span>
+            <span hidden id="set-version">2.7.61</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5151,7 +5167,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.60', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.61', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5180,7 +5196,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.60', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.61', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -6842,15 +6858,23 @@ function drawCadTimeline(){
   /* 轴上其实是 **7 个标记**：第 0 天「当天」是起点（学完那天），之后 +1/+2/+4/+7/+15/+21 才是 6 遍复习。
      第一版把起点漏了、直接把 +1 标成"当天"，是探针里那句「文案必须等于 当天 +1 +2…」抓出来的。 */
   const marks = [{ d: 0, txt: '当天', start: true }].concat(N.map(d => ({ d, txt: '+' + d })));
-  const nodes = marks.map(m => {
+  const nodes = marks.map((m, i) => {
     const pct = Math.round(m.d / span * 1000) / 10;
-    return '<i class="ct-node' + (m.start ? ' d0' : '') + '" style="left:' + pct + '%" title="' + (m.start ? '第 0 天 · 学完当天' : '复习 +' + m.d + ' 天') + '"></i>' +
-           '<span class="ct-day' + (m.start ? ' d0' : '') + '" style="left:' + pct + '%">' + m.txt + '</span>';
+    /* v2.7.61 动效：刻度**逐个亮起**（每个延后 130ms），与下面那条"沿线走过"的光点同步推进。
+       一次性、只动 opacity/transform；reduced-motion 下由下面的媒体查询关掉。 */
+    return '<i class="ct-node' + (m.start ? ' d0' : '') + '" style="left:' + pct + '%; animation-delay:' + (i * 130) + 'ms" title="' + (m.start ? '第 0 天 · 学完当天' : '复习 +' + m.d + ' 天') + '"></i>' +
+           '<span class="ct-day' + (m.start ? ' d0' : '') + '" style="left:' + pct + '%; animation-delay:' + (i * 130) + 'ms">' + m.txt + '</span>';
   }).join('');
   box.innerHTML = '<div class="ct-title">6 轮复习节奏<span>走完即自动「已掌握」</span></div>' +
-    '<div class="ct-axis"><span class="ct-rail"></span>' + nodes + '</div>' +
+    '<div class="ct-axis"><span class="ct-rail"></span><span class="ct-sweep" aria-hidden="true"></span>' + nodes + '</div>' +
     '<div class="ct-note">学完当天记为第 0 天，之后第 1 / 2 / 4 / 7 / 15 / 21 天各复习一遍（共 6 遍）。<br>' +
     '逾期完成的词会以当天为新起点重排后续节点；轴上刻度按天数等比铺开，越往右越疏。</div>';
+  /* 「沿线走过」的距离要用真实轴宽算（轴的宽度随窗口变），所以渲染后量一次再设给 CSS 变量。 */
+  const axis = box.querySelector('.ct-axis'), sweep = box.querySelector('.ct-sweep');
+  if(axis && sweep){
+    const w = Math.round(axis.getBoundingClientRect().width) - 12;
+    if(w > 0) sweep.style.setProperty('--sweep', w + 'px');
+  }
 }
 /* v2.7.60 可见新增：学习记录的「掌握进度条」。
    记录页有四个数字（已学习 / 学习中 / 已掌握 / 今日需复习），但**数字说不出比例**——
