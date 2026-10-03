@@ -1428,6 +1428,9 @@ html.sl-has-session #view-auth{display:none}
 @media (max-width:640px){ .rv-words{padding-left:0} }
 .rv-tag{min-width:62px; text-align:right; font-size:var(--fs-micro); font-weight:700}
 .rv-gap{opacity:.6}
+/* v2.7.62：折叠后的多天空缺行稍微抬起一点存在感（它代表的不再是"某一天"，而是一段） */
+.rv-gap-multi{opacity:.72}
+.rv-gap-multi .rv-day{color:var(--text)}
 .rv-gap .rv-day{color:var(--muted)}
 .rv-gap .rv-desc{color:var(--muted); font-style:italic}
 @media (max-width:560px){
@@ -2252,7 +2255,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.61</span>
+            <span hidden id="set-version">2.7.62</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5169,7 +5172,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.61', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.62', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5198,7 +5201,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.61', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.62', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7254,11 +7257,26 @@ const AppReview = {
     // ---- 复习清单 ----
     const real = rows.filter(x => !x.gap);
     const overdue = real.filter(x => x.day < today).reduce((n,x) => n + x.words.length, 0);
-    const rowsHtml = rows.map(x => {
+    /* v2.7.62 可见改进：**连续的空缺日折叠成一行**。
+       原来漏一天就占一行「空缺 · 当天没有复习内容」，中间断几天就能把清单撑出大半屏，
+       真正的复习批次反而被淹没。现在把连续空缺合成一条「10-02 – 10-05 · 连续 4 天无复习内容」，
+       其中已复习的词数一并汇总（数据不丢），完整日期列表放在 title 里。 */
+    const merged = [];
+    for(const x of rows){
+      const last = merged[merged.length - 1];
+      if(x.gap && last && last.gap){ last.span.push(x.day); last.done += (x.done || 0); continue; }
+      if(x.gap){ merged.push({ gap: true, day: x.day, days: [x.day], span: [x.day], done: (x.done || 0) }); continue; }
+      merged.push(x);
+    }
+    const rowsHtml = merged.map(x => {
       const wc = x.words ? x.words.length : 0;
       if(x.gap){
-        return '<div class="rv-row rv-gap"><span class="rv-day">'+SRS.mind(x.day)+'</span>'
-          + '<span class="rv-desc">空缺 · 当天没有复习内容</span>'
+        const n = x.span.length, multi = n > 1;
+        const from = x.span[0], to = x.span[n - 1];
+        const label = multi ? (SRS.mind(from) + ' – ' + SRS.mind(to)) : SRS.mind(from);
+        return '<div class="rv-row rv-gap'+(multi ? ' rv-gap-multi' : '')+'" title="'+x.span.join('、')+'">'
+          + '<span class="rv-day">'+label+(multi ? '<i>连续 '+n+' 天</i>' : '')+'</span>'
+          + '<span class="rv-desc">空缺 · 这'+(multi ? '几天' : '天')+'没有复习内容</span>'
           + '<span class="rv-n">—</span><span class="rv-tag muted">'+(x.done ? ('已复习 '+x.done+' 词') : '未复习')+'</span></div>';
       }
       const c0 = AppAuth.data().wordState[SRS.key(r.targetId, x.words[0].w)] || {};
