@@ -2149,7 +2149,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.49</span>
+            <span hidden id="set-version">2.7.50</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5066,7 +5066,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.49', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.50', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5095,7 +5095,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.49', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.50', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -5554,10 +5554,10 @@ const AppUI = {
       const tgt = f.target || res.targetId || '';
       const tname = (WL.byId(tgt) || {}).name || res.targetName || (tgt ? tgt : '未选择');
       const keptN = res.kept ? res.kept.length : (tgt ? (WL.count(tgt) || 0) : 0);
-      const pre = SRS.key(tgt, '');
-      const ws = d.wordState || {};
-      let dueN = 0, learnedN = 0;
-      for(const k in ws){ if(k.indexOf(pre) !== 0) continue; learnedN++; if(SRS.isDue(ws[k], today)) dueN++; }
+      /* 到期数用**应用自己的** SRS.dueCount（它会按词表条目集合规整、并与复习清单同源）——
+         原来我在这里手抄了一遍同样的循环，既重复又可能与规整规则不一致（铁律 4：只改一处真相）。 */
+      const entriesOfTarget = (WL.cache.get(tgt) || {}).entries || [];
+      const dueN = tgt ? (SRS.dueCount(tgt, entriesOfTarget) || 0) : 0;
       const setSub = (id, html, hot) => {
         const el = document.getElementById(id);
         if(!el) return;
@@ -5570,7 +5570,11 @@ const AppUI = {
          为什么保守：探针在合成数据下量到「渲染时数出来是 0，而同一份数据稍后独立重算得到 6」
          （概览渲染早于筛选流程对 wordState 的规整），我没有在预算内查清这条时序，
          于是宁可少报也不报错 —— 具体见 07-KNOWN-ISSUES #58。 */
-      setSub('fb-sub-review', dueN ? '今日 <b>' + dueN + '</b> 词到期' : '查看今天要复习的词', dueN > 0);
+      /* 复习入口：现在数字来自**应用自己的** SRS.dueCount（与复习清单同源、同样规整），
+         所以可以恢复完整契约 —— 有到期报数字；没有到期时报「今天没有到期的词」；一个词都没学过才说「还没有开始学」。
+         （v2.7.49 那轮因为手抄的计数在渲染时数不准，曾临时降级为中性指引；v2.7.50 换成同源计数后恢复。） */
+      const learnedN = (() => { const ws = d.wordState || {}, pre = SRS.key(tgt, ''); let n = 0; for(const k in ws){ if(k.indexOf(pre) === 0) n++; } return n; })();
+      setSub('fb-sub-review', dueN ? '今日 <b>' + dueN + '</b> 词到期' : (learnedN ? '今天没有到期的词' : '还没有开始学'), dueN > 0);
       let libs = 0, words = 0;
       try{ (WL.registry || []).forEach(def => { libs++; words += WL.count(def.id) || 0; }); }catch(e){}
       setSub('fb-sub-library', libs ? '已收录 <b>' + libs + '</b> 个词库 · <b>' + fmtN(words) + '</b> 词' : '');
