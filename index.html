@@ -2115,7 +2115,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.46</span>
+            <span hidden id="set-version">2.7.47</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5032,7 +5032,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.46', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.47', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5061,7 +5061,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.46', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.47', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7259,7 +7259,17 @@ const AppBrowse = {
      词多的时候一屏看得太少。现在给一个分段控件（舒适 / 紧凑），选择存本地，下次打开记住。
      放在 AppBrowse 里而不是全局设置里 —— 它是这一页的阅读偏好，不是账号级配置。 */
   compact: false,
-  initDensity(){ try{ this.compact = Store.get('browseCompact', false) === true; }catch(e){ this.compact = false; } },
+  sort: 'list',                                  // 'list' = 词库原序；'due' = 按到期日
+  initDensity(){
+    try{ this.compact = Store.get('browseCompact', false) === true; }catch(e){ this.compact = false; }
+    try{ this.sort = Store.get('browseSort', 'list') === 'due' ? 'due' : 'list'; }catch(e){ this.sort = 'list'; }
+  },
+  setSort(v){
+    this.sort = v === 'due' ? 'due' : 'list';
+    try{ Store.set('browseSort', this.sort); }catch(e){}
+    this.page = 1;
+    this.render();
+  },
   setDensity(v){
     this.compact = !!v;
     try{ Store.set('browseCompact', this.compact); }catch(e){}
@@ -7276,6 +7286,18 @@ const AppBrowse = {
     let entries = this.source === 'all' ? ((WL.cache.get(r.targetId) || {}).entries || []) : r.kept;
     const q = this.q.trim().toLowerCase();
     if(q) entries = entries.filter(e => e.w.toLowerCase().includes(q) || defText(e, 200).toLowerCase().includes(q));
+    /* v2.7.47 可见新增：排序切换（这才是**浏览页**的那份 —— 上一版我误打到了记录页的同类代码上，
+       AppRecord 也有 this.q/this.filter，看着一样，但渲染的是另一张表；探针当场抓到首行没变）。 */
+    if(this.sort === 'due'){
+      const dd = (w) => { const c = AppAuth.data().wordState[SRS.key(r.targetId, w)]; return c ? SRS.dueDay(c) : null; };
+      entries = entries.slice().sort((a, b) => {
+        const da = dd(a.w), db = dd(b.w);
+        if(!da && !db) return 0;
+        if(!da) return 1;
+        if(!db) return -1;
+        return da < db ? -1 : (da > db ? 1 : 0);
+      });
+    }
     const total = entries.length;
     const pages = Math.max(1, Math.ceil(total / this.per));
     if(this.page > pages) this.page = pages;
@@ -7298,6 +7320,10 @@ const AppBrowse = {
       '<span class="seg" role="group" aria-label="列表密度">' +
         '<button class="seg-btn'+(this.compact?'':' on')+'" aria-pressed="'+(this.compact?'false':'true')+'" onclick="AppBrowse.setDensity(false)">舒适</button>' +
         '<button class="seg-btn'+(this.compact?' on':'')+'" aria-pressed="'+(this.compact?'true':'false')+'" onclick="AppBrowse.setDensity(true)">紧凑</button>' +
+      '</span>' +
+      '<span class="seg" role="group" aria-label="排序方式">' +
+        '<button class="seg-btn'+(this.sort==='list'?' on':'')+'" aria-pressed="'+(this.sort==='list'?'true':'false')+'" onclick="AppBrowse.setSort(\'list\')">词库序</button>' +
+        '<button class="seg-btn'+(this.sort==='due'?' on':'')+'" aria-pressed="'+(this.sort==='due'?'true':'false')+'" onclick="AppBrowse.setSort(\'due\')">按到期日</button>' +
       '</span>' +
       '</div>' +
       (total ? '<div class="table-scroll"><table class="wlist'+(this.compact?' compact':'')+'"><thead><tr><th>单词</th><th>音标</th><th>释义</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'+pager : '<div class="empty"><div class="big">'+icon('search', 40)+'</div><p>未找到匹配的单词。</p></div>') +
