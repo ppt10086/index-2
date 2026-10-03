@@ -517,6 +517,12 @@ html.side-collapsed .side-toggle{left:12px}
 .goal-ring .gr-fill{fill:none; stroke:var(--primary); stroke-width:6; stroke-linecap:round;
   animation:grFill .5s var(--ease) both}
 .goal-ring.done .gr-fill{stroke:var(--accent)}
+/* v2.7.46：复习页顶部的今日进度环（与概览目标环共用 .goal-ring / ringHtml，只是横排布局） */
+.rv-ring{display:flex; align-items:center; gap:16px; margin:0 0 14px; padding-bottom:14px; border-bottom:1px solid var(--line)}
+.rv-ring .goal-ring{margin:0; flex:0 0 auto}
+.rv-ring-txt{display:flex; flex-direction:column; gap:2px; min-width:0}
+.rv-ring-txt b{font-size:var(--fs-title); font-weight:700; font-variant-numeric:tabular-nums}
+.rv-ring-txt span{font-size:var(--fs-small); color:var(--muted)}
 .goal-ring .gr-txt{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px}
 .goal-ring .gr-txt b{font-size:var(--fs-title); font-weight:700; line-height:1; font-variant-numeric:tabular-nums}
 .goal-ring .gr-txt span{font-size:10px; color:var(--muted); letter-spacing:.02em}
@@ -2109,7 +2115,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.45</span>
+            <span hidden id="set-version">2.7.46</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5026,7 +5032,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.45', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.46', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5055,7 +5061,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.45', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.46', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -5502,15 +5508,8 @@ const AppUI = {
        既然结束页与到期分布都用上了环语言，这里也该是**同一个形状**的不同尺度。
        环的画法：stroke-dasharray = 周长，dashoffset = 周长 ×(1-达成率)，一次填充动效，数据驱动。 */
     const goalPct = Math.min(100, Math.round(todayMarks / Math.max(1, d.settings.daily) * 100));
-    const RING = 30, CIRC = Math.round(2 * Math.PI * RING * 10) / 10;
-    const ring =
-      '<div class="goal-ring'+(goalPct >= 100 ? ' done' : '')+'">' +
-        '<svg viewBox="0 0 72 72" role="img" aria-label="今日目标完成 '+goalPct+'%（'+todayMarks+' / '+d.settings.daily+' 词）">' +
-          '<circle class="gr-track" cx="36" cy="36" r="'+RING+'"></circle>' +
-          '<circle class="gr-fill" cx="36" cy="36" r="'+RING+'" style="--circ:'+CIRC+'; stroke-dasharray:'+CIRC+'; stroke-dashoffset:'+(Math.round(CIRC * (1 - goalPct / 100) * 10) / 10)+'"></circle>' +
-        '</svg>' +
-        '<div class="gr-txt"><b>'+todayMarks+'</b><span>今日已认识</span></div>' +
-      '</div>';
+    const ring = ringHtml({ pct: goalPct, num: todayMarks, label: '今日已认识',
+      aria: '今日目标完成 ' + goalPct + '%（' + todayMarks + ' / ' + d.settings.daily + ' 词）' });
     $('#dash-progress').innerHTML =
       ring +
       '<div class="wk">'+bars+'</div>' +
@@ -6691,6 +6690,21 @@ function weekCompareHtml(){
     '<div class="wc-top"><span>近 7 天 <b>' + cur + '</b> 词</span><span class="wc-d">' + trend + '</span><span>前 7 天 ' + prev + ' 词</span></div>' +
     '<div class="wc-bars">' + bars + '</div></div>';
 }
+/* v2.7.46：把「数据环」抽成一个共用构造函数 —— 概览的今日目标环与复习页的今日进度环**同一份实现**（铁律 4）。
+   环的画法：stroke-dasharray = 周长，stroke-dashoffset = 周长 ×(1-达成率)，一次填充动效，数据驱动。
+   pct 到 100 时进 done 态（换强调色）。 */
+function ringHtml(o){
+  const pct = Math.max(0, Math.min(100, Math.round(o.pct || 0)));
+  const R = 30, CIRC = Math.round(2 * Math.PI * R * 10) / 10;
+  const off = Math.round(CIRC * (1 - pct / 100) * 10) / 10;
+  return '<div class="goal-ring' + (pct >= 100 ? ' done' : '') + '">' +
+    '<svg viewBox="0 0 72 72" role="img" aria-label="' + esc(o.aria || (o.label + ' ' + pct + '%')) + '">' +
+      '<circle class="gr-track" cx="36" cy="36" r="' + R + '"></circle>' +
+      '<circle class="gr-fill" cx="36" cy="36" r="' + R + '" style="--circ:' + CIRC + '; stroke-dasharray:' + CIRC + '; stroke-dashoffset:' + off + '"></circle>' +
+    '</svg>' +
+    '<div class="gr-txt"><b>' + (o.num === undefined ? pct + '%' : esc(String(o.num))) + '</b><span>' + esc(o.label || '') + '</span></div>' +
+  '</div>';
+}
 function doneMark(){
   const NODES = SRS.NODES, ROUNDS = SRS.ROUNDS;
   const C = 60, R = 46, GAP = 11;                      // 圆心/半径/段间留白（度；留白要够大才读得出"6 段"）
@@ -6913,6 +6927,14 @@ const AppReview = {
       + '<div class="muted" style="margin-bottom:14px">共 <b>'+total+'</b> 个单词今天需要复习，来自 '+real.length+' 个批次'
       + (overdue ? '（其中 <b style="color:var(--warn)">'+overdue+'</b> 个是之前没复习、顺延到今天的）' : '')
       + '。复习一遍记一遍；漏掉的日子会在此列出空缺。</div>'
+      /* v2.7.46 可见新增：今日复习进度环（已复习 / 今日到期）。用与概览目标环**同一个** ringHtml，
+         把「今天还剩多少没复习」这件事从文字里拿出来变成一眼能看的形状。 */
+      + (() => {
+          const doneToday = Math.min(total, ((AppAuth.data().stats || {}).reviewDays || {})[SRS.today()] || 0);
+          return '<div class="rv-ring">' + ringHtml({ pct: total ? Math.round(doneToday / total * 100) : 100,
+            num: doneToday, label: '今日已复习', aria: '今日复习进度 ' + doneToday + ' / ' + total + ' 词' }) +
+            '<div class="rv-ring-txt"><b>' + doneToday + ' / ' + total + '</b><span>' + (total === 0 ? '今天没有到期的词' : (doneToday >= total ? '今天的复习都做完了' : '还剩 ' + (total - doneToday) + ' 词没复习')) + '</span></div></div>';
+        })()
       + '<div class="rv-list">'+rowsHtml+'</div>'
       + '<div class="muted small" style="margin-top:14px">复习节点：学完当天起来第 +1 / +2 / +4 / +7 / +15 / +21 天，共 6 遍，走完即自动变为「已掌握」。逾期完成的词会以当天为新的起点重新排后续节点。</div>'
       + fcButtonsBandHtml('AppReview', '开始复习', '今日 '+total+' 词到期 · 走完 6 遍即掌握', total)
