@@ -2200,7 +2200,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.55</span>
+            <span hidden id="set-version">2.7.56</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5117,7 +5117,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.55', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.56', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5146,7 +5146,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.55', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.56', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7494,6 +7494,13 @@ const AppBrowse = {
      放在 AppBrowse 里而不是全局设置里 —— 它是这一页的阅读偏好，不是账号级配置。 */
   compact: false,
   sort: 'list',                                  // 'list' = 词库原序；'due' = 按到期日
+  state: 'all',                                  // 'all' | 'learning' | 'known'（v2.7.56：只看未掌握/已掌握）
+  setState(v){
+    this.state = (v === 'learning' || v === 'known') ? v : 'all';
+    try{ Store.set('browseState', this.state); }catch(e){}
+    this.page = 1;
+    this.render();
+  },
   initDensity(){
     try{ this.compact = Store.get('browseCompact', false) === true; }catch(e){ this.compact = false; }
     try{ this.sort = Store.get('browseSort', 'list') === 'due' ? 'due' : 'list'; }catch(e){ this.sort = 'list'; }
@@ -7518,6 +7525,16 @@ const AppBrowse = {
     const r = AppFilter.result;
     if(!r){ box.innerHTML = '<div class="card empty"><div class="big">'+icon('bookOpen', 40)+'</div><p>请先生成个人词表。</p></div>'; return; }
     let entries = this.source === 'all' ? ((WL.cache.get(r.targetId) || {}).entries || []) : r.kept;
+    /* v2.7.56 可见新增：状态筛选（只看未掌握 / 只看已掌握）。
+       记录页早有这个筛选，浏览页一直没有 —— 想「把没背会的挑出来再看看」只能靠眼睛扫标签。
+       注意：放在 source 之后、q 与排序之前，所以三个筛选维度（来源 / 状态 / 搜索）是叠加的。 */
+    if(this.state !== 'all'){
+      const ws0 = AppAuth.data().wordState || {};
+      entries = entries.filter(e => {
+        const known = SRS.isMastered(ws0[SRS.key(r.targetId, e.w)]);
+        return this.state === 'known' ? known : !known;
+      });
+    }
     const q = this.q.trim().toLowerCase();
     if(q) entries = entries.filter(e => e.w.toLowerCase().includes(q) || defText(e, 200).toLowerCase().includes(q));
     /* v2.7.47 可见新增：排序切换（这才是**浏览页**的那份 —— 上一版我误打到了记录页的同类代码上，
@@ -7558,6 +7575,12 @@ const AppBrowse = {
       '<span class="seg" role="group" aria-label="排序方式">' +
         '<button class="seg-btn'+(this.sort==='list'?' on':'')+'" aria-pressed="'+(this.sort==='list'?'true':'false')+'" onclick="AppBrowse.setSort(\'list\')">词库序</button>' +
         '<button class="seg-btn'+(this.sort==='due'?' on':'')+'" aria-pressed="'+(this.sort==='due'?'true':'false')+'" onclick="AppBrowse.setSort(\'due\')">按到期日</button>' +
+      '</span>' +
+      /* v2.7.56：状态筛选（第三处复用同一套 .seg 分段控件） */
+      '<span class="seg" role="group" aria-label="按状态筛选">' +
+        '<button class="seg-btn'+(this.state==='all'?' on':'')+'" aria-pressed="'+(this.state==='all'?'true':'false')+'" onclick="AppBrowse.setState(\'all\')">全部</button>' +
+        '<button class="seg-btn'+(this.state==='learning'?' on':'')+'" aria-pressed="'+(this.state==='learning'?'true':'false')+'" onclick="AppBrowse.setState(\'learning\')">未掌握</button>' +
+        '<button class="seg-btn'+(this.state==='known'?' on':'')+'" aria-pressed="'+(this.state==='known'?'true':'false')+'" onclick="AppBrowse.setState(\'known\')">已掌握</button>' +
       '</span>' +
       '</div>' +
       (total ? '<div class="table-scroll"><table class="wlist'+(this.compact?' compact':'')+'"><thead><tr><th>单词</th><th>音标</th><th>释义</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'+pager : '<div class="empty"><div class="big">'+icon('search', 40)+'</div><p>未找到匹配的单词。</p></div>') +
