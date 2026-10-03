@@ -252,7 +252,7 @@ p,li,td,th{text-wrap:pretty}
 .topbar{display:flex; align-items:flex-end; justify-content:space-between; gap:14px; margin-bottom:20px; flex-wrap:wrap}
 .topbar h1{font-size:var(--fs-h1); font-weight:800; letter-spacing:-.02em; overflow-wrap:anywhere}
 .topbar .sub{color:var(--muted); font-size:var(--fs-caption); margin-top:2px}
-.grid{display:grid; gap:16px}
+.grid{display:grid; gap:var(--gap-block)}
 .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -410,7 +410,7 @@ html.side-collapsed .side-toggle{left:12px}
 .side-user .su-chev{margin-left:auto; color:var(--muted); display:flex; align-items:center}
 .side-user:hover .su-chev{color:var(--text)}
 /* 用户中心页面 */
-.prof-head{display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin:6px 0 18px}
+.prof-head{display:flex; align-items:center; gap:var(--gap-block); flex-wrap:wrap; margin:6px 0 18px}
 .prof-avatar{width:76px; height:76px; border-radius:50%; background:var(--text); color:var(--bg); display:flex;
   align-items:center; justify-content:center; font-weight:800; font-size:var(--fs-display); flex-shrink:0;
   overflow:hidden; box-shadow:var(--shadow)}
@@ -533,7 +533,7 @@ html.side-collapsed .side-toggle{left:12px}
   .round-dots{flex-wrap:nowrap; gap:2px; overflow:hidden}
   .round-dots .rd{width:5px; height:5px}
   .round-dots .rd.now{width:7px; height:7px}
-  .round-dots .rd-num{margin-left:5px; flex:0 0 auto}
+  .round-dots .rd-num{margin-left:4px; flex:0 0 auto}
 }
 /* v2.7.23 记忆节奏带：只属于这个产品的一条图形 —— 6 个刻度 = 6 轮记忆曲线，
    间距按 NODES 天数差成比例（左密右疏），已完成填实、当前一轮强调色放大、未来留浅点。
@@ -570,7 +570,7 @@ html.side-collapsed .side-toggle{left:12px}
 .goal-ring.act:active{transform:scale(.98)}
 .goal-ring.act:focus-visible{outline:2px solid color-mix(in srgb, var(--primary) 55%, transparent); outline-offset:3px}
 /* v2.7.46：复习页顶部的今日进度环（与概览目标环共用 .goal-ring / ringHtml，只是横排布局） */
-.rv-ring{display:flex; align-items:center; gap:16px; margin:0 0 14px; padding-bottom:14px; border-bottom:1px solid var(--line)}
+.rv-ring{display:flex; align-items:center; gap:var(--gap-block); margin:0 0 14px; padding-bottom:14px; border-bottom:1px solid var(--line)}
 .rv-ring .goal-ring{margin:0; flex:0 0 auto}
 .rv-ring-txt{display:flex; flex-direction:column; gap:2px; min-width:0}
 .rv-ring-txt b{font-size:var(--fs-title); font-weight:700; font-variant-numeric:tabular-nums}
@@ -739,7 +739,7 @@ html.side-collapsed .side-toggle{left:12px}
 
 .empty{padding:52px 20px; text-align:center; color:var(--muted)}
 .empty .big{font-size:46px; margin-bottom:12px}
-.placeholder-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px}
+.placeholder-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:var(--gap-block)}
 .ph-card{background:var(--panel); border:1px dashed var(--line2); border-radius:var(--radius); padding:24px; text-align:center; transition-property:border-color,background-color,scale; transition-duration:var(--dur-1); transition-timing-function:ease-out}
 .ph-card:hover{border-color:var(--primary); scale:.985}
 .ph-card .pico{font-size:34px; margin-bottom:10px}
@@ -802,7 +802,7 @@ input[type="range"]:focus-visible{box-shadow:none; outline:2px solid var(--prima
   --space-xs:6px; --space-sm:10px; --space-md:16px; --space-lg:26px; --space-xl:40px;
   /* v2.7.37 间距角色化：语义决定数值（不是数值凑尺度）。
      取值与原有的 6/10px 完全一致 ⇒ 渲染零变化；变的是“改一处就能改一类”。*/
-  --gap-in:6px;  --gap-between:10px;
+  --gap-in:6px;  --gap-between:10px; --gap-block:16px;
   --glass:rgba(248,248,250,.76); --glass-strong:rgba(248,248,250,.92);
   --glass-line:rgba(0,0,0,.08);
   /* 环境光斑：原来是紫/绿/蓝，现在只留灰阶深浅 */
@@ -871,7 +871,7 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
 #page-dashboard > .grid{margin-top:24px}
 #page-dashboard .topbar{margin-bottom:24px}
 #page-english .topbar,#page-math .topbar,#page-library .topbar,#page-settings .topbar{margin-bottom:24px}
-.grid-4{gap:16px}
+.grid-4{gap:var(--gap-block)}
 .filter-summary{gap:0; margin:4px 0 18px; grid-template-columns:repeat(3,minmax(0,1fr)); background:var(--panel3); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden}
 .filter-summary .stat{border:none; box-shadow:none; border-radius:0; background:transparent; padding:16px 18px; min-width:0}
 .filter-summary .stat + .stat{border-left:1px solid var(--line)}
@@ -1258,7 +1258,7 @@ li,td,th{text-wrap:normal}
 .set-pane{padding:2px 0 6px}
 .danger-zone{border-top:1px dashed var(--line2); padding-top:4px; margin-top:8px}
 @media (max-width:860px){
-  .set-layout{grid-template-columns:1fr; gap:16px}
+  .set-layout{grid-template-columns:1fr; gap:var(--gap-block)}
   .set-nav{flex-direction:row; flex-wrap:wrap; position:static; gap:6px; padding:0}
   .set-cat{width:auto; padding:8px 13px; font-size:var(--fs-caption)}
   .set-cat::after{display:none}
@@ -1267,7 +1267,7 @@ li,td,th{text-wrap:normal}
 /* ============ UI v8 · 学习类型三分类 ============ */
 .study-setup{max-width:680px; margin:0 auto}
 .study-kind{display:flex; flex-direction:column; gap:0; margin:6px 0 4px; border-top:1px solid var(--line)}
-.kind-opt{display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%;
+.kind-opt{display:flex; align-items:center; justify-content:space-between; gap:var(--gap-block); width:100%;
   padding:14px 12px; text-align:left; border:0; border-bottom:1px solid var(--line);
   color:var(--text); transition:background-color var(--dur) var(--ease)}
 .kind-opt b{font-size:var(--fs-lead); display:block}
@@ -1350,7 +1350,7 @@ html.sl-has-session #view-auth{display:none}
 .rv-day{min-width:88px; font-weight:700; display:flex; flex-direction:column; line-height:1.3}
 .rv-day i{font-style:normal; font-size:var(--fs-micro); font-weight:600; color:var(--muted)}
 /* v2.7.42：行内 6 格节奏标记（复习清单专用 —— 这一行的主信息就是「第几遍」） */
-.rv-ticks{display:inline-flex; align-items:center; gap:3px; margin-right:8px; vertical-align:-1px}
+.rv-ticks{display:inline-flex; align-items:center; gap:2px; margin-right:8px; vertical-align:-1px}
 .rv-tick{width:6px; height:6px; border-radius:2px; background:var(--line2)}
 .rv-tick.on{background:var(--primary)}
 /* v2.7.45：详情弹层里的节奏行（复用上面同一套 .rv-tick，不另起实现） */
@@ -1369,7 +1369,7 @@ html.sl-has-session #view-auth{display:none}
 .rv-toggle:focus-visible{outline:2px solid color-mix(in srgb, var(--primary) 55%, transparent); outline-offset:2px}
 .rv-row.open{background:var(--panel)}
 .rv-words{flex:1 1 100%; display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:8px;
-  padding-left:88px; animation:fxRise var(--dur-2) var(--ease) both}
+  padding-left:84px; animation:fxRise var(--dur-2) var(--ease) both}
 .rv-words .rv-w{font-size:var(--fs-small); color:var(--text); background:var(--panel2); border:1px solid var(--line);
   border-radius:var(--radius-sm); padding:3px 9px}
 .rv-words .rv-more{font-size:var(--fs-micro); color:var(--muted)}
@@ -1412,7 +1412,7 @@ html.sl-has-session #view-auth{display:none}
 
 /* 英语学习：背单词主导区（v2.3）——让「背单词」占据屏幕主体，其余入口弱化到边角 */
 .en-hero{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-lg); box-shadow:var(--shadow);
-  padding:26px 26px 22px; display:flex; flex-direction:column; gap:16px}
+  padding:26px 26px 22px; display:flex; flex-direction:column; gap:var(--gap-block)}
 .en-hero-head{display:flex; flex-direction:column; gap:2px}
 .en-hero-k{font-size:var(--fs-small); font-weight:800; letter-spacing:.14em; color:var(--primary)}
 .en-hero-sub{font-size:var(--fs-caption); color:var(--muted)}
@@ -1590,7 +1590,7 @@ html.sl-has-session #view-auth{display:none}
    现在：按钮自身的描边/外发光取原动画的中间值固定下来，呼吸感交给早已存在的 ::before 光晕，
    它只动 opacity + transform（合成器属性），每帧不再触发布局与样式重算。 */
 #page-dashboard .topbar .flow-band.compact{ flex:1 1 100%; order:2; min-height:86px; border-radius:var(--radius-lg);
-  justify-content:center; gap:16px; padding:0 22px;
+  justify-content:center; gap:var(--gap-block); padding:0 22px;
   border-color:color-mix(in srgb, var(--primary) 39%, var(--line));
   box-shadow:0 0 0 4px color-mix(in srgb, var(--primary) 5%, transparent);
   background:color-mix(in srgb, var(--primary) 9%, transparent) }
@@ -2200,7 +2200,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.54</span>
+            <span hidden id="set-version">2.7.55</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5117,7 +5117,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.54', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.55', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5146,7 +5146,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.54', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.55', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
