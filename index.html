@@ -2453,7 +2453,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.91</span>
+            <span hidden id="set-version">2.7.92</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5374,7 +5374,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.91', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.92', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5403,7 +5403,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.91', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.92', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7422,9 +7422,14 @@ function doneHtml(o){
   const isReview = c.mode === 'review';
   const early = !!c.early;                       // 中途退出（Esc / 返回）
   const title = isQuiz ? '抽测完成' : (isReview ? (early ? '本轮复习结束' : '本轮复习完成') : (early ? '本轮学习结束' : '本轮学习完成'));
+  /* v2.7.92 可见新增：小结里把「跳过」也报出来（有才报，没有不多说一个字）。
+     为什么该报：跳过是**零副作用**的动作（不写记录），用户点完会想知道"我刚才跳过的那几个去哪了"——
+     这一行正好回答它：跳过 N 词，进记录的字面意思就是不进的只有它。 */
+  const skipN = (marks.skip || 0);
+  const skipTxt = skipN ? '，跳过 ' + skipN + ' 词（不计入记录，稍后还会出现）' : '';
   const stat = isReview
-    ? '本轮复习了 <b>' + total + '</b> 个单词：记得 ' + (marks.good || 0) + ' 词，忘了 ' + (marks.again || 0) + ' 词。'
-    : '本轮过了 <b>' + total + '</b> 个单词：记得 ' + (marks.good || 0) + ' 词，模糊 ' + (marks.hard || 0) + ' 词，不记得 ' + (marks.again || 0) + ' 词。';
+    ? '本轮复习了 <b>' + total + '</b> 个单词：记得 ' + (marks.good || 0) + ' 词，忘了 ' + (marks.again || 0) + ' 词' + skipTxt + '。'
+    : '本轮过了 <b>' + total + '</b> 个单词：记得 ' + (marks.good || 0) + ' 词，模糊 ' + (marks.hard || 0) + ' 词，不记得 ' + (marks.again || 0) + ' 词' + skipTxt + '。';
   const tail = isQuiz
     ? '抽测只作自测，不计入学习记录与任何词汇数量。'
     : (isReview
