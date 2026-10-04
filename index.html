@@ -342,6 +342,12 @@ p,li,td,th{text-wrap:pretty}
 /* stat cards */
 .stat{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow-sm); display:flex; align-items:center; gap:14px; transition-property:box-shadow,border-color,scale; transition-duration:var(--dur-1); transition-timing-function:ease-out}
 .stat:hover{border-color:var(--line2); box-shadow:var(--shadow)}
+/* v2.7.87 可见新增：可点的统计卡（今日需复习）—— 去掉 button 默认外观，保留原视觉并给出手感/聚焦环 */
+button.stat{appearance:none; font:inherit; text-align:left; width:100%; cursor:pointer}
+button.stat.stat-go{border-color:color-mix(in srgb, var(--primary) 30%, var(--line))}
+button.stat.stat-go:hover{border-color:var(--primary); box-shadow:var(--shadow)}
+button.stat.stat-go:focus-visible{outline:2px solid color-mix(in srgb, var(--primary) 55%, transparent); outline-offset:2px}
+button.stat.stat-go .ico-svg{color:var(--primary)}
 .stat-body{display:flex; flex-direction:column; gap:2px; min-width:0}
 .stat .k{font-size:var(--fs-small); color:var(--muted); font-weight:600; letter-spacing:.01em}
 .stat .v{font-size:var(--fs-h1); font-weight:800; line-height:1.2; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
@@ -2434,7 +2440,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.86</span>
+            <span hidden id="set-version">2.7.87</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5351,7 +5357,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.86', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.87', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5380,7 +5386,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.86', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.87', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -5802,13 +5808,20 @@ const AppUI = {
       }
       return n;
     })();
+    /* v2.7.87 可见新增：概览统计卡里「今日需复习」那一张**可以点** —— 点它直接进复习流程。
+       原来四个数字都只是数字：知道自己"今天有 N 词要复习"，却还要在页面上找入口。
+       做成：只有它（有到期时）变成可点卡片（真 button 语义 + 键盘可达），没有到期时保持静态，不假装可点。 */
     $('#dash-stats').innerHTML = [
-      // v2.7.6：按需求删掉三条说明文案（保留「今日需复习」那条的进度提示）
-      ['bookOpen','新单词', newN === null ? '—' : newN, '', 'stat-blue'],
-      ['clock','学习中', learnN, '', 'stat-orange'],
-      ['checkCircle','已掌握', known, '', 'stat-green'],
-      ['refresh','今日需复习', due, due ? ('已复习 ' + todayReview + ' 词') : '今日无到期单词', 'stat-red']
-    ].map(x => '<div class="stat"><span class="stat-ico '+x[4]+'">'+icon(x[0])+'</span><div class="stat-body"><span class="k">'+x[1]+'</span><span class="v">'+x[2]+'</span>'+(x[3] ? '<span class="d">'+x[3]+'</span>' : '')+'</div></div>').join('');
+      ['bookOpen','新单词', newN === null ? '—' : newN, '', 'stat-blue', false],
+      ['clock','学习中', learnN, '', 'stat-orange', false],
+      ['checkCircle','已掌握', known, '', 'stat-green', false],
+      ['refresh','今日需复习', due, due ? ('已复习 ' + todayReview + ' 词 · 点这里开始') : '今日无到期单词', 'stat-red', due > 0]
+    ].map((x, i) => {
+      const inner = '<span class="stat-ico '+x[4]+'">'+icon(x[0])+'</span><div class="stat-body"><span class="k">'+x[1]+'</span><span class="v">'+x[2]+'</span>'+(x[3] ? '<span class="d">'+x[3]+'</span>' : '')+'</div>';
+      if(!x[5]) return '<div class="stat">' + inner + '</div>';
+      return '<button type="button" class="stat stat-go" title="开始复习今天到期的词" aria-label="开始复习今天到期的 ' + due + ' 个词"'
+        + ' onclick="AppUI.startFlowTo(this,\'english\',\'review\')">' + inner + '</button>';
+    }).join('');
     // 近 7 日学习趋势（来自每日学习日志，纯 CSS 柱状，无第三方图表依赖）
     const log = d.stats.dayLog || {};
     const days7 = [];
