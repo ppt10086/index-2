@@ -792,6 +792,10 @@ html.side-collapsed .side-toggle{left:12px}
 .wlist .op{white-space:nowrap; font-size:var(--fs-small); text-align:right}
 .wlist .op button{color:var(--primary); font-weight:600; font-size:var(--fs-small); padding:4px 6px; border-radius:var(--radius-sm)}
 .wlist .op button:hover{background:var(--primary-soft)}
+/* v2.7.69 新元素：浏览行的到期日小标记（与状态标签并排，紧凑且不与「详情」按钮抢注意力） */
+.wlist .op{display:flex; align-items:center; gap:var(--gap-between); justify-content:flex-end}
+.wlist .due-chip{margin:0; font-variant-numeric:tabular-nums; white-space:nowrap}
+@media (max-width:640px){ .wlist .op{flex-wrap:wrap} }
 /* v2.7.41 新控件：列表密度分段开关（词汇浏览页）。分段控件本身就是「同一件事的两个档位」，
    所以用一条胶囊里塞两个按钮，选中态用面板色 + 阴影，未选中是透明 —— 一眼看出当前档位。 */
 .seg{display:inline-flex; align-items:center; gap:2px; padding:2px; border:1px solid var(--line2);
@@ -1312,6 +1316,12 @@ li,td,th{text-wrap:normal}
 .wk-bar{width:100%; max-width:34px; min-height:6px; border-radius:8px 8px 4px 4px;
   background:var(--primary); opacity:.92; position:relative}
 .wk-bar.off{background:var(--panel2); opacity:.75}
+/* v2.7.69 新动效：柱子逐根生长（scaleY 从底部，只动 transform/opacity，一次性；数字稍后淡入） */
+.wk-bar{transform-origin:bottom center; animation:wkGrow .45s var(--ease) both}
+.wk-bar i{animation:wkNum .3s var(--ease) both}
+@keyframes wkGrow{from{transform:scaleY(0); opacity:0} to{transform:scaleY(1); opacity:.92}}
+@keyframes wkNum{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none}}
+@media (prefers-reduced-motion: reduce){ .wk-bar, .wk-bar i{animation:none} }
 .wk-bar i{position:absolute; left:0; right:0; top:-16px; text-align:center; font-style:normal; font-size:var(--fs-micro);
   color:var(--muted); font-variant-numeric:tabular-nums; line-height:1}
 .wk-col span{font-size:var(--fs-micro); color:var(--muted); white-space:nowrap}
@@ -2328,7 +2338,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.68</span>
+            <span hidden id="set-version">2.7.69</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5245,7 +5255,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.68', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.69', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5274,7 +5284,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.68', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.69', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -5714,8 +5724,11 @@ const AppUI = {
       days7.push({ key, n: log[key] || 0, label: i===0 ? '今' : '周'+wd[c.getDay()] });
     }
     const max7 = Math.max(1, ...days7.map(x => x.n));
-    const bars = days7.map(x =>
-      '<div class="wk-col" title="'+x.key+' · '+x.n+' 词"><div class="wk-bar'+(x.n?'':' off')+'" style="height:'+Math.round(Math.max(6, x.n/max7*64))+'px"><i>'+(x.n||'')+'</i></div><span>'+x.label+'</span></div>'
+    /* v2.7.69 新动效：柱子**逐根长起来**（每根延后 50ms，从底部 scaleY 生长，一次性）。
+       注意与日均线的配合：生长用的是 transform，视觉高度会变、**布局高度不变** ——
+       drawWeekAvg() 因此改用 offsetHeight 反推刻度（见那里的注释），否则会照着动画中间态画线。 */
+    const bars = days7.map((x, i) =>
+      '<div class="wk-col" title="'+x.key+' · '+x.n+' 词"><div class="wk-bar'+(x.n?'':' off')+'" style="height:'+Math.round(Math.max(6, x.n/max7*64))+'px; animation-delay:'+(i*50)+'ms"><i style="animation-delay:'+(i*50+120)+'ms">'+(x.n||'')+'</i></div><span>'+x.label+'</span></div>'
     ).join('');
     /* v2.7.39 可见新增：把这条**通用 8px 进度条**换成「今日目标环」。
        理由与学习卡那次一样：通用进度条在哪都能见到，而这个产品的身份是「节奏/环」——
@@ -7270,9 +7283,12 @@ function drawWeekAvg(){
     const old = wk.querySelector('.wk-avg'); if(old) old.remove();
     if(max <= 0) return;                                   // 全 0：不画（否则等于给空数据加戏）
     const ref = bars[nums.indexOf(max)];                   // 最高柱 = 刻度参照（其像素高对应 max 词）
-    const rr = ref.getBoundingClientRect(), wr = wk.getBoundingClientRect();
-    const unit = rr.height / max;                          // px / 词
-    const top = Math.round((rr.bottom - mean * unit - wr.top) * 10) / 10;
+    /* v2.7.69：改用 **offsetHeight/offsetTop**（布局高度，不受 transform 影响）。
+       因为柱子的生长动效是 scaleY，getBoundingClientRect().height 在动画期间是**视觉**高度 ——
+       照它画线就会照着动画中间态画（这正是我一直在守的那类坑：动画不能污染测量）。 */
+    const barH = ref.offsetHeight, barBottom = ref.offsetTop + ref.offsetHeight;
+    const unit = barH / max;                               // px / 词
+    const top = Math.round((barBottom - mean * unit) * 10) / 10;
     const line = document.createElement('span');
     line.className = 'wk-avg';
     line.style.top = top + 'px';
@@ -7933,7 +7949,22 @@ const AppBrowse = {
       const stTag = stage ? '<span class="tag '+stage.cls+'">'+stage.txt+'</span>' : '';
       const enc = encodeURIComponent(e.w);
       const def = defText(e, 80);
-      return '<tr><td class="w">'+esc(e.w)+passNote(c)+'</td><td class="ph">'+(e.ph ? esc(e.ph) : '<span class="muted" data-pw="'+esc(e.w)+'" title="正在补齐音标…">…</span>')+'</td><td class="df"'+(def?'':' data-dw="'+esc(e.w)+'"')+'>'+(def?esc(def):'…')+'</td><td class="op"><button onclick="AppBrowse.detail(\''+enc+'\')">详情</button>'+(stTag?' '+stTag:'')+'</td></tr>';
+      /* v2.7.69 新元素：浏览行的**到期日小标记**。
+         浏览列表原来只有状态标签（学习中/已掌握），看不到"哪天该复习" ——
+         要判断先看哪个词，得切到记录页。这里把它带到行内（与记录页同一套语义与日期写法）。
+         已掌握不显示（没有下一个到期日）；没学过的也不显示（还没排期）。 */
+      const due = (() => {
+        if(!c || SRS.isMastered(c)) return '';
+        const dd = SRS.dueDay(c);
+        if(!dd) return '';
+        const t = SRS.today();
+        const diff = SRS.dayDiff(t, dd);
+        if(diff === 0) return '<span class="tag tag-orange due-chip">今天</span>';
+        if(diff === 1) return '<span class="tag tag-blue due-chip">明天</span>';
+        if(diff < 0) return '<span class="tag tag-red due-chip">逾期 ' + SRS.mind(dd) + '</span>';
+        return '<span class="tag due-chip">' + SRS.mind(dd) + '</span>';
+      })();
+      return '<tr><td class="w">'+esc(e.w)+passNote(c)+'</td><td class="ph">'+(e.ph ? esc(e.ph) : '<span class="muted" data-pw="'+esc(e.w)+'" title="正在补齐音标…">…</span>')+'</td><td class="df"'+(def?'':' data-dw="'+esc(e.w)+'"')+'>'+(def?esc(def):'…')+'</td><td class="op">'+due+'<button onclick="AppBrowse.detail(\''+enc+'\')">详情</button>'+(stTag?' '+stTag:'')+'</td></tr>';
     }).join('');
     const pager = '<div class="pager"><button class="btn btn-sm" onclick="AppBrowse.page--;AppBrowse.render()" '+(this.page<=1?'disabled':'')+'>‹ 上一页</button><span>第 '+this.page+' / '+pages+' 页 · 共 '+total+' 词</span><button class="btn btn-sm" onclick="AppBrowse.page++;AppBrowse.render()" '+(this.page>=pages?'disabled':'')+'>下一页 ›</button></div>';
     box.innerHTML =
