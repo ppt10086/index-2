@@ -583,8 +583,7 @@ html.side-collapsed .side-toggle{left:12px}
 }
 @media (max-width:480px){
   .fc-word{font-size:var(--fs-h1)}
-  .fc-ph{font-size:var(--fs-lead)}
-  .btn-lg{padding:11px 16px}
+  .fc-ph{font-size:var(--fs-lead)}  .btn-lg{padding:11px 16px}
   .topbar .btn{padding:8px 12px}
   .auth-wrap{padding:16px 12px}
   .auth-card{padding:28px 18px 22px; border-radius:var(--radius-lg)}
@@ -601,7 +600,11 @@ html.side-collapsed .side-toggle{left:12px}
 .flashcard::before{content:""; position:absolute; top:0; left:0; right:0; height:4px; background:var(--primary)}
 .flashcard:hover{border-color:var(--line2)}
 .fc-word{font-size:42px; font-weight:700; letter-spacing:-.015em; word-break:break-word; line-height:1.22; font-variant-numeric:tabular-nums}
-.fc-ph{color:var(--muted); font-size:var(--fs-title); letter-spacing:.02em}
+.fc-ph{color:var(--muted); font-size:var(--fs-title); letter-spacing:.02em;
+  /* v2.7.74：音标可点即朗读（扩大可点面积，与发音按钮同一动作）—— 给一点可点暗示 */
+  cursor:pointer; border-radius:var(--radius-xs); transition:background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease)}
+.fc-ph:hover{background:var(--primary-soft); color:var(--primary)}
+.fc-ph:focus-visible{outline:2px solid color-mix(in srgb, var(--primary) 55%, transparent); outline-offset:3px}
 .fc-def{font-size:var(--fs-lead); max-width:520px; color:var(--text); line-height:1.78; text-align:left; background:var(--panel2); padding:15px 19px; border-radius:var(--radius); width:100%; border:1px solid var(--line)}
 .fc-phrases{font-size:var(--fs-caption); color:var(--muted); max-width:520px; text-align:left; background:var(--panel3); border:1px dashed var(--line2); padding:13px 17px; border-radius:var(--radius); width:100%}
 .fc-phrases b{color:var(--primary)}
@@ -2380,7 +2383,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.73</span>
+            <span hidden id="set-version">2.7.74</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5297,7 +5300,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.73', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.74', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5326,7 +5329,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.73', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.74', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -6841,7 +6844,7 @@ const AppStudy = {
          避免点阵排成两行挤压卡片。放在 fc-body 之外，所以不会影响 Fit 对卡片的测量。 */
       roundDotsHtml(s.idx, total) +
       '<div class="flashcard"><div class="fc-word-wrap" data-fit-host><span class="fc-word-box"><span class="fc-word" data-fit data-fit-nowrap data-fit-reserve="'+fitReserve()+'" data-fit-max="'+fcFontSize(e.w)+'">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppStudy.speak()" aria-label="朗读 '+esc(e.w)+'（快捷键 ·）" title="朗读（快捷键 ·）">'+icon('volume2', 20)+'</button></span></div>' +
-      '<div class="fc-ph" id="fc-ph"></div>' +
+      '<div class="fc-ph" id="fc-ph" role="button" tabindex="0" title="点击朗读" aria-label="朗读这个单词" onclick="AppStudy.speak()" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();AppStudy.speak();}"></div>' +
       passNote(curState) +
       '<div class="fc-img" id="fc-img"'+(imgEnabled() ? '' : ' hidden')+'></div>' +
       '<div id="fc-body" style="width:100%">'+(s.revealed ? '<div class="reveal-in">'+cardBody(e)+'</div>' : (s.idx < 3 ? '<div class="fc-preview"><div class="fc-preview-hint">先回忆它的意思与发音，再点下方按钮核对</div><button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示释义</button></div>' : '<button class="btn btn-primary btn-lg" onclick="AppStudy.reveal()">显示释义</button>'))+'</div></div>' +
@@ -7238,13 +7241,30 @@ function doneMark(){
        我第一版把无障碍名字也写成了增量（"学完后第 2 天"）—— 那是错的，已改回累计。 */
     return '<path class="dm-seg on' + (cadPickedRound === i + 1 ? ' picked' : '') + '" data-days="' + d + '" data-round="' + (i + 1) + '" role="button" tabindex="0"'
       + ' aria-label="第 ' + (i + 1) + ' 遍复习，学完后第 ' + NODES[i] + ' 天"'
-      + ' onclick="cadRoundTip(this)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();cadRoundTip(this);}"'
+      + ' onclick="cadRoundTip(this)" onkeydown="cadSegKey(event, this)"'
       + ' d="M' + x1 + ' ' + y1 + ' A' + R + ' ' + R + ' 0 ' + large + ' 1 ' + x2 + ' ' + y2 + '" style="animation-delay:' + (i * 70) + 'ms"></path>';
   }).join('');
   return '<svg class="done-mark" viewBox="0 0 120 120" role="img" aria-label="六轮记忆曲线已完成：' + ROUNDS + ' 轮全部走完">' +
     segs + '<path class="dm-check" d="M45 62 l10 11 l22 -26"></path></svg>';
 }
 /* v2.7.72：把"这一遍是什么时候"写到环下方的小字上（点哪段说哪段）。 */
+/* v2.7.74：环的键盘操作补完整 —— Enter/Space 选中；**左右方向键在段之间移动**（并把焦点带过去）。
+   原来只能 Tab 到某一段再 Enter，方向键无反应；一个"6 段的控件"应该能顺着走一遍。 */
+function cadSegKey(e, seg){
+  try{
+    if(!seg) return;
+    const k = e.key;
+    if(k === 'Enter' || k === ' '){ e.preventDefault(); cadRoundTip(seg); return; }
+    if(k === 'ArrowRight' || k === 'ArrowLeft'){
+      e.preventDefault();
+      const svg = seg.closest('svg'); if(!svg) return;
+      const segs = [...svg.querySelectorAll('.dm-seg')];
+      const i = segs.indexOf(seg);
+      const next = segs[(i + (k === 'ArrowRight' ? 1 : segs.length - 1)) % segs.length];
+      if(next){ cadRoundTip(next); next.focus(); }      // 选中 + 焦点一起移动（读屏会念新的 aria-label）
+    }
+  }catch(err){}
+}
 function cadRoundTip(seg){
   try{
     const cap = document.querySelector('.study-done .done-cap');
@@ -7696,7 +7716,7 @@ const AppReview = {
         '<span class="tag '+stage.cls+'">第 '+Math.min((c && c.n || 0) + 1, SRS.ROUNDS)+' 遍</span></div>' +
       srsStripHtml(c) +
       '<div class="flashcard"><div class="fc-word-wrap" data-fit-host><span class="fc-word-box"><span class="fc-word" data-fit data-fit-nowrap data-fit-reserve="'+fitReserve()+'" data-fit-max="'+fcFontSize(e.w)+'">'+esc(e.w)+'</span><button class="fc-speak" onclick="AppReview.speak()" aria-label="朗读 '+esc(e.w)+'（快捷键 ·）" title="朗读（快捷键 ·）">'+icon('volume2', 20)+'</button></span></div>' +
-      '<div class="fc-ph" id="fc-ph"></div>' +
+      '<div class="fc-ph" id="fc-ph" role="button" tabindex="0" title="点击朗读" aria-label="朗读这个单词" onclick="AppStudy.speak()" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();AppStudy.speak();}"></div>' +
       passNote(c) +
       '<div class="fc-img" id="fc-img"'+(imgEnabled() ? '' : ' hidden')+'></div>' +
       '<div id="fc-body" style="width:100%">'+(s.revealed ? cardBody(e) : '<button class="btn btn-primary btn-lg" onclick="AppReview.reveal()">显示释义</button>')+'</div></div>' +
