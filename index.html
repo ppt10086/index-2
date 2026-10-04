@@ -657,6 +657,14 @@ html.side-collapsed .side-toggle{left:12px}
    （无圆角、更窄、带一条 baseline），语义差别一眼可见：上面是「已发生」，这条是「将要发生」。 */
 .tide-box{margin-top:16px; padding-top:14px; border-top:1px solid var(--line)}
 .tide{display:flex; align-items:flex-end; gap:4px; height:30px; border-bottom:1px solid var(--line2); padding-bottom:2px}
+/* v2.7.81：潮汐格可点（真 button 包住原来的柱子，保住原有视觉与 hover 放大）。 */
+.tide-d{appearance:none; background:none; border:0; padding:0; margin:0; cursor:pointer;
+  flex:1 1 0; min-width:2px; height:100%; display:flex; align-items:flex-end;
+  border-radius:var(--radius-xs)}
+.tide-d:focus-visible{outline:2px solid color-mix(in srgb, var(--primary) 55%, transparent); outline-offset:1px}
+.tide-d.on{background:color-mix(in srgb, var(--primary) 14%, transparent)}
+.tide-d.on i{background:var(--primary)}
+.tide-read{color:var(--primary); font-variant-numeric:tabular-nums}
 .tide i{flex:1 1 0; min-width:2px; border-radius:var(--radius-xs); background:color-mix(in srgb, var(--primary) 34%, var(--line2))}
 .tide i.zero{background:var(--line); height:3px}
 .tide i.today{background:var(--primary)}
@@ -664,7 +672,7 @@ html.side-collapsed .side-toggle{left:12px}
    只用 transform/filter，**不动布局**；也不改 cursor —— 它不可点，别暗示可点。日期与词数仍由 title 提供。 */
 .tide i{transform-origin:bottom center;
   transition:transform var(--dur-1) var(--ease), filter var(--dur-1) var(--ease)}
-.tide i:hover{transform:scale(1.22); filter:brightness(1.08) saturate(1.15)}
+.tide i:hover, .tide-d:hover i{transform:scale(1.22); filter:brightness(1.08) saturate(1.15)}
 @media (prefers-reduced-motion: reduce){ .tide i{transition:none} }
 .tide-lab{display:flex; justify-content:space-between; gap:12px; margin-top:6px; font-size:var(--fs-micro); color:var(--muted); font-variant-numeric:tabular-nums}
 .tide-lab b{color:var(--text); font-weight:700}
@@ -2410,7 +2418,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.80</span>
+            <span hidden id="set-version">2.7.81</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5327,7 +5335,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.80', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.81', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5356,7 +5364,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.80', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.81', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7554,19 +7562,41 @@ function tideHtml(entries){
   }
   const max = Math.max(1, ...buckets);
   const total = buckets.reduce((a, b) => a + b, 0);
+  /* v2.7.81 可见新增（含正经 a11y 改动）：潮汐 14 格**可以点**。
+     为什么：概览这一条原来只是"看形状"的图 —— 想知道"第 5 天到底是什么时候、有几个词"只能靠 hover 的 title。
+     现在点一格 → 该格高亮，并在下面一行读出**日期 + 词数**；键盘 Tab/Enter 同样可达。
+     a11y 变更：容器从 role="img"（叶子角色，里面不该有可交互元素）改为 role="group" + 组级 aria-label，
+     每格自己带 aria-label（这样读屏既知道整体分布，也能逐格读）。
+     注意槽位语义：第 0 格是"今天（含逾期）"，其余格是 +i 天。 */
   let ticks = '';
   for(let i = 0; i < DAYS; i++){
     const n = buckets[i];
     const h = n ? Math.max(5, Math.round(n / max * 30)) : 3;
     const dt = SRS.dayAdd(today, i);
-    ticks += '<i class="'+(i === 0 ? 'today' : (n ? '' : 'zero'))+'" style="height:'+h+'px" title="'+dt+' · '+n+' 词'+(i === 0 && overdue ? '（含逾期 '+overdue+'）' : '')+'"></i>';
+    const tip = dt + ' · ' + n + ' 词' + (i === 0 && overdue ? '（含逾期 ' + overdue + '）' : '');
+    ticks += '<button type="button" class="tide-d" data-day="'+i+'" data-dt="'+dt+'" data-n="'+n+'"'
+      + ' aria-label="'+tip+'" title="'+tip+'"'
+      + ' onclick="tidePick(this)"><i class="'+(i === 0 ? 'today' : (n ? '' : 'zero'))+'" style="height:'+h+'px"></i></button>';
   }
   /* v2.7.59 可见新增：给潮汐加一行**轴标签**（今天 / +7 天 / +14 天）。
      原来 14 格只有相对高低，看不出哪一格是今天、哪一格是一周后 ——
      图能"看出形状"但读不出**位置**，等于只完成了一半。 */
-  return '<div class="tide" role="img" aria-label="未来两周到期分布：今日 '+buckets[0]+' 词，合计 '+total+' 词">'+ticks+'</div>' +
+  return '<div class="tide" role="group" aria-label="未来两周到期分布：今日 '+buckets[0]+' 词，合计 '+total+' 词（可逐格查看）">'+ticks+'</div>' +
     '<div class="tide-axis" aria-hidden="true"><span>今天</span><span>+7 天</span><span>+'+(DAYS - 1)+' 天</span></div>' +
-    '<div class="tide-lab"><span>今日到期 <b>'+buckets[0]+'</b> 词'+(overdue ? '（含逾期 '+overdue+'）' : '')+'</span><span>未来两周共 '+total+' 词</span></div>';
+    '<div class="tide-lab"><span>今日到期 <b>'+buckets[0]+'</b> 词'+(overdue ? '（含逾期 '+overdue+'）' : '')+'</span><span class="tide-read" id="tide-read" role="status">未来两周共 '+total+' 词</span></div>';
+}
+/* v2.7.81：点潮汐格 → 高亮 + 在右侧读数位置读出日期与词数（可逆：再点同一格取消）。 */
+function tidePick(btn){
+  try{
+    if(!btn) return;
+    const box = btn.closest('.tide'); if(!box) return;
+    const wasOn = btn.classList.contains('on');
+    box.querySelectorAll('.tide-d').forEach(b => b.classList.remove('on'));
+    const read = document.getElementById('tide-read');
+    if(wasOn){ if(read) read.textContent = '未来两周共 ' + ((AppFilter.result && AppFilter.result.kept) || []).length + ' 词'; return; }
+    btn.classList.add('on');
+    if(read) read.textContent = btn.getAttribute('data-dt') + ' · ' + btn.getAttribute('data-n') + ' 词';
+  }catch(e){}
 }
 function burstFx(anchor, count){
   if(!anchor) return;
