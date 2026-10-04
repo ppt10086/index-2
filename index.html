@@ -493,6 +493,12 @@ html.side-collapsed .side-toggle{left:12px}
 .side-goal .sg-bar i{display:block; height:100%; border-radius:var(--radius-full); background:var(--primary);
   transition:width var(--dur-3) var(--ease)}
 .side-goal.done .sg-bar i{background:var(--accent)}
+/* v2.7.73：达标时的一次微光（每次会话首次达标才放；与新动效语言一致：一次性、只动 transform/opacity） */
+.side-goal.just-met .sg-bar{position:relative}
+.side-goal.just-met .sg-bar::after{content:''; position:absolute; inset:-4px -2px; border-radius:var(--radius-full);
+  border:2px solid color-mix(in srgb, var(--accent) 60%, transparent); animation:sgGlow .9s var(--ease) both; pointer-events:none}
+@keyframes sgGlow{from{opacity:.9; transform:scale(.98)} to{opacity:0; transform:scale(1.12)}}
+@media (prefers-reduced-motion: reduce){ .side-goal.just-met .sg-bar::after{animation:none} }
 @media (prefers-reduced-motion: reduce){ .side-goal .sg-bar i{transition:none} }
 .side-user{display:flex; align-items:center; gap:var(--gap-between); padding:10px; border-radius:var(--radius); background:var(--panel2); margin-top:10px; border:1px solid var(--line); width:100%; text-align:left; color:inherit; cursor:pointer; transition:background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease)}
 .side-user:hover{background:var(--panel3); border-color:var(--line2)}
@@ -2374,7 +2380,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.72</span>
+            <span hidden id="set-version">2.7.73</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5291,7 +5297,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.72', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.73', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5320,7 +5326,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.72', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.73', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7093,7 +7099,15 @@ function updateSideGoal(){
     const num = document.getElementById('sg-num'), fill = document.getElementById('sg-fill');
     if(num) num.textContent = done + ' / ' + goal;
     if(fill) fill.style.width = pct + '%';
-    box.classList.toggle('done', pct >= 100);
+    const met = pct >= 100;
+    /* v2.7.73：达标时给一次**微光**（与新动效语言一致：一次性、只动 transform/opacity）。
+       与复习环的达标光晕同理 —— 只在本次会话**首次**达标时放，之后只保持 done 态。 */
+    const firstMet = met && !AppUI._sideGoalMet;
+    if(firstMet) AppUI._sideGoalMet = true;
+    if(!met) AppUI._sideGoalMet = false;                 // 目标被改大/数据被清 → 允许下次再庆祝
+    box.classList.toggle('done', met);
+    box.classList.toggle('just-met', firstMet);
+    if(firstMet) setTimeout(() => { try{ box.classList.remove('just-met'); }catch(e){} }, 950);
     box.setAttribute('aria-label', '今日进度 ' + done + ' / ' + goal + ' 词，' + pct + '%');
   }catch(e){}
 }
@@ -7196,6 +7210,14 @@ function roundDotsHtml(idx, total){
   for(let i = 0; i < n; i++) s += '<i class="rd' + (i < cur ? ' done' : (i === cur ? ' now' : '')) + '"></i>';
   return s + '<span class="rd-num">' + (cur + 1) + ' / ' + n + '</span></div>';
 }
+/* v2.7.73：环上被点过的段要**记得住** —— 结束页每次重渲染（切页回来 / 再走一轮）都会重建 DOM，
+   所以把"选中第几遍"放在模块级变量里，重渲染时按它恢复高亮与那行说明。 */
+let cadPickedRound = 0;
+function cadRoundLabel(){
+  if(!cadPickedRound) return '6 轮记忆曲线 · 全部走完';
+  const d = SRS.NODES[cadPickedRound - 1] || '';
+  return '第 ' + cadPickedRound + ' 遍复习 · 学完后第 ' + d + ' 天（累计 ' + d + ' 天节点）';
+}
 function doneMark(){
   const NODES = SRS.NODES, ROUNDS = SRS.ROUNDS;
   const C = 60, R = 46, GAP = 11;                      // 圆心/半径/段间留白（度；留白要够大才读得出"6 段"）
@@ -7212,8 +7234,10 @@ function doneMark(){
     a0 = a1 + GAP;
     /* v2.7.72 新交互：每一段可以点（回看这一遍是什么时候）。段的 data-days 就是这一遍的间隔天数，
        点击后由 cadRoundTip() 把说明写到环下方那行小字上，并高亮该段。 */
-    return '<path class="dm-seg on" data-days="' + d + '" data-round="' + (i + 1) + '" role="button" tabindex="0"'
-      + ' aria-label="第 ' + (i + 1) + ' 遍复习，学完后第 ' + d + ' 天"'
+    /* 注意语义：**累计节点**用 NODES[i]（第 3 遍 = 学完后第 4 天），而弧长用的是**间隔增量** deltas[i]。
+       我第一版把无障碍名字也写成了增量（"学完后第 2 天"）—— 那是错的，已改回累计。 */
+    return '<path class="dm-seg on' + (cadPickedRound === i + 1 ? ' picked' : '') + '" data-days="' + d + '" data-round="' + (i + 1) + '" role="button" tabindex="0"'
+      + ' aria-label="第 ' + (i + 1) + ' 遍复习，学完后第 ' + NODES[i] + ' 天"'
       + ' onclick="cadRoundTip(this)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();cadRoundTip(this);}"'
       + ' d="M' + x1 + ' ' + y1 + ' A' + R + ' ' + R + ' 0 ' + large + ' 1 ' + x2 + ' ' + y2 + '" style="animation-delay:' + (i * 70) + 'ms"></path>';
   }).join('');
@@ -7226,12 +7250,12 @@ function cadRoundTip(seg){
     const cap = document.querySelector('.study-done .done-cap');
     if(!cap || !seg) return;
     const r = parseInt(seg.getAttribute('data-round'), 10) || 0;
-    const d = parseInt(seg.getAttribute('data-days'), 10) || 0;
-    cap.textContent = '第 ' + r + ' 遍复习 · 学完后第 ' + d + ' 天（累计 ' + (SRS.NODES[r - 1] || d) + ' 天节点）';
+    cadPickedRound = (cadPickedRound === r) ? 0 : r;      // 再点一次取消选择（可逆）
+    cap.textContent = cadRoundLabel();
     const svg = seg.closest('svg');
     if(svg){
       svg.querySelectorAll('.dm-seg').forEach(s => s.classList.remove('picked'));
-      seg.classList.add('picked');
+      if(cadPickedRound) seg.classList.add('picked');
     }
   }catch(e){}
 }
@@ -7261,7 +7285,7 @@ function doneHtml(o){
   /* v2.7.38 可见新增：收尾图形替代原来的纯图标 —— 六个点按 SRS 天数差成比例排布
      （与学习卡节奏带同一数据来源），逐个点亮后落一个对勾；全部一次性、只动 opacity/transform。 */
   return '<div class="study-done">' + doneMark() +
-    '<div class="done-cap">6 轮记忆曲线 · 全部走完</div>' +
+    '<div class="done-cap">' + cadRoundLabel() + '</div>' +
     '<h3>' + title + '</h3>' +
     '<p class="muted" role="status">' + stat + tail + '</p>' +
     nextReviewHtml(c) +
