@@ -751,7 +751,9 @@ button.srs-dot:focus-visible{outline:2px solid color-mix(in srgb, var(--primary)
 .fc-btns .again:hover{background:color-mix(in srgb, var(--no) 17%, transparent); color:var(--no);
   box-shadow:0 0 0 3px color-mix(in srgb, var(--no) 12%, transparent)}
 .fc-btns .hard{background:color-mix(in srgb, var(--text) 7%, transparent); color:var(--text); border:1px solid var(--line)}
-.fc-btns .hard:hover{background:color-mix(in srgb, var(--text) 12%, transparent); box-shadow:0 0 0 3px var(--panel2); color:var(--text)}
+/* v2.7.90：「跳过」是最轻的一档 —— 灰字无底，不抢「记得/不记得」的注意力 */
+.fc-btns .skip{background:transparent; color:var(--muted); border:1px solid var(--line); font-weight:600}
+.fc-btns .skip:hover{color:var(--text); border-color:var(--line2); background:var(--panel2)}.fc-btns .hard:hover{background:color-mix(in srgb, var(--text) 12%, transparent); box-shadow:0 0 0 3px var(--panel2); color:var(--text)}
 .fc-btns .good{background:color-mix(in srgb, var(--yes) 10%, transparent); color:var(--yes);
   border:1px solid color-mix(in srgb, var(--yes) 32%, transparent);
   -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px)}
@@ -2451,7 +2453,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.89</span>
+            <span hidden id="set-version">2.7.90</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -2752,6 +2754,10 @@ function fcButtonsHtml(api, firstLabel){
       '<span class="lb lb-n" aria-hidden="true">下一个</span>' +
     '</button>' +
     '<button class="btn good" onclick="' + api + '.mark(\'good\')">记得</button>' +
+    /* v2.7.90 可见新增：「跳过」——不确定就先跳过。
+       与「不记得」的区别很清楚：不记得 = 我确实不会（会走回炉/留痕）；跳过 = 我现在不想判断（**不写任何记录**）。
+       原来只有两个按钮，用户在"拿不准"时只能被迫选一边，等于污染了记忆强度数据。 */
+    '<button class="btn skip" type="button" title="先跳过这个词（不记录、稍后还会出现）" onclick="' + api + '.skip()">跳过</button>' +
   '</div>';
 }
 /* v2.7.6：带图标/自动宽度的流带（复习入口与概览页三个按钮复用同一条视觉语言）
@@ -5368,7 +5374,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.89', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.90', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5397,7 +5403,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.89', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.90', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -6950,6 +6956,14 @@ const AppStudy = {
        手感由既有的 .btn:active{scale:.96} 与揭示动画（v2.7.40 分层落位）承担。 */
     this.state.revealed = true;
     this.render();
+  },
+  /* v2.7.90 可见新增：「跳过」——不写任何词态记录，只往前走一格；被跳过的词仍留在新词池里，下次还会出现。
+     与「不记得」的区别：不记得是**判断**（会回炉/留痕），跳过是**不判断**（零副作用）。 */
+  skip(){
+    const s = this.state;
+    if(!s) return;
+    if(s.marks) s.marks.skip = (s.marks.skip || 0) + 1;
+    this.next();
   },
   mark(level){
     const s = this.state;
