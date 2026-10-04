@@ -157,6 +157,22 @@ html[data-theme="dark"][data-accent="violet"] {--primary:#bda0ec; --primary2:#cf
   .cad-timeline .ct-day:nth-of-type(odd){top:19px}
   .cad-timeline .ct-day:nth-of-type(even){top:34px}
 }
+/* v2.7.67 新元素：概览「今日待办」横幅（有到期词才出现） */
+.dash-todo{display:flex; align-items:center; gap:12px; margin:0 0 14px; padding:12px 14px;
+  border:1px solid color-mix(in srgb, var(--primary) 26%, var(--line)); border-left:3px solid var(--primary);
+  border-radius:var(--radius); background:var(--primary-soft);
+  animation:fxRise var(--dur-3) var(--ease) both}
+.dash-todo .dt-ic{display:inline-flex; color:var(--primary); flex:0 0 auto}
+.dash-todo .dt-txt{display:flex; flex-direction:column; gap:2px; min-width:0; flex:1}
+.dash-todo .dt-txt b{font-size:var(--fs-body); font-weight:700}
+.dash-todo .dt-txt i{font-style:normal; font-size:var(--fs-small); color:var(--muted)}
+.dash-todo .btn{flex:0 0 auto}
+@media (max-width:520px){
+  .dash-todo{gap:10px; padding:11px 12px; flex-wrap:wrap}
+  .dash-todo .dt-txt i{font-size:var(--fs-micro)}
+  .dash-todo .btn{width:100%}
+}
+@media (prefers-reduced-motion: reduce){ .dash-todo{animation:none} }
 .wk-cmp{margin-top:14px; padding-top:12px; border-top:1px solid var(--line)}
 /* v2.7.63 可见新增：词表筛选页的「预估」行（选择时就能看到后果） */
 .fp{display:flex; align-items:center; gap:8px; margin:14px 0 0; padding:11px 14px;
@@ -2299,7 +2315,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.66</span>
+            <span hidden id="set-version">2.7.67</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5216,7 +5232,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.66', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.67', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5245,7 +5261,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.66', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.67', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -5740,6 +5756,8 @@ const AppUI = {
       '<div class="tide-box">'+tideHtml(AppFilter.result && AppFilter.result.kept)+'</div>' +
       '';   // v2.7.6：按需求删除「上次学习 · 每日目标 · 复习计划」这行提示
     drawWeekAvg();   // v2.7.58：柱状图渲染完再画日均线（要用真实柱高反推刻度）
+    /* v2.7.67 新元素：今日待办横幅（有到期词才出现；没有就清空，不占位） */
+    try{ const tb = document.getElementById('dash-banner'); if(tb) tb.innerHTML = dashTodoHtml(); }catch(e){}
     const tip = $('#dash-english-tip');
     if(AppFilter.result){
       const r = AppFilter.result;
@@ -6877,6 +6895,7 @@ const AppStudy = {
     if(box){
       box.innerHTML = doneHtml({ mode, total, marks, early: !done });
       if(!done) burstFx(box.querySelector('.study-done'), 8);
+      countUpNumbers(box);      // v2.7.67：结束页数字滚动计数（一次性，约 0.7s）
     }
     try{ AppUI.refreshEntryCounts(); }catch(err){}
   },
@@ -7000,6 +7019,31 @@ function updateSideGoal(){
     box.classList.toggle('done', pct >= 100);
     box.setAttribute('aria-label', '今日进度 ' + done + ' / ' + goal + ' 词，' + pct + '%');
   }catch(e){}
+}
+/* v2.7.67 新元素：概览的「今日待办」CTA 条。
+   为什么加：概览上有到期数（快捷入口那一行）和目标环，但**没有一个"现在就该做这件事"的入口** ——
+   有词到期时最该看到的是"去复习"。所以有到期才显示一条可点的横幅；没有到期就**完全不出现**
+   （不占位、不说废话）。数据用 SRS.dueCount，与复习清单同源。 */
+function dashTodoHtml(){
+  try{
+    const d = AppAuth.data(), f = d.filter || {};
+    const tgt = f.target || '';
+    if(!tgt) return '';
+    const entries = (WL.cache.get(tgt) || {}).entries || [];
+    const due = SRS.dueCount(tgt, entries) || 0;
+    if(due <= 0) return '';
+    const overdueN = (() => {
+      const ws = d.wordState || {}, today = SRS.today();
+      let n = 0;
+      for(const e of entries){ const c = ws[SRS.key(tgt, e.w)]; if(c && SRS.isDue(c, today) && SRS.dueDay(c) < today) n++; }
+      return n;
+    })();
+    return '<div class="dash-todo" role="region" aria-label="今日待办">' +
+      '<span class="dt-ic" aria-hidden="true">' + icon('refresh', 18) + '</span>' +
+      '<span class="dt-txt"><b>今天有 ' + due + ' 个词到期</b><i>' + (overdueN ? '其中 ' + overdueN + ' 个是之前顺延的，先清掉最省事' : '趁热过一遍，走完 6 遍自动「已掌握」') + '</i></span>' +
+      '<button class="btn btn-primary btn-sm" type="button" onclick="AppUI.startFlowTo(this,\'english\',\'review\')">开始复习</button>' +
+    '</div>';
+  }catch(e){ return ''; }
 }
 function drawAuthMark(){
   const box = document.getElementById('auth-mark');
@@ -7130,6 +7174,29 @@ function doneHtml(o){
    间隔重复的关键信息是"**下一步**"，而结束页原来只报过去（过了几张、记得几个）。
    只在新词学习轮给出：这一轮新学的词，下一轮复习就是明天（SRS.NODES[0] = +1 天）——
    复习轮不显示，因为那一批词各自的节点不同，笼统写一句"明天"会是**错的**（宁可不说）。 */
+/* v2.7.67 新动效：结束页小数字的**滚动计数**。
+   三个数字原来一次性出现；现在从 0 数到真实值（约 0.7s，easeOutCubic），把"今天做了多少"演出来。
+   无障碍：数字本身 aria-hidden，整组的 aria-label 写的是**最终值** —— 读屏用户不会被中间值干扰。 */
+function countUpNumbers(scope){
+  try{
+    const root = scope || document;
+    if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const els = [...root.querySelectorAll('.dt-cell b[data-count]')];
+    if(!els.length) return;
+    const t0 = performance.now(), DUR = 700;
+    const step = (now) => {
+      const p = Math.min(1, (now - t0) / DUR);
+      const e = 1 - Math.pow(1 - p, 3);                      // easeOutCubic：前快后稳
+      els.forEach(el => {
+        const target = parseInt(el.getAttribute('data-count'), 10) || 0;
+        el.textContent = String(Math.round(target * e));
+      });
+      if(p < 1) requestAnimationFrame(step);
+      else els.forEach(el => { el.textContent = String(parseInt(el.getAttribute('data-count'), 10) || 0); });
+    };
+    requestAnimationFrame(step);
+  }catch(e){}
+}
 function nextReviewHtml(c){
   if(!c || c.mode === 'review' || c.mode === 'quiz') return '';
   const step = (SRS.NODES && SRS.NODES[0]) || 1;
@@ -7196,7 +7263,7 @@ function todaySummaryHtml(){
   const streak = (() => { try { return calcStreak(st) || 0; } catch (e) { return 0; } })();
   if(!learned && !reviewed && !streak) return '';
   const cell = (num, unit, label, hot) =>
-    '<span class="dt-cell' + (hot ? ' hot' : '') + '"><b>' + num + '</b>' + (unit ? '<i>' + unit + '</i>' : '') + '<span>' + label + '</span></span>';
+    '<span class="dt-cell' + (hot ? ' hot' : '') + '"><b data-count="' + num + '" aria-hidden="true">0</b>' + (unit ? '<i>' + unit + '</i>' : '') + '<span>' + label + '</span></span>';
   return '<div class="done-today" role="group" aria-label="今天累计：认识 ' + learned + ' 个、复习 ' + reviewed + ' 个、连续 ' + streak + ' 天">' +
     cell(learned, '词', '今天已认识', learned > 0) +
     cell(reviewed, '词', '今天已复习', false) +
@@ -7622,6 +7689,7 @@ const AppReview = {
     if(box){
       box.innerHTML = doneHtml({ mode:'review', total, marks, early: !done });
       if(!done) burstFx(box.querySelector('.study-done'), 8);
+      countUpNumbers(box);      // v2.7.67：结束页数字滚动计数（一次性，约 0.7s）
     }
     try{ AppUI.refreshEntryCounts(); }catch(err){}
   },
