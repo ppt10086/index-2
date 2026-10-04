@@ -2477,7 +2477,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.95</span>
+            <span hidden id="set-version">2.7.96</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5402,7 +5402,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.95', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.96', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5431,7 +5431,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.95', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.96', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7297,9 +7297,28 @@ function dashTodoHtml(){
       for(const e of entries){ const c = ws[SRS.key(tgt, e.w)]; if(c && SRS.isDue(c, today) && SRS.dueDay(c) < today) n++; }
       return n;
     })();
+    /* v2.7.96 可见新增：副文案不再是笼统一句"趁热过一遍"，而是**按真实到期分布说清轻重缓急**：
+       · 有顺延的 → 先说顺延条数（最该先做的）
+       · 今天这批 + 明天也有一批 → "做完这 N 个就收工 · 明天还有 M 个"（给参照，也让"今天别拖"有依据）
+       · 只有今天这批 → 给一个明确的小目标
+       数据全部来自 SRS.batches（与复习清单**同源**），不编数字。 */
+    /* ⚠️ v2.7.96：`SRS.batches` 只收**到期/逾期**的批次（它内部 `if(!this.isDue(c, t)) continue`），
+       所以"明天有多少"取不到 —— 直接按 `dueDay` 数一遍（与 isDue 同一套字段，仍然是**同源**，不编数字）。 */
+    const cntOn = (day) => {
+      const ws0 = d.wordState || {};
+      let n = 0;
+      for(const e of entries){ const c = ws0[SRS.key(tgt, e.w)]; if(c && !SRS.isMastered(c) && SRS.dueDay(c) === day) n++; }
+      return n;
+    };
+    const todayCount = cntOn(SRS.today());
+    const tomorrowCount = cntOn(SRS.dayAdd(SRS.today(), 1));
+    const tip = overdueN
+      ? ('其中 ' + overdueN + ' 个是之前顺延的，先清掉最省事')
+      : (todayCount ? ('做完这 ' + todayCount + ' 个就收工' + (tomorrowCount ? ' · 明天还有 ' + tomorrowCount + ' 个' : ''))
+                    : '趁热过一遍，走完 6 遍自动「已掌握」');
     return '<div class="dash-todo" role="region" aria-label="今日待办">' +
       '<span class="dt-ic" aria-hidden="true">' + icon('refresh', 18) + '</span>' +
-      '<span class="dt-txt"><b>今天有 ' + due + ' 个词到期</b><i>' + (overdueN ? '其中 ' + overdueN + ' 个是之前顺延的，先清掉最省事' : '趁热过一遍，走完 6 遍自动「已掌握」') + '</i></span>' +
+      '<span class="dt-txt"><b>今天有 ' + due + ' 个词到期</b><i>' + tip + '</i></span>' +
       '<button class="btn btn-primary btn-sm" type="button" onclick="AppUI.startFlowTo(this,\'english\',\'review\')">开始复习</button>' +
     '</div>';
   }catch(e){ return ''; }
