@@ -1589,6 +1589,9 @@ html.sl-has-session #view-auth{display:none}
   cursor:pointer; white-space:nowrap; transition:background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease)}
 .rv-toggle:hover{background:var(--primary-soft); color:var(--primary); border-color:transparent}
 .rv-toggle:focus-visible{outline:2px solid color-mix(in srgb, var(--primary) 55%, transparent); outline-offset:2px}
+/* v2.7.89 可见新增：「就复习这批」比「看这批词」更主动 —— 用主色描边区分开（不是同一种操作） */
+.rv-toggle.rv-do{border-color:color-mix(in srgb, var(--primary) 45%, var(--line2)); color:var(--primary)}
+.rv-toggle.rv-do:hover{background:var(--primary); color:var(--btn-fg); border-color:var(--primary)}
 .rv-row.open{background:var(--panel)}
 .rv-words{flex:1 1 100%; display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:8px;
   padding-left:84px; animation:fxRise var(--dur-2) var(--ease) both}
@@ -2448,7 +2451,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.88</span>
+            <span hidden id="set-version">2.7.89</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5365,7 +5368,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.88', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.89', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5394,7 +5397,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.88', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.89', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7820,6 +7823,10 @@ const AppReview = {
             ? '<button class="rv-toggle" type="button" aria-expanded="'+(open ? 'true' : 'false')+'" aria-controls="rvw-'+x.day+'"'
               + ' onclick="AppReview.toggleWords(\''+x.day+'\')">'+(open ? '收起' : '看这批词')+'</button>'
             : '')
+        /* v2.7.89 可见新增：这一批的「就复习这批」——只过这一天的词。
+           本来这行右侧只有"看这批词"，想先清掉顺延那批也只能整批一起做。 */
+        + '<button class="rv-toggle rv-do" type="button" title="只复习这一批 '+wc+' 词"'
+          + ' onclick="event.stopPropagation();AppReview.startBatch(\''+x.day+'\')">就复习这批</button>'
         + wordsHtml + '</div>';
     }).join('');
     box.innerHTML =
@@ -7856,6 +7863,16 @@ const AppReview = {
     if(el) el.classList.add('go');
     setTimeout(() => { this._flowing = false; this.enterCard(); }, 240);
   },
+  /* v2.7.89 可见新增：**只复习这一批**。原来「开始复习」永远是把今天所有到期词一起过；
+     而清单是按天分组的（今天 / 顺延 / 未来），想"先清掉顺延那批"就得整批一起做。
+     这里记住要只做哪一天，进入复习后按它过滤 deck。 */
+  startBatch(day){
+    try{
+      this.onlyDay = day || null;
+      const btn = document.querySelector('#tab-review .flow-band');
+      this.startFlow(btn);
+    }catch(e){}
+  },
   enterCard(){
     const box = $('#tab-review');
     if(!box){ this.start(); return; }
@@ -7875,7 +7892,13 @@ const AppReview = {
     const today = SRS.today();
     const rows = SRS.batches(r.targetId, r.kept, today);
     const all = [];
-    for(const x of rows){ if(!x.gap) for(const e of x.words) all.push(e); }
+    for(const x of rows){
+      if(x.gap) continue;
+      /* v2.7.89：若用户是点某一批的「就复习这批」，只收那一天的词（逾期批按它的原始日期匹配）。 */
+      if(this.onlyDay && x.day !== this.onlyDay) continue;
+      for(const e of x.words) all.push(e);
+    }
+    this.onlyDay = null;                       // 一次性意图：用过就清，避免影响下一次整批复习
     if(!all.length){ this.state = null; this.render(); return; }
     // v2.4：数量来自下滑小窗（我的偏好 / 全部 / 自定义）；未指定则全做
     const want = Math.max(1, Math.min(all.length, limit || this.wantCount || all.length));
