@@ -2477,7 +2477,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.94</span>
+            <span hidden id="set-version">2.7.95</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5402,7 +5402,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.94', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.95', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5431,7 +5431,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.94', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.95', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7076,6 +7076,8 @@ const AppStudy = {
     const marks = (s && s.marks) || { good:0, hard:0, again:0 };
     const total = s ? s.idx : 0;
     const mode = s ? s.mode : 'study';
+    this._lastBatch = (s && s.batch) || '';      // v2.7.95：本批的可读名，供结束页说明
+    const batch = this._lastBatch;
     this.state = null;
     AppUI._keyHandler = null;
     document.onkeydown = null;
@@ -7084,7 +7086,7 @@ const AppStudy = {
     AppData.autoBackup();
     const box = $('#tab-study');
     if(box){
-      box.innerHTML = doneHtml({ mode, total, marks, early: !done });
+      box.innerHTML = doneHtml({ mode, total, marks, early: !done, batch });
       if(!done) burstFx(box.querySelector('.study-done'), 8);
       countUpNumbers(box);      // v2.7.67：结束页数字滚动计数（一次性，约 0.7s）
     }
@@ -7455,8 +7457,11 @@ function doneHtml(o){
      这一行正好回答它：跳过 N 词，进记录的字面意思就是不进的只有它。 */
   const skipN = (marks.skip || 0);
   const skipTxt = skipN ? '，跳过 ' + skipN + ' 词（不计入记录，稍后还会出现）' : '';
+  /* v2.7.95 可见新增：点了「就复习这批」时，结束页说明**这一轮做的是哪一批** ——
+     否则"本轮复习了 N 个单词"缺少参照：这 N 个是哪来的？（是全天的？还是只做了顺延那批？） */
+  const batchTxt = c.batch ? '（只做了 ' + c.batch + ' 这一批）' : '';
   const stat = isReview
-    ? '本轮复习了 <b>' + total + '</b> 个单词：记得 ' + (marks.good || 0) + ' 词，忘了 ' + (marks.again || 0) + ' 词' + skipTxt + '。'
+    ? '本轮复习了 <b>' + total + '</b> 个单词' + batchTxt + '：记得 ' + (marks.good || 0) + ' 词，忘了 ' + (marks.again || 0) + ' 词' + skipTxt + '。'
     : '本轮过了 <b>' + total + '</b> 个单词：记得 ' + (marks.good || 0) + ' 词，模糊 ' + (marks.hard || 0) + ' 词，不记得 ' + (marks.again || 0) + ' 词' + skipTxt + '。';
   const tail = isQuiz
     ? '抽测只作自测，不计入学习记录与任何词汇数量。'
@@ -7919,6 +7924,9 @@ const AppReview = {
   startBatch(day){
     try{
       this.onlyDay = day || null;
+      /* v2.7.95：记下这一批的可读名（"10月4日" / "9月30日顺延批"），结束页要用它说明"这 N 个是哪一批"。 */
+      const today = SRS.today();
+      this._pendingBatchLabel = (day === today) ? ('今天的 ' + SRS.mind(day)) : (SRS.mind(day) + '（顺延批）');
       const btn = document.querySelector('#tab-review .flow-band');
       this.startFlow(btn);
     }catch(e){}
@@ -7954,7 +7962,12 @@ const AppReview = {
     const want = Math.max(1, Math.min(all.length, limit || this.wantCount || all.length));
     this.wantCount = want;
     const deck = all.slice(0, want);
-    this.state = { mode:'review', deck, idx:0, revealed:false, targetId:r.targetId, total: all.length };
+    /* v2.7.95 可见新增：把「这一轮做的是哪一批」记进状态，供结束页说明。
+       因为点了「就复习这批」之后，用户在结束页看到"本轮复习了 N 个单词"会缺少参照 —— **这 N 个是哪来的**。
+       与 batchLabel 一起进 state，finish() 时带到结束页。 */
+    const batchLabel = this._pendingBatchLabel || '';
+    this._pendingBatchLabel = '';
+    this.state = { mode:'review', deck, idx:0, revealed:false, targetId:r.targetId, total: all.length, batch: batchLabel };
     this.renderCard();
   },
   renderCard(){
@@ -8106,12 +8119,16 @@ const AppReview = {
     const done = !!(opts && opts.done);
     const marks = (s && s.marks) || { good:0, again:0 };
     const total = s ? s.idx : 0;
+    /* ⚠️ v2.7.95：**必须在 `this.state = null` 之前**取这批的名字 ——
+       我第一次把这行加到了 AppStudy 的那份 finish 里（两份同名函数），于是结束页拿不到 batch，静默不显示。 */
+    const batch = (s && s.batch) || '';
     this.state = null;
     document.onkeydown = null;
     WordImg.clear();
     const box = $('#tab-review');
     if(box){
-      box.innerHTML = doneHtml({ mode:'review', total, marks, early: !done });
+      /* v2.7.95：把「这一轮做的是哪一批」带到结束页（点了「就复习这批」时才有）。 */
+      box.innerHTML = doneHtml({ mode:'review', total, marks, early: !done, batch });
       if(!done) burstFx(box.querySelector('.study-done'), 8);
       countUpNumbers(box);      // v2.7.67：结束页数字滚动计数（一次性，约 0.7s）
     }
