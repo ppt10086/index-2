@@ -1531,6 +1531,18 @@ html.sl-has-session #view-auth{display:none}
 .wd-cad b{color:var(--text); font-variant-numeric:tabular-nums}
 @media (max-width:480px){ .wd-cad{gap:8px} }
 @media (max-width:480px){ .rv-tick{width:5px; height:5px} }
+/* v2.7.80 可见新增：详情弹层里的六轮回看（6 枚可点节点 + 一行说明） */
+.cad-nodes{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px}
+.cad-node{appearance:none; font:inherit; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px;
+  padding:6px 8px; border:1px solid var(--line2); border-radius:var(--radius-sm); background:var(--panel);
+  color:var(--muted); transition:border-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease), background-color var(--dur-1) var(--ease)}
+.cad-node b{font-size:var(--fs-caption); color:var(--text); font-variant-numeric:tabular-nums}
+.cad-node i{font-style:normal; font-size:var(--fs-micro); font-variant-numeric:tabular-nums}
+.cad-node:hover{border-color:var(--primary); color:var(--text)}
+.cad-node.on{border-color:var(--primary); background:var(--primary-soft); color:var(--primary)}
+.cad-node:focus-visible{outline:2px solid color-mix(in srgb, var(--primary) 55%, transparent); outline-offset:2px}
+.cad-note{margin-top:6px; font-size:var(--fs-micro); color:var(--muted); font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion: reduce){ .cad-node{transition:none} }
 .rv-desc{flex:1; min-width:120px; color:var(--text)}
 .rv-n{min-width:56px; text-align:right; font-weight:700; color:var(--primary)}
 /* v2.7.54 可见新增：复习批次「展开看这批词」 */
@@ -2398,7 +2410,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.79</span>
+            <span hidden id="set-version">2.7.80</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5315,7 +5327,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.79', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.80', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5344,7 +5356,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.79', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.80', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7044,6 +7056,29 @@ function roundTicks(n){
   for(let i = 0; i < ROUNDS; i++) s += '<i class="rv-tick'+(i < on ? ' on' : '')+'"></i>';
   return s + '</span>';
 }
+/* v2.7.80 可见新增：详情弹层里的「六轮回看」。
+   为什么：复习清单的缺口行已经能点开看"那几天"（v2.7.65/79），而这个产品真正的节奏
+   （第 1 / 2 / 4 / 7 / 15 / 21 天各复习一遍）在**单个词**的详情里反而看不到。
+   这里给 6 个节点各一枚可点的小片：点一下 → 该节点高亮 + 一行说明读到「第 N 遍 · 学完后第 X 天」。
+   复用 ringTicks 的 .rv-tick 视觉语言，不另起一套。 */
+function cadNodesHtml(){
+  const NODES = SRS.NODES || [];
+  return '<div class="cad-nodes" role="group" aria-label="六轮复习节点，可逐个查看">' +
+    NODES.map((d, i) => '<button type="button" class="cad-node" data-round="' + (i + 1) + '" data-days="' + d + '"'
+      + ' aria-label="第 ' + (i + 1) + ' 遍复习，学完后第 ' + d + ' 天"'
+      + ' onclick="cadNodePick(this)"><b>' + (i + 1) + '</b><i>+ ' + d + ' 天</i></button>').join('') +
+  '</div><div class="cad-note" id="cad-note">点一枚节点，看这一遍是什么时候</div>';
+}
+function cadNodePick(btn){
+  try{
+    const box = btn.closest('.cad-nodes'); if(!box) return;
+    box.querySelectorAll('.cad-node').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    const r = btn.getAttribute('data-round'), d = btn.getAttribute('data-days');
+    const note = document.getElementById('cad-note');
+    if(note) note.textContent = '第 ' + r + ' 遍复习 · 学完后第 ' + d + ' 天';
+  }catch(e){}
+}
 /* v2.7.44 可见新增：学习记录的「近 7 天 / 前 7 天」对比条。
    学习记录页原来只有四个数字（总数/学习中/已掌握/今日需复习）——数字说明不了「最近在变好还是变差」。
    这里用与概览潮汐同一套刻度语言画 14 格（左 7 格=前 7 天，右 7 格=近 7 天），中间一条分隔线，
@@ -8169,6 +8204,8 @@ const AppBrowse = {
         '<span>已走 <b>' + (st ? (SRS.isMastered(st) ? SRS.ROUNDS : (st.n || 0)) : 0) + '</b> / ' + SRS.ROUNDS + ' 遍' +
         (st && !SRS.isMastered(st) && SRS.dueDay(st) ? ' · 下次复习 <b>' + SRS.mind(SRS.dueDay(st)) + '</b>' : (st && SRS.isMastered(st) ? ' · 已掌握' : ' · 尚未开始')) +
         '</span></div>' +
+      /* v2.7.80 可见新增：六轮回看（点节点看"第 N 遍是什么时候"），与结束页的环回看同一语言。 */
+      cadNodesHtml() +
       (Array.isArray(e.def) && e.def.length ? '<div class="sec">释义</div><ul>'+e.def.map(([p,v]) => '<li>'+(p?'<b>'+esc(p)+'.</b> ':'')+esc(v)+'</li>').join('')+'</ul>' : (typeof e.def === 'string' && e.def ? '<div class="sec">释义</div><div class="muted">'+esc(e.def)+'</div>' : '<div class="sec">释义</div><div class="muted" id="wd-def">词库未收录释义，正在获取在线翻译…</div>')) +
       (Array.isArray(e.phrases) && e.phrases.length ? '<div class="sec">词组搭配</div><ul>'+e.phrases.slice(0,8).map(([p,v]) => '<li><b>'+esc(p)+'</b>'+(v?' · '+esc(v):'')+'</li>').join('')+'</ul>' : '') +
       '<div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap">' +
