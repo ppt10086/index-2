@@ -188,6 +188,9 @@ html[data-theme="dark"][data-accent="violet"] {--primary:#bda0ec; --primary2:#cf
 /* v2.7.60：掌握进度条（记录页）—— 把"已掌握 / 已学习"画成一段可比的长度 */
 .mst{margin-top:14px; padding-top:12px; border-top:1px solid var(--line)}
 .mst-bar{height:10px; border-radius:var(--radius-full); background:color-mix(in srgb, var(--line2) 60%, transparent); overflow:hidden}
+/* v2.7.83：条本身是 button（可点切换说明）—— 去掉按钮默认外观，保留原来的视觉 */
+button.mst-bar{appearance:none; border:0; padding:0; margin:0; width:100%; display:block; cursor:pointer; text-align:left}
+button.mst-bar:focus-visible{outline:2px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset:3px}
 .mst-bar .mst-done{display:block; height:100%; border-radius:var(--radius-full); background:var(--accent);
   animation:mstFill var(--dur-3) var(--ease) both}
 .mst-lab{display:flex; align-items:center; justify-content:space-between; gap:var(--gap-between); margin-top:8px;
@@ -2418,7 +2421,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.82</span>
+            <span hidden id="set-version">2.7.83</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5335,7 +5338,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.82', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.83', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5364,7 +5367,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.82', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.83', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7137,11 +7140,31 @@ function masteryBarHtml(learned, known){
   if(!total) return '';
   const pct = Math.round(ok / total * 100);
   const w = Math.round(ok / total * 1000) / 10;
-  return '<div class="mst" role="img" aria-label="掌握进度：已掌握 ' + ok + ' / 已学习 ' + total + ' 词，' + pct + '%">' +
-    '<div class="mst-bar"><i class="mst-done" style="width:' + w + '%"></i></div>' +
+  return '<div class="mst" role="group" aria-label="掌握进度：已掌握 ' + ok + ' / 已学习 ' + total + ' 词，' + pct + '%（点条形可切换说明）">' +
+    /* v2.7.83 可见新增：**条本身可点** —— 点一下在"已掌握/学习中"两种读法之间切换。
+       原来只有一个静态百分比 + 图例；现在点条形就会说清「还差多少词到全部掌握」，
+       把"百分比"变成"还剩多少"这个更能推动行动的说法。真 button 包裹（键盘可达）。
+       顺带 a11y：容器从 role="img"（叶子角色）改为 role="group"。 */
+    '<button type="button" class="mst-bar" aria-label="切换掌握说明" onclick="mstToggle(' + ok + ',' + total + ')">'
+      + '<i class="mst-done" style="width:' + w + '%"></i></button>' +
     '<div class="mst-lab"><span><b>' + pct + '%</b> 已掌握</span>' +
-      '<span class="mst-legend"><i class="mst-k done"></i>已掌握 ' + ok + '<i class="mst-k learn"></i>学习中 ' + (total - ok) + '</span></div>' +
+      '<span class="mst-legend" id="mst-legend"><i class="mst-k done"></i>已掌握 ' + ok + '<i class="mst-k learn"></i>学习中 ' + (total - ok) + '</span></div>' +
   '</div>';
+}
+/* v2.7.83：点掌握条 → 图例在"分布"与"还差多少"之间切换（可逆）。 */
+function mstToggle(ok, total){
+  try{
+    const el = document.getElementById('mst-legend');
+    if(!el) return;
+    const alt = el.getAttribute('data-alt') === '1';
+    if(alt){
+      el.innerHTML = '<i class="mst-k done"></i>已掌握 ' + ok + '<i class="mst-k learn"></i>学习中 ' + (total - ok);
+      el.setAttribute('data-alt', '0');
+    } else {
+      el.textContent = '再掌握 ' + (total - ok) + ' 词就全部走完（共 ' + total + ' 词）';
+      el.setAttribute('data-alt', '1');
+    }
+  }catch(e){}
 }
 /* v2.7.64 可见新增：登录页的品牌节奏标记。
    刻度位置按 SRS.NODES 的天数差**等比**铺开（0 天最左、+21 天最右），所以中间自然有疏密 ——
