@@ -172,7 +172,7 @@ html[data-theme="dark"][data-accent="violet"] {--primary:#bda0ec; --primary2:#cf
 .dash-todo .dt-txt i{font-style:normal; font-size:var(--fs-small); color:var(--muted)}
 .dash-todo .btn{flex:0 0 auto}
 @media (max-width:520px){
-  .dash-todo{gap:10px; padding:11px 12px; flex-wrap:wrap}
+  .dash-todo{gap:var(--gap-between); padding:11px 12px; flex-wrap:wrap}
   .dash-todo .dt-txt i{font-size:var(--fs-micro)}
   .dash-todo .btn{width:100%}
 }
@@ -190,10 +190,10 @@ html[data-theme="dark"][data-accent="violet"] {--primary:#bda0ec; --primary2:#cf
 .mst-bar{height:10px; border-radius:var(--radius-full); background:color-mix(in srgb, var(--line2) 60%, transparent); overflow:hidden}
 .mst-bar .mst-done{display:block; height:100%; border-radius:var(--radius-full); background:var(--accent);
   animation:mstFill var(--dur-3) var(--ease) both}
-.mst-lab{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px;
+.mst-lab{display:flex; align-items:center; justify-content:space-between; gap:var(--gap-between); margin-top:8px;
   font-size:var(--fs-small); color:var(--muted); font-variant-numeric:tabular-nums}
 .mst-lab b{color:var(--accent); font-size:var(--fs-lead)}
-.mst-legend{display:inline-flex; align-items:center; gap:6px; font-size:var(--fs-micro)}
+.mst-legend{display:inline-flex; align-items:center; gap:var(--gap-in); font-size:var(--fs-micro)}
 .mst-k{width:8px; height:8px; border-radius:var(--radius-xs); display:inline-block; margin-left:8px}
 .mst-k:first-child{margin-left:0}
 .mst-k.done{background:var(--accent)}
@@ -201,7 +201,7 @@ html[data-theme="dark"][data-accent="violet"] {--primary:#bda0ec; --primary2:#cf
 @keyframes mstFill{from{opacity:.2} to{opacity:1}}
 @media (prefers-reduced-motion: reduce){ .mst-bar .mst-done{animation:none} }
 @media (max-width:480px){ .mst-lab{font-size:var(--fs-micro)} .mst-legend{display:none} }
-.wc-top{display:flex; align-items:baseline; justify-content:space-between; gap:10px; font-size:var(--fs-small); color:var(--muted); font-variant-numeric:tabular-nums}
+.wc-top{display:flex; align-items:baseline; justify-content:space-between; gap:var(--gap-between); font-size:var(--fs-small); color:var(--muted); font-variant-numeric:tabular-nums}
 .wc-top b{color:var(--text); font-size:var(--fs-lead); font-weight:700}
 .wc-top .wc-d{color:color-mix(in srgb, var(--accent) 82%, var(--text)); font-weight:600}
 .wc-bars{display:flex; align-items:flex-end; gap:4px; height:32px; margin-top:8px; border-bottom:1px solid var(--line2); padding-bottom:2px}
@@ -223,7 +223,7 @@ html[data-theme="dark"][data-accent="violet"] {--primary:#bda0ec; --primary2:#cf
    原来这里用一句话解释「主题色改的是主按钮/选中态/进度/标签/点缀图标」——
    好的界面应该把这句话**演出来**：预览里的五种元素全部直接引用主题变量，
    所以点色板时它们跟着变（纯 CSS 变量联动，不需要一行 JS）。 */
-.acc-prev{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:2px 0 10px;
+.acc-prev{display:flex; align-items:center; gap:var(--gap-between); flex-wrap:wrap; margin:2px 0 10px;
   padding:12px 14px; border:1px dashed var(--line2); border-radius:var(--radius); background:var(--panel2)}
 .acc-prev .ap-btn{display:inline-flex; align-items:center; padding:7px 14px; border-radius:var(--radius-sm);
   background:var(--btn-solid); color:var(--btn-fg); font-size:var(--fs-small); font-weight:700}
@@ -788,7 +788,7 @@ html.side-collapsed .side-toggle{left:12px}
   background:var(--primary-soft); color:var(--text); font-size:var(--fs-small); max-width:92%}
 .done-next .dn-i{display:inline-flex; color:var(--primary); flex:0 0 auto}
 .done-next b{font-variant-numeric:tabular-nums}
-@media (max-width:420px){ .done-next{font-size:var(--fs-micro); padding:7px 11px; gap:6px} }
+@media (max-width:420px){ .done-next{font-size:var(--fs-micro); padding:7px 11px; gap:var(--gap-in)} }
 /* v2.7.52 可见新增：结束页「今天」小结条（三格：已认识 / 已复习 / 连续天数） */
 .done-today{display:flex; align-items:stretch; justify-content:center; gap:0; margin:16px auto 4px;
   max-width:420px; border:1px solid var(--line); border-radius:var(--radius); background:var(--panel2); overflow:hidden}
@@ -869,7 +869,7 @@ html.side-collapsed .side-toggle{left:12px}
 
 /* 通知与弹窗 */
 #toast-wrap{position:fixed; right:18px; bottom:18px; z-index:999; display:flex; flex-direction:column; gap:var(--gap-between); max-width:340px; pointer-events:none}
-.toast{background:var(--panel); border:1px solid var(--line2); border-radius:var(--radius); box-shadow:var(--shadow); padding:12px 16px; font-size:var(--fs-caption); display:flex; gap:10px; align-items:flex-start; animation:slidein var(--dur-2) cubic-bezier(.2,0,0,1); pointer-events:auto}
+.toast{background:var(--panel); border:1px solid var(--line2); border-radius:var(--radius); box-shadow:var(--shadow); padding:12px 16px; font-size:var(--fs-caption); display:flex; gap:var(--gap-between); align-items:flex-start; animation:slidein var(--dur-2) cubic-bezier(.2,0,0,1); pointer-events:auto}
 .toast.ok i{color:var(--accent)}
 .toast.err i{color:var(--danger)}
 .toast.warn i{color:var(--warn)}
@@ -923,7 +923,7 @@ html.side-collapsed .side-toggle{left:12px}
 .chip{display:inline-flex; align-items:center; gap:var(--gap-in); background:var(--panel2); border:1px solid var(--line2); padding:5px 12px; border-radius:var(--radius-full); font-size:var(--fs-small); font-weight:600}
 .chip .x{cursor:pointer; color:var(--muted); font-size:var(--fs-body); line-height:1; padding:2px}
 .chip .x:hover{color:var(--danger)}
-.search-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px}
+.search-row{display:flex; gap:var(--gap-between); flex-wrap:wrap; margin-bottom:16px}
 .search-row input{flex:1; min-width:200px}
 .preset-row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
 .preset-row select{max-width:250px}
@@ -1035,7 +1035,7 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
 #page-english{min-width:0}
 /* 两个独立入口：背新单词 / 复习旧单词（v2.5）。
    常驻在英语页顶部，**会话进行中也可见**，所以学到一半想换去复习旧词可以直接点。 */
-#en-switch{display:flex; gap:6px; padding:4px; border-radius:var(--radius); background:var(--panel3);
+#en-switch{display:flex; gap:var(--gap-in); padding:4px; border-radius:var(--radius); background:var(--panel3);
   border:1px solid var(--line); flex-wrap:wrap}
 #en-switch .en-sw{display:flex; align-items:center; gap:8px; padding:9px 15px; border-radius:var(--radius-sm);
   background:transparent; border:1px solid transparent; color:var(--muted); font-size:var(--fs-caption); font-weight:700;
@@ -1050,17 +1050,17 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
 #en-switch .en-sw[data-tab="review"].active .en-sw-n{background:var(--warn); color:var(--btn-fg)}
 @media (max-width:860px){
   #en-switch{width:100%; gap:4px}
-  #en-switch .en-sw{flex:1 1 0; justify-content:center; padding:9px 8px; gap:6px; min-width:0}
+  #en-switch .en-sw{flex:1 1 0; justify-content:center; padding:9px 8px; gap:var(--gap-in); min-width:0}
 }
 /* 次级入口：小、灰、靠右，不抢主视觉 */
-#english-minor{display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:flex-end; margin-top:20px}
+#english-minor{display:flex; align-items:center; gap:var(--gap-in); flex-wrap:wrap; justify-content:flex-end; margin-top:20px}
 #english-minor .en-minor-label{font-size:var(--fs-micro); color:var(--muted); letter-spacing:.08em; opacity:.8}
 #english-minor button{font-size:var(--fs-small); padding:6px 12px; border-radius:var(--radius-sm); background:transparent;
   border:1px solid var(--line2); color:var(--muted); font-weight:600; min-height:34px; cursor:pointer}
 #english-minor button:hover{color:var(--primary); border-color:var(--primary); background:var(--primary-soft)}
 @media (max-width:860px){ #english-minor{justify-content:center} }
 /* 进入次级页面时的返回条 */
-#english-back{display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap}
+#english-back{display:flex; align-items:center; gap:var(--gap-between); margin-bottom:16px; flex-wrap:wrap}
 #english-back .btn{min-height:38px}
 #english-back .crumb{font-size:var(--fs-caption); color:var(--muted)}
 
@@ -1084,7 +1084,7 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
 /* ---- 词库中心：通栏分组 + 瀑布流栅格 ---- */
 #library-list{columns:2; column-gap:28px}
 .lib-group{break-inside:avoid; margin:0 0 var(--space-lg); display:block}
-.lib-head{display:flex; align-items:center; gap:10px; font-size:var(--fs-small); font-weight:700; letter-spacing:.12em; color:var(--muted); margin:2px 2px 6px; text-transform:uppercase}
+.lib-head{display:flex; align-items:center; gap:var(--gap-between); font-size:var(--fs-small); font-weight:700; letter-spacing:.12em; color:var(--muted); margin:2px 2px 6px; text-transform:uppercase}
 .lib-head::before{content:""; width:14px; height:2px; border-radius:var(--radius-full); background:var(--primary); opacity:.9}
 .lib-row{border:0; border-radius:0; background:transparent; box-shadow:none; padding:14px 10px; margin:0}
 .lib-row + .lib-row{border-top:1px solid var(--line)}
@@ -1104,7 +1104,7 @@ body::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:non
 .skel-line.w40{width:40%}
 
 /* ---- 空状态：方向而非气氛 ---- */
-.empty{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:56px 20px}
+.empty{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:var(--gap-in); padding:56px 20px}
 .empty .big{width:72px; height:72px; border-radius:var(--radius-lg); display:flex; align-items:center; justify-content:center; background:var(--panel2); color:var(--muted); margin-bottom:8px; transition:scale var(--dur) var(--ease)}
 .empty .big .ico-svg{width:30px; height:30px}
 .empty h3{margin:6px 0 2px}
@@ -1336,7 +1336,7 @@ li,td,th{text-wrap:normal}
   box-shadow:var(--shadow); padding:24px; animation:pop var(--dur-2) var(--ease)}
 .ob-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px}
 .ob-brand{font-weight:800; letter-spacing:.22em; font-size:var(--fs-body)}
-.ob-dots{display:flex; gap:6px; margin-bottom:20px}
+.ob-dots{display:flex; gap:var(--gap-in); margin-bottom:20px}
 .ob-dot{width:26px; height:5px; border-radius:var(--radius-full); background:var(--line2); transition:background-color var(--dur) var(--ease)}
 .ob-dot.on{background:var(--primary)}
 .ob-body h2{font-size:var(--fs-h2); letter-spacing:-.01em; margin-bottom:8px}
@@ -1355,7 +1355,7 @@ li,td,th{text-wrap:normal}
   transition:border-color var(--dur) var(--ease), background-color var(--dur) var(--ease)}
 .ob-goal span{font-size:var(--fs-micro); font-weight:600; color:var(--muted)}
 .ob-goal.sel{border-color:var(--primary); background:var(--primary-soft)}
-.ob-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:20px; flex-wrap:wrap}
+.ob-actions{display:flex; justify-content:flex-end; gap:var(--gap-between); margin-top:20px; flex-wrap:wrap}
 .ob-sum{margin:6px 0 14px; border:1px solid var(--line); border-radius:var(--radius); padding:4px 16px; background:var(--panel3)}
 @media (max-width:480px){
   .ob-goals{grid-template-columns:repeat(2,1fr)}
@@ -1372,7 +1372,7 @@ li,td,th{text-wrap:normal}
 .wk-avg{position:absolute; left:2px; right:2px; height:0; border-top:1px dashed color-mix(in srgb, var(--primary) 55%, transparent); pointer-events:none}
 .wk-avg b{position:absolute; right:0; top:-15px; font-size:var(--fs-micro); font-weight:600; color:var(--primary);
   background:var(--panel); padding:0 4px; border-radius:var(--radius-sm); font-variant-numeric:tabular-nums}
-.wk-col{flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; min-width:0}
+.wk-col{flex:1; display:flex; flex-direction:column; align-items:center; gap:var(--gap-in); min-width:0}
 .wk-bar{width:100%; max-width:34px; min-height:6px; border-radius:8px 8px 4px 4px;
   background:var(--primary); opacity:.92; position:relative}
 .wk-bar.off{background:var(--panel2); opacity:.75}
@@ -1498,7 +1498,7 @@ li,td,th{text-wrap:normal}
 .auth-tagline{color:var(--text); font-weight:800; font-size:var(--fs-title); text-align:center; margin:6px 0 4px; line-height:1.5}
 .auth-card label{white-space:nowrap}
 .auth-hero{width:100%; min-height:50px; margin:4px 0 10px}
-.auth-alt{display:flex; gap:10px; justify-content:center; flex-wrap:wrap}
+.auth-alt{display:flex; gap:var(--gap-between); justify-content:center; flex-wrap:wrap}
 .auth-alt .btn{min-height:44px; padding:9px 18px}
 .auth-back{margin-top:8px}
 .auth-card input{min-height:44px}
@@ -1534,13 +1534,13 @@ html.sl-has-session #view-auth{display:none}
 .rv-tick{width:6px; height:6px; border-radius:var(--radius-xs); background:var(--line2)}
 .rv-tick.on{background:var(--primary)}
 /* v2.7.45：详情弹层里的节奏行（复用上面同一套 .rv-tick，不另起实现） */
-.wd-cad{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:10px 0 2px;
+.wd-cad{display:flex; align-items:center; gap:var(--gap-between); flex-wrap:wrap; margin:10px 0 2px;
   font-size:var(--fs-small); color:var(--muted)}
 .wd-cad b{color:var(--text); font-variant-numeric:tabular-nums}
 @media (max-width:480px){ .wd-cad{gap:8px} }
 @media (max-width:480px){ .rv-tick{width:5px; height:5px} }
 /* v2.7.80 可见新增：详情弹层里的六轮回看（6 枚可点节点 + 一行说明） */
-.cad-nodes{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px}
+.cad-nodes{display:flex; flex-wrap:wrap; gap:var(--gap-in); margin-top:6px}
 .cad-node{appearance:none; font:inherit; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px;
   padding:6px 8px; border:1px solid var(--line2); border-radius:var(--radius-sm); background:var(--panel);
   color:var(--muted); transition:border-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease), background-color var(--dur-1) var(--ease)}
@@ -1700,7 +1700,7 @@ html.sl-has-session #view-auth{display:none}
   padding:6px 10px; border-radius:var(--radius-sm); transition:color var(--dur-1) var(--ease), background var(--dur-1) var(--ease)}
 .fb-alt button:hover{color:var(--primary); background:var(--primary-soft)}
 /* v2.7.6：mini 流带 —— 概览页「下一步建议」里三个入口用（保留各自图标 + >>>，中性灰） */
-.fb-row{display:flex; gap:10px; flex-wrap:wrap}
+.fb-row{display:flex; gap:var(--gap-between); flex-wrap:wrap}
 .flow-band.mini{width:auto; min-height:44px; padding:0 8px 0 12px; border-radius:var(--radius); gap:8px;
   background:var(--panel2); border-color:var(--line); color:var(--text); flex:0 1 auto}
 .flow-band.mini .fb-ic{display:flex; align-items:center; color:var(--muted)}
@@ -2418,7 +2418,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.81</span>
+            <span hidden id="set-version">2.7.82</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5335,7 +5335,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.81', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.82', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5364,7 +5364,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.81', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.82', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
