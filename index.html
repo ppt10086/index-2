@@ -636,6 +636,12 @@ html.side-collapsed .side-toggle{left:12px}
 .tide i{flex:1 1 0; min-width:2px; border-radius:var(--radius-xs); background:color-mix(in srgb, var(--primary) 34%, var(--line2))}
 .tide i.zero{background:var(--line); height:3px}
 .tide i.today{background:var(--primary)}
+/* v2.7.70 微交互：潮汐格悬停时放大提亮（让"哪一格是多少"更好瞄）。
+   只用 transform/filter，**不动布局**；也不改 cursor —— 它不可点，别暗示可点。日期与词数仍由 title 提供。 */
+.tide i{transform-origin:bottom center;
+  transition:transform var(--dur-1) var(--ease), filter var(--dur-1) var(--ease)}
+.tide i:hover{transform:scale(1.22); filter:brightness(1.08) saturate(1.15)}
+@media (prefers-reduced-motion: reduce){ .tide i{transition:none} }
 .tide-lab{display:flex; justify-content:space-between; gap:12px; margin-top:6px; font-size:var(--fs-micro); color:var(--muted); font-variant-numeric:tabular-nums}
 .tide-lab b{color:var(--text); font-weight:700}
 /* v2.7.59：潮汐的轴标签（今天 / +7 天 / +13 天）—— 让"哪一格是哪天"读得出来，而不是只能看出形状。
@@ -664,6 +670,16 @@ html.side-collapsed .side-toggle{left:12px}
 .rv-ring-txt{display:flex; flex-direction:column; gap:2px; min-width:0}
 .rv-ring-txt b{font-size:var(--fs-title); font-weight:700; font-variant-numeric:tabular-nums}
 .rv-ring-txt span{font-size:var(--fs-small); color:var(--muted)}
+/* v2.7.70：今日复习做完 —— 环内落一个勾；**本次会话首次达标**时环外放一次光晕（达标是事件，不是常态） */
+.rv-ring .gr-check{position:absolute; right:-2px; bottom:-2px; display:inline-flex; align-items:center; justify-content:center;
+  width:22px; height:22px; border-radius:50%; background:var(--accent); color:var(--panel);
+  animation:grCheck .35s var(--ease) both}
+.rv-ring .goal-ring{position:relative}
+.rv-ring.just-done .goal-ring::after{content:''; position:absolute; inset:-2px; border-radius:50%;
+  border:2px solid color-mix(in srgb, var(--accent) 65%, transparent); animation:grHalo .9s var(--ease) both; pointer-events:none}
+@keyframes grCheck{from{opacity:0; transform:scale(.4)} to{opacity:1; transform:none}}
+@keyframes grHalo{from{opacity:.9; transform:scale(.9)} to{opacity:0; transform:scale(1.5)}}
+@media (prefers-reduced-motion: reduce){ .rv-ring .gr-check, .rv-ring.just-done .goal-ring::after{animation:none} }
 .goal-ring .gr-txt{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px}
 .goal-ring .gr-txt b{font-size:var(--fs-title); font-weight:700; line-height:1; font-variant-numeric:tabular-nums}
 .goal-ring .gr-txt span{font-size:10px; color:var(--muted); letter-spacing:.02em}
@@ -2338,7 +2354,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.69</span>
+            <span hidden id="set-version">2.7.70</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5255,7 +5271,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.69', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.70', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5284,7 +5300,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.69', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.70', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7134,6 +7150,7 @@ function ringHtml(o){
       '<circle class="gr-fill" cx="36" cy="36" r="' + R + '" style="--circ:' + CIRC + '; stroke-dasharray:' + CIRC + '; stroke-dashoffset:' + off + '"></circle>' +
     '</svg>' +
     '<span class="gr-txt"><b>' + (o.num === undefined ? pct + '%' : esc(String(o.num))) + '</b><span>' + esc(o.label || '') + '</span></span>' +
+    (o.extra || '') +          // v2.7.70：环内可附加内容（如"今日复习做完"的对勾）—— 由调用方决定，环本身不知道语义
   '</' + tag + '>';
 }
 /* v2.7.51 可见新增：本轮进度点阵。
@@ -7541,9 +7558,17 @@ const AppReview = {
          把「今天还剩多少没复习」这件事从文字里拿出来变成一眼能看的形状。 */
       + (() => {
           const doneToday = Math.min(total, ((AppAuth.data().stats || {}).reviewDays || {})[SRS.today()] || 0);
-          return '<div class="rv-ring">' + ringHtml({ pct: total ? Math.round(doneToday / total * 100) : 100,
-            num: doneToday, label: '今日已复习', aria: '今日复习进度 ' + doneToday + ' / ' + total + ' 词' }) +
-            '<div class="rv-ring-txt"><b>' + doneToday + ' / ' + total + '</b><span>' + (total === 0 ? '今天没有到期的词' : (doneToday >= total ? '今天的复习都做完了' : '还剩 ' + (total - doneToday) + ' 词没复习')) + '</span></div></div>';
+          const complete = total > 0 && doneToday >= total;
+          /* v2.7.70 新动效/新状态：今日复习**做完**时，环内落一个勾，并在**本次会话首次达标**时放一次光晕。
+             为什么要区分"首次"：每次进这一页都放一次庆祝就成了噪音 —— 达标是一次事件，不是一种常态。 */
+          const firstTime = complete && !AppReview._celebratedDay;
+          if(firstTime) AppReview._celebratedDay = SRS.today();
+          const ringCls = complete ? ' done' : '';
+          return '<div class="rv-ring' + ringCls + (firstTime ? ' just-done' : '') + '">' +
+            ringHtml({ pct: total ? Math.round(doneToday / total * 100) : 100,
+              num: doneToday, label: '今日已复习', aria: '今日复习进度 ' + doneToday + ' / ' + total + ' 词' + (complete ? '（已做完）' : ''),
+              extra: complete ? '<span class="gr-check" aria-hidden="true">' + icon('check', 20) + '</span>' : '' }) +
+            '<div class="rv-ring-txt"><b>' + doneToday + ' / ' + total + '</b><span>' + (total === 0 ? '今天没有到期的词' : (complete ? '今天的复习都做完了' : '还剩 ' + (total - doneToday) + ' 词没复习')) + '</span></div></div>';
         })()
       + '<div class="rv-list">'+rowsHtml+'</div>'
       + '<div class="muted small" style="margin-top:14px">复习节点：学完当天起来第 +1 / +2 / +4 / +7 / +15 / +21 天，共 6 遍，走完即自动变为「已掌握」。逾期完成的词会以当天为新的起点重新排后续节点。</div>'
