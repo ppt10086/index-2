@@ -40,6 +40,10 @@
      审计实测字号 30 种、圆角 27 种、时长 36 种 —— 这次统一路由回这里，只留一处真相） */
   --fs-micro:11px; --fs-small:12.5px; --fs-caption:13.5px; --fs-body:14.5px; --fs-lead:16px; --fs-title:18px; --fs-h2:21px; --fs-h1:26px; --fs-display:30px;
   --radius-sm:10px; --radius:14px; --radius-lg:22px; --radius-full:999px;
+  /* v2.7.68：**微元素圆角**也进契约。组件级圆角早有 token（sm/默认/lg/full），
+     但小片、刻度、细条这类"微元素"一直写着 2px / 1px 的字面量（审计里表现为圆角档数悄悄涨到 13）。
+     定义 --radius-xs 把它们收回来，让"微元素圆角"只有一个来源。 */
+  --radius-xs:2px;
   --dur-1:150ms; --dur-2:220ms; --dur-3:320ms; --dur-4:520ms;
 
   --shadow:0 0 0 1px rgba(0,0,0,.05), 0 2px 6px rgba(0,0,0,.05), 0 22px 46px -22px rgba(0,0,0,.20);
@@ -122,7 +126,7 @@ html[data-theme="dark"][data-accent="violet"] {--primary:#bda0ec; --primary2:#cf
 .cad-timeline .ct-title{font-size:var(--fs-small); font-weight:700; color:var(--text); margin-bottom:14px}
 .cad-timeline .ct-title span{font-weight:400; color:var(--muted); margin-left:6px}
 .cad-timeline .ct-axis{position:relative; height:38px; margin:0 8px; overflow:hidden}
-.cad-timeline .ct-rail{position:absolute; left:0; right:0; top:9px; height:2px; background:var(--line2); border-radius:2px}
+.cad-timeline .ct-rail{position:absolute; left:0; right:0; top:9px; height:2px; background:var(--line2); border-radius:var(--radius-xs)}
 .cad-timeline .ct-node{position:absolute; top:4px; width:12px; height:12px; margin-left:-6px; border-radius:50%;
   background:var(--panel); border:2px solid var(--primary)}
 .cad-timeline .ct-node.d0{background:var(--primary)}
@@ -190,7 +194,7 @@ html[data-theme="dark"][data-accent="violet"] {--primary:#bda0ec; --primary2:#cf
   font-size:var(--fs-small); color:var(--muted); font-variant-numeric:tabular-nums}
 .mst-lab b{color:var(--accent); font-size:var(--fs-lead)}
 .mst-legend{display:inline-flex; align-items:center; gap:6px; font-size:var(--fs-micro)}
-.mst-k{width:8px; height:8px; border-radius:2px; display:inline-block; margin-left:8px}
+.mst-k{width:8px; height:8px; border-radius:var(--radius-xs); display:inline-block; margin-left:8px}
 .mst-k:first-child{margin-left:0}
 .mst-k.done{background:var(--accent)}
 .mst-k.learn{background:var(--line2)}
@@ -201,7 +205,7 @@ html[data-theme="dark"][data-accent="violet"] {--primary:#bda0ec; --primary2:#cf
 .wc-top b{color:var(--text); font-size:var(--fs-lead); font-weight:700}
 .wc-top .wc-d{color:color-mix(in srgb, var(--accent) 82%, var(--text)); font-weight:600}
 .wc-bars{display:flex; align-items:flex-end; gap:4px; height:32px; margin-top:8px; border-bottom:1px solid var(--line2); padding-bottom:2px}
-.wc-bars i{flex:1 1 0; min-width:3px; border-radius:2px 2px 0 0; background:color-mix(in srgb, var(--primary) 34%, var(--line2))}
+.wc-bars i{flex:1 1 0; min-width:3px; border-radius:var(--radius-xs) var(--radius-xs) 0 0; background:color-mix(in srgb, var(--primary) 34%, var(--line2))}
 .wc-bars i.prev{background:color-mix(in srgb, var(--line2) 70%, transparent)}
 .wc-bars i.zero{height:3px !important; background:var(--line)}
 .wc-bars i.today{background:var(--primary)}
@@ -360,7 +364,7 @@ p,li,td,th{text-wrap:pretty}
 /* ⚠️ 必须给**明确宽度**：.auth-card 是居中 flex，块级子元素会被收缩到内容宽，
    而这一块的内容全是绝对定位 → 宽度会是 0，刻度位置算出来就是 NaN（探针第一次就量到了）。 */
 .auth-mark{position:relative; height:26px; width:min(280px, 84%); margin:2px auto 6px}
-.auth-mark .am-rail{position:absolute; left:0; right:0; top:12px; height:2px; background:var(--line2); border-radius:2px}
+.auth-mark .am-rail{position:absolute; left:0; right:0; top:12px; height:2px; background:var(--line2); border-radius:var(--radius-xs)}
 .auth-mark .am-dot{position:absolute; top:8px; width:10px; height:10px; margin-left:-5px; border-radius:50%;
   background:var(--panel); border:2px solid var(--primary); animation:ctPop .5s var(--ease) both}
 .auth-mark .am-dot.d0{background:var(--primary)}
@@ -629,7 +633,7 @@ html.side-collapsed .side-toggle{left:12px}
    （无圆角、更窄、带一条 baseline），语义差别一眼可见：上面是「已发生」，这条是「将要发生」。 */
 .tide-box{margin-top:16px; padding-top:14px; border-top:1px solid var(--line)}
 .tide{display:flex; align-items:flex-end; gap:4px; height:30px; border-bottom:1px solid var(--line2); padding-bottom:2px}
-.tide i{flex:1 1 0; min-width:2px; border-radius:1px; background:color-mix(in srgb, var(--primary) 34%, var(--line2))}
+.tide i{flex:1 1 0; min-width:2px; border-radius:var(--radius-xs); background:color-mix(in srgb, var(--primary) 34%, var(--line2))}
 .tide i.zero{background:var(--line); height:3px}
 .tide i.today{background:var(--primary)}
 .tide-lab{display:flex; justify-content:space-between; gap:12px; margin-top:6px; font-size:var(--fs-micro); color:var(--muted); font-variant-numeric:tabular-nums}
@@ -1231,10 +1235,19 @@ li,td,th{text-wrap:normal}
 .fc-word-wrap .fc-word{max-width:100%}
 .fc-word-wrap .fc-speak{position:absolute; left:calc(100% + 6px); top:50%; transform:translateY(-50%)}
 .fc-speak{width:var(--fc-speak); height:var(--fc-speak); border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
-  color:var(--primary); background:var(--primary-soft); border:1px solid transparent;
+  color:var(--primary); background:var(--primary-soft); border:1px solid transparent; position:relative;
   transition:background-color var(--dur) var(--ease), scale var(--dur) var(--ease)}
 .fc-speak:hover{background:var(--primary); color:var(--btn-fg)}
 .fc-speak:active{scale:.94}
+/* v2.7.68 新动效：发音按钮的一次性脉冲（声音之外的视觉反馈）。
+   注意：上面那条 .fc-speak 规则**必须保持完整** —— 我第一版把这段插进了规则中间，
+   等于提前用 } 截断了它，后面的 color/background 会掉到新规则上（探针/截图才能发现）。 */
+.fc-speak.pulse{animation:speakTap .6s var(--ease) both}
+.fc-speak.pulse::after{content:''; position:absolute; inset:0; border-radius:50%;
+  border:2px solid color-mix(in srgb, var(--primary) 70%, transparent); animation:speakPulse .6s var(--ease) both; pointer-events:none}
+@keyframes speakPulse{from{opacity:.9; transform:scale(1)} to{opacity:0; transform:scale(1.65)}}
+@keyframes speakTap{0%{transform:scale(1)} 35%{transform:scale(.92)} 100%{transform:scale(1)}}
+@media (prefers-reduced-motion: reduce){ .fc-speak.pulse, .fc-speak.pulse::after{animation:none} }
 
 /* 数学角标与路线图 */
 .soon-badge{display:inline-flex; align-items:center; margin-left:8px; padding:1px 8px; border-radius:var(--radius-full);
@@ -1448,7 +1461,7 @@ html.sl-has-session #view-auth{display:none}
 .rv-day i{font-style:normal; font-size:var(--fs-micro); font-weight:600; color:var(--muted)}
 /* v2.7.42：行内 6 格节奏标记（复习清单专用 —— 这一行的主信息就是「第几遍」） */
 .rv-ticks{display:inline-flex; align-items:center; gap:2px; margin-right:8px; vertical-align:-1px}
-.rv-tick{width:6px; height:6px; border-radius:2px; background:var(--line2)}
+.rv-tick{width:6px; height:6px; border-radius:var(--radius-xs); background:var(--line2)}
 .rv-tick.on{background:var(--primary)}
 /* v2.7.45：详情弹层里的节奏行（复用上面同一套 .rv-tick，不另起实现） */
 .wd-cad{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:10px 0 2px;
@@ -2315,7 +2328,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.67</span>
+            <span hidden id="set-version">2.7.68</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5232,7 +5245,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.67', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.68', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5261,7 +5274,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.67', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.68', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -6903,6 +6916,18 @@ const AppStudy = {
     const s = this.state;
     if(!s || !s.deck[s.idx]) return;
     speakWord(s.deck[s.idx].w);
+    /* v2.7.68 新动效：发音按钮的**一次性脉冲**反馈。
+       原来点发音（或按快捷键 ·）只出声、没有任何视觉反馈 —— 静音/弱网时尤其像"没反应"。
+       重新触发方式：移除类 → 强制回流 → 加回类，这样连点也能每次都重播。 */
+    try{
+      const btn = document.querySelector('.fc-speak.pulse') || document.querySelector('.fc-speak');
+      if(btn){
+        btn.classList.remove('pulse');
+        void btn.offsetWidth;
+        btn.classList.add('pulse');
+        setTimeout(() => { try{ btn.classList.remove('pulse'); }catch(e){} }, 620);
+      }
+    }catch(e){}
   },
   bindKeys(){
     AppUI._keyHandler = e => {
@@ -7634,6 +7659,18 @@ const AppReview = {
     const s = this.state;
     if(!s || !s.deck[s.idx]) return;
     speakWord(s.deck[s.idx].w);
+    /* v2.7.68 新动效：发音按钮的**一次性脉冲**反馈。
+       原来点发音（或按快捷键 ·）只出声、没有任何视觉反馈 —— 静音/弱网时尤其像"没反应"。
+       重新触发方式：移除类 → 强制回流 → 加回类，这样连点也能每次都重播。 */
+    try{
+      const btn = document.querySelector('.fc-speak.pulse') || document.querySelector('.fc-speak');
+      if(btn){
+        btn.classList.remove('pulse');
+        void btn.offsetWidth;
+        btn.classList.add('pulse');
+        setTimeout(() => { try{ btn.classList.remove('pulse'); }catch(e){} }, 620);
+      }
+    }catch(e){}
   },
   /* 复习一遍记一遍：计划按时间推进，认得/不认得都不改变节点安排 */
   mark(level){
