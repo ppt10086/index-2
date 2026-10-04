@@ -650,6 +650,12 @@ html.side-collapsed .side-toggle{left:12px}
    它是这一屏唯一的「大胆处」，所以其余元素保持安静（小字、中性灰）。 */
 .srs-strip{display:flex; align-items:center; gap:0; margin:0 0 16px; min-height:14px; line-height:1; color:var(--muted); font-size:var(--fs-micro)}
 .srs-dot{display:block; width:6px; height:6px; border-radius:50%; background:transparent; box-shadow:inset 0 0 0 1.5px var(--line2); flex:none}
+/* v2.7.84：节奏点变成真按钮（可 hover/聚焦/点击读出"第 N 轮 · 第 X 天"）——
+   去掉按钮默认外观，保留原来的点状视觉与间距。 */
+button.srs-dot{appearance:none; border:0; padding:0; margin:0; cursor:pointer}
+button.srs-dot:hover{box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent)}
+button.srs-dot:focus-visible{outline:2px solid color-mix(in srgb, var(--primary) 60%, transparent); outline-offset:2px}
+.srs-due.say{color:var(--primary)}
 .srs-dot.done{background:color-mix(in srgb, var(--primary) 55%, var(--line2)); box-shadow:none}
 .srs-dot.now{width:9px; height:9px; background:var(--primary); box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent)}
 .srs-txt{margin-left:12px; letter-spacing:.02em; font-variant-numeric:tabular-nums}
@@ -2421,7 +2427,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.83</span>
+            <span hidden id="set-version">2.7.84</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5338,7 +5344,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.83', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.84', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5367,7 +5373,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.83', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.84', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7536,8 +7542,29 @@ function fillPh(e){
      这是本轮唯一一处「大胆」的地方，其余保持安静；
    · 右侧一句话给出下一次复习时间（这才是用户真正想知道的事）。
    `probe-rhythm.mjs` 会断言：6 个刻度、间距单调变宽、当前刻度位置 = 轮次、两侧文案与实际排期一致。 */
-function srsStripHtml(c){
-  const NODES = SRS.NODES, ROUNDS = SRS.ROUNDS;
+/* v2.7.84：把鼠标/焦点所在的节奏点读出来（"第 4 轮 · 学完后第 7 天"），离开后**回到原来的文案**。
+   ⚠️ 这里踩过一次：原来用 `if(base !== '')` 判空 → 当原文案本来就为空（新词没有到期日）时，
+   复位被跳过，文案会**一直停在提示上**（探针抓到的就是这个）。现在用「有没有记过 base」来判定，
+   记过就无条件还原（哪怕还原成空串）。 */
+function srsSay(btn){
+  try{
+    const el = document.getElementById('srs-say');
+    if(!el || !btn) return;
+    if(el.getAttribute('data-base') === null) el.setAttribute('data-base', el.textContent || '');
+    el.textContent = '第 ' + btn.getAttribute('data-round') + ' 轮 · 学完后第 ' + btn.getAttribute('data-days') + ' 天';
+    el.classList.add('say');
+  }catch(e){}
+}
+function srsSayEnd(){
+  try{
+    const el = document.getElementById('srs-say');
+    if(!el) return;
+    const base = el.getAttribute('data-base');
+    if(base !== null) el.textContent = base;      // 记过就还原（可能是空串）
+    el.classList.remove('say');
+  }catch(e){}
+}
+function srsStripHtml(c){  const NODES = SRS.NODES, ROUNDS = SRS.ROUNDS;
   const n = c && c.n ? Math.min(c.n, ROUNDS) : 0;            // 已完成的轮数
   const cur = Math.min(n + 1, ROUNDS);                        // 正在进行的是第几轮
   const done = (c && c.s === 'known' && n >= ROUNDS);
@@ -7552,16 +7579,24 @@ function srsStripHtml(c){
   }
   /* 新词（没有 d0）右侧留空：上面那枚阶段标签已经写了「新词」，
      同一行里再写一遍就是重复信息（视觉复核指出过这一点）。 */
+  /* v2.7.84 可见新增：把这一条从"能看形状"变成"能问"。
+     原来 6 个点只显示"到第几轮了"，间距随天数变化但**没有刻度含义** ——
+     用户看不出"第 4 个点其实是第 8 天"。现在每个点都是真 <button>：
+     悬停或点一下，右侧说明就写出「第 4 轮 · 学完后第 8 天」。键盘可达。
+     a11y：容器由 role="img"（叶子角色，不该含可交互元素）改为 role="group"。 */
   let dots = '';
   for(let i = 0; i < ROUNDS; i++){
     const gap = i === 0 ? 0 : (NODES[i] - NODES[i - 1]);      // 与上一轮之间的天数
     const ml = i === 0 ? 0 : Math.min(26, 3 + gap * 2);       // 1 天≈5px、8 天≈19px（上限 26px）
     const cls = i < n ? 'done' : (i === cur - 1 ? 'now' : (done ? 'done' : 'todo'));
-    dots += '<i class="srs-dot '+cls+'" style="margin-left:'+ml+'px"></i>';
+    dots += '<button type="button" class="srs-dot '+cls+'" style="margin-left:'+ml+'px" data-round="'+(i + 1)+'" data-days="'+NODES[i]+'"'
+      + ' title="第 '+(i + 1)+' 轮 · 学完后第 '+NODES[i]+' 天"'
+      + ' aria-label="第 '+(i + 1)+' 轮复习，学完后第 '+NODES[i]+' 天"'
+      + ' onmouseenter="srsSay(this)" onfocus="srsSay(this)" onclick="srsSay(this)"></button>';
   }
-  return '<div class="srs-strip" role="img" aria-label="记忆节奏：第 '+cur+' / '+ROUNDS+' 轮，'+dueTxt+'">' +
+  return '<div class="srs-strip" role="group" aria-label="记忆节奏：第 '+cur+' / '+ROUNDS+' 轮，'+dueTxt+'">' +
     dots + '<span class="srs-txt">'+(done ? '已掌握' : '第 '+cur+' / '+ROUNDS+' 轮')+'</span>' +
-    '<span class="srs-due">'+esc(dueTxt)+'</span></div>';
+    '<span class="srs-due" id="srs-say">'+esc(dueTxt)+'</span></div>';
 }
 /* ===== v2.7.24 复习潮汐：把节奏母题从「一个词」抬到「整个计划」 =====
    学习卡上的节奏带回答「这个词在第几轮」，概览上这条回答「未来两周的量怎么分布」——
