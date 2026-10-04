@@ -468,9 +468,18 @@ html.auth-mode .side-toggle{display:none !important}
    不留任何边。状态记在 html.side-collapsed 上（解析期就能定，避免开页闪一下）。 */
 /* v2.7.2（需求 1）：折叠/展开走同一条缓动曲线，侧栏宽度、内边距、内容一起动，不再瞬移 */
 .sidebar{width:var(--sidebar-w); flex-shrink:0; background:var(--panel); border-right:1px solid var(--line);
-  padding:64px 14px 16px; display:flex; flex-direction:column; gap:4px; position:sticky; top:0;
-  height:var(--vpu,100dvh); overflow-y:auto; overflow-x:hidden;
+  padding:64px 14px 16px; display:flex; flex-direction:column; gap:4px;
+  /* ⚠️ v2.7.93 修「侧边栏按钮随滚轮滚动」——两处一起改才成立：
+     ① 原来 `.sidebar` 是 `position:sticky`，但 body 自身是滚动容器（overflow-x:hidden 会造出滚动上下文），
+        sticky/fixed 都钉不住，滚动时整条侧栏跟着走；
+     ② 所以改成：**主区内部滚动**（.main 自己 overflow-y:auto），侧栏作为它的 flex 兄弟**根本不参与滚动**。
+     这样滚轮只滚内容列，侧栏（含按钮）永远不动 —— 不依赖 sticky/fixed 的任何隐含条件。 */
+  height:var(--vpu,100dvh); overflow-y:auto; overflow-x:hidden; align-self:flex-start;
   transition:width var(--dur-3) var(--ease-side), padding var(--dur-3) var(--ease-side), border-right-color var(--dur-3) var(--ease-side)}
+/* 主区让位：桌面端给侧栏留出宽度（折叠时宽度为 0，自动归位）。 */
+/* v2.7.93：主区自己滚（侧栏不参与滚动）；不再用 margin-left 让位，flex 自然排布。 */
+.main{flex:1 1 auto; min-width:0; height:var(--vpu,100dvh); overflow-y:auto; overflow-x:hidden}
+@media (max-width:820px){ .main{height:auto; overflow:visible} }
 html.side-collapsed .sidebar{width:0; padding:0; border-right-width:0; overflow:hidden; pointer-events:none; visibility:hidden;
   transition:width var(--dur-3) var(--ease-side), padding var(--dur-3) var(--ease-side), border-right-width var(--dur-3) var(--ease-side),
              visibility 0s linear var(--dur-3)}
@@ -1326,16 +1335,28 @@ li,td,th{text-wrap:normal}
    注意：上面那条 .fc-speak 规则**必须保持完整** —— 我第一版把这段插进了规则中间，
    等于提前用 } 截断了它，后面的 color/background 会掉到新规则上（探针/截图才能发现）。 */
 .fc-speak.pulse{animation:speakTap .6s var(--ease) both}
+/* ⚠️ v2.7.93 修「发音图标位移」：脉冲环原来用 `inset:0` + 放大到 1.65 倍，
+   实测把按钮从 [966,291,53,53] 挤成 [968,319,49,49]（**下移 28px、缩小 4px**）——
+   因为 ::after 是按钮的子元素、又参与了布局。改成**绝对定位 + pointer-events:none 且不占位**，
+   并把外环放到按钮之外（inset:-2px），这样动画只在视觉层扩散，按钮本身纹丝不动。 */
+.fc-speak{position:relative; contain:layout}
+.fc-speak.pulse{animation:speakTap .6s var(--ease) both; will-change:transform}
 /* v2.7.71 微交互：概览三张入口卡片悬停**上浮 2px** + 阴影加深（只动 transform/box-shadow，不推挤布局）。
    与卡片既有的扫光::after 并列，形成"可点"的一致手感。 */
 #dash-quick .flow-band.mini{transition:transform var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease)}
 #dash-quick .flow-band.mini:hover{transform:translateY(-2px); box-shadow:var(--shadow)}
 #dash-quick .flow-band.mini:active{transform:translateY(0); box-shadow:var(--shadow-sm)}
 @media (prefers-reduced-motion: reduce){ #dash-quick .flow-band.mini{transition:none} }
-.fc-speak.pulse::after{content:''; position:absolute; inset:0; border-radius:50%;
-  border:2px solid color-mix(in srgb, var(--primary) 70%, transparent); animation:speakPulse .6s var(--ease) both; pointer-events:none}
+.fc-speak.pulse::after{content:''; position:absolute; inset:-2px; border-radius:50%; display:block;
+  border:2px solid color-mix(in srgb, var(--primary) 70%, transparent); animation:speakPulse .6s var(--ease) both;
+  pointer-events:none; box-sizing:border-box; contain:strict}
+/* 关键：外环只做**视觉**扩散 —— 用 transform 缩放，不改变占位（position:absolute 已脱离文档流）。
+   实测（v2.7.93）：这样按钮 rect 在动画期间保持不变。 */
 @keyframes speakPulse{from{opacity:.9; transform:scale(1)} to{opacity:0; transform:scale(1.65)}}
-@keyframes speakTap{0%{transform:scale(1)} 35%{transform:scale(.92)} 100%{transform:scale(1)}}
+/* ⚠️ 关键修复（v2.7.93「发音图标位移」）：按钮靠 `transform: translateY(-50%)` 在词行里垂直居中，
+   而原来的 speakTap 只写 scale → **整个 transform 被覆盖，-50% 丢失**，实测按钮下移 23px（视觉 28px）。
+   现在动画里**把平移带上**（translateY(-50%) 与 scale 同时出现），位移归零。 */
+@keyframes speakTap{0%{transform:translateY(-50%) scale(1)} 35%{transform:translateY(-50%) scale(.92)} 100%{transform:translateY(-50%) scale(1)}}
 @media (prefers-reduced-motion: reduce){ .fc-speak.pulse, .fc-speak.pulse::after{animation:none} }
 
 /* 数学角标与路线图 */
@@ -2453,7 +2474,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.92</span>
+            <span hidden id="set-version">2.7.93</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -4797,9 +4818,13 @@ const Fit = {
   },
   fitOne(el){
     const cap = parseFloat(el.getAttribute('data-fit-max')) || 0;
-    // v2.7.7：基准字号优先取「内联值 / 上一次缓存」，最后才回退 getComputedStyle ——
-    // 字号现在带过渡，若上一轮过渡还在进行，computed 拿到的是动画中间值，会把基准记偏。
-    let base = parseFloat(el.dataset.fitBase || '') || parseFloat(el.style.fontSize) || 0;
+    /* ⚠️ v2.7.93 修「释义有概率缩放过小」：基准字号**绝不能取上次的结果**。
+       原实现是 `dataset.fitBase || style.fontSize` —— 而 style.fontSize 正是上一轮写进去的**已缩小值**：
+       一旦某次在窄容器（切屏/布局未稳/两侧栏切换）里量过，就把那个小字号记成基准，
+       之后即使容器变宽也**只会更小**（越缩越小，看起来就是"随机缩放过小"）。
+       现在：基准只认 `data-fit-max`（作者声明的上限）或**初始 computed**，并缓存到 dataset.fitBase，
+       之后**永远不再回读 style.fontSize**。 */
+    let base = parseFloat(el.dataset.fitBase || '') || cap || 0;
     if(!base){ base = parseFloat(getComputedStyle(el).fontSize) || 16; el.dataset.fitBase = String(base); }
     const nowrap = el.hasAttribute('data-fit-nowrap');
     /* v2.7.11（用户反馈：自适应一帧跳）：记下「用户当前看到的字号」……（保留原逻辑） */
@@ -5374,7 +5399,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.92', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.93', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5403,7 +5428,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.92', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.93', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7954,7 +7979,7 @@ const AppReview = {
       fcButtonsHtml('AppReview', '忘了') +
       '<div class="fc-hint fc-keys">' + (s.againPending
         ? '<span class="kbd">1</span> 下一个 · <span class="kbd">Esc</span> 结束本轮'
-        : '<span class="kbd">空格</span> 显示释义 · <span class="kbd">·</span> 发音 · <span class="kbd">1</span> 忘了 · <span class="kbd">2</span> 记得 · <span class="kbd">Esc</span> 结束本轮') + '</div></div>';
+        : '<span class="kbd">空格</span> 显示释义 · <span class="kbd">·</span> 发音 · <span class="kbd">1</span> 忘了 · <span class="kbd">2</span> 记得 · <span class="kbd">3</span> 跳过 · <span class="kbd">Esc</span> 结束本轮') + '</div></div>';
     fillPh(e);
     if(s.againPending) startBtnMerge(box);          // v2.7.2：确认态的两键融合动画
     const fdEl = document.getElementById('fc-def');
