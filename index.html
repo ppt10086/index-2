@@ -1551,6 +1551,9 @@ html.sl-has-session #view-auth{display:none}
 /* v2.7.62：折叠后的多天空缺行稍微抬起一点存在感（它代表的不再是"某一天"，而是一段） */
 .rv-gap-multi{opacity:.72}
 .rv-gap-multi .rv-day{color:var(--text)}
+/* v2.7.79：缺口行整行可点（可点暗示）；按钮仍是键盘/读屏入口 */
+.rv-row.row-clickable{cursor:pointer}
+.rv-row.row-clickable:hover{background:var(--panel2)}
 /* v2.7.65：折叠的空缺段点开后，每天一枚小片（日期 + 当天已复习数） */
 .rv-days{align-items:center}
 .rv-days .rv-daychip{display:inline-flex; align-items:baseline; gap:6px}
@@ -2395,7 +2398,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.78</span>
+            <span hidden id="set-version">2.7.79</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5312,7 +5315,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.78', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.79', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5341,7 +5344,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.78', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.79', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7613,11 +7616,11 @@ const AppReview = {
             x.span.map(day => '<span class="rv-w rv-daychip">' + SRS.mind(day) +
               '<i>' + (rev[day] ? ('已复习 ' + rev[day]) : '未复习') + '</i></span>').join('') +
           '</div>';
-        /* v2.7.76：整行可点 —— 但**不能**在这里挂行内 onclick：
-           复习列表已有委托点击处理，两处一起会**双重切换**（展开又立刻收起，实测就是这样）。
-           所以只打标记（row-clickable + data-gapday），点击交给那一个委托处理器。 */
+        /* v2.7.79：整行可点（扩大可点面积）—— 这回是**真的可用**，两条教训都记在这里：
+           ① 之前两次"点不动"是**测试假红**：合成点击打在脱离文档的旧节点上（详见 07-KNOWN-ISSUES #59）；
+           ② 按钮必须 stopPropagation，否则与整行 onclick 形成**双切换**（展开又立刻收起）。 */
         return '<div class="rv-row rv-gap'+(multi ? ' rv-gap-multi row-clickable' : '')+(openGap ? ' open' : '')+'" title="'+x.span.join('、')+'"'
-          + (multi ? ' data-gapday="'+from+'"' : '') + '>'
+          + (multi ? ' onclick="AppReview.toggleWords(\''+from+'\')"' : '') + '>'
           + '<span class="rv-day">'+label+(multi ? '<i>连续 '+n+' 天</i>' : '')+'</span>'
           + '<span class="rv-desc">空缺 · 这'+(multi ? '几天' : '天')+'没有复习内容</span>'
           + '<span class="rv-n">—</span><span class="rv-tag muted">'+(x.done ? ('已复习 '+x.done+' 词') : '未复习')+'</span>'
