@@ -1263,6 +1263,12 @@ li,td,th{text-wrap:normal}
    注意：上面那条 .fc-speak 规则**必须保持完整** —— 我第一版把这段插进了规则中间，
    等于提前用 } 截断了它，后面的 color/background 会掉到新规则上（探针/截图才能发现）。 */
 .fc-speak.pulse{animation:speakTap .6s var(--ease) both}
+/* v2.7.71 微交互：概览三张入口卡片悬停**上浮 2px** + 阴影加深（只动 transform/box-shadow，不推挤布局）。
+   与卡片既有的扫光::after 并列，形成"可点"的一致手感。 */
+#dash-quick .flow-band.mini{transition:transform var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease)}
+#dash-quick .flow-band.mini:hover{transform:translateY(-2px); box-shadow:var(--shadow)}
+#dash-quick .flow-band.mini:active{transform:translateY(0); box-shadow:var(--shadow-sm)}
+@media (prefers-reduced-motion: reduce){ #dash-quick .flow-band.mini{transition:none} }
 .fc-speak.pulse::after{content:''; position:absolute; inset:0; border-radius:50%;
   border:2px solid color-mix(in srgb, var(--primary) 70%, transparent); animation:speakPulse .6s var(--ease) both; pointer-events:none}
 @keyframes speakPulse{from{opacity:.9; transform:scale(1)} to{opacity:0; transform:scale(1.65)}}
@@ -2354,7 +2360,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.70</span>
+            <span hidden id="set-version">2.7.71</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5271,7 +5277,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.70', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.71', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5300,7 +5306,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.70', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.71', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -6841,6 +6847,9 @@ const AppStudy = {
   },
   reveal(){
     if(!this.state) return;
+    /* v2.7.71：这里**不加**按压缩放动效 —— 按下后立刻 render()，按钮会被替换掉，
+       脉冲根本来不及被看见（分析过，属于"看起来该加、实际不可见"）。
+       手感由既有的 .btn:active{scale:.96} 与揭示动画（v2.7.40 分层落位）承担。 */
     this.state.revealed = true;
     this.render();
   },
