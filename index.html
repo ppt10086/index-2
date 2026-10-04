@@ -1537,6 +1537,13 @@ html.sl-has-session #view-auth{display:none}
 .rv-row:last-child{border-bottom:0}
 .rv-row:nth-child(odd){background:var(--panel2)}
 .rv-day{min-width:88px; font-weight:700; display:flex; flex-direction:column; line-height:1.3}
+/* v2.7.85 可见新增：复习行最前面的**相对时间**小字（今天 / 明天 / N 天后 / 逾期 N 天）——
+   原来只有绝对日期，想知道"到底是今天还是几天后"得自己算。 */
+.rv-rel{flex:0 0 auto; min-width:44px; font-size:var(--fs-micro); font-variant-numeric:tabular-nums;
+  color:var(--muted); text-align:center; padding:2px 6px; border-radius:var(--radius-xs); background:var(--panel2)}
+.rv-rel.now{color:var(--primary); background:var(--primary-soft); font-weight:700}
+.rv-rel.past{color:var(--accent); background:var(--accent-soft)}
+@media (max-width:640px){ .rv-rel{min-width:38px; padding:2px 4px} }
 .rv-day i{font-style:normal; font-size:var(--fs-micro); font-weight:600; color:var(--muted)}
 /* v2.7.42：行内 6 格节奏标记（复习清单专用 —— 这一行的主信息就是「第几遍」） */
 .rv-ticks{display:inline-flex; align-items:center; gap:2px; margin-right:8px; vertical-align:-1px}
@@ -2427,7 +2434,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.84</span>
+            <span hidden id="set-version">2.7.85</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5344,7 +5351,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.84', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.85', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5373,7 +5380,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.84', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.85', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7756,6 +7763,9 @@ const AppReview = {
       const late = x.day < today;
       const dRel = SRS.dayDiff(x.day, today);
       const rel = dRel === 0 ? '今天' : (dRel === 1 ? '昨天' : dRel + ' 天前');
+      /* v2.7.85：相对**未来**的说法（这一批哪天到期）。逾期行（late）已并入今天，所以是「今天」。 */
+      const relDays = late ? 0 : SRS.dayDiff(today, x.day);
+      const relText = relDays === 0 ? '今天' : (relDays === 1 ? '明天' : (relDays < 0 ? '逾期 ' + (-relDays) + ' 天' : relDays + ' 天后'));
       /* v2.7.54 可见新增：每批可以展开看「具体是哪些词」。
          原来每行只有「N 词」这个数字 —— 想知道是哪几个词就得点进去开始复习，看不到就先背上了。
          展开是**就地**的（不跳页、不进弹层），并且只把这一批的词列出来（默认 12 个，多的给一句"还有 X 个"）。 */
@@ -7775,7 +7785,13 @@ const AppReview = {
           }).join('') +
           (words.length > shown.length ? '<span class="rv-more">还有 '+(words.length - shown.length)+' 个</span>' : '') +
         '</div>';
-      return '<div class="rv-row'+(open ? ' open' : '')+'"><span class="rv-day">'+SRS.mind(x.day)+'<i>'+rel+'</i></span>'
+      /* v2.7.85 可见新增：每行最前面加一枚**相对时间**小字（「今天 / 明天 / 3 天后 / 逾期 2 天」）。
+         原来只有绝对日期（`.rv-day` 写 "10月4日"）+ 一个"今日到期/顺延"标签 ——
+         想知道"到底是今天还是几天后"得自己算。这一枚把它直接说出来，且与概览潮汐的时间口径一致。
+         只做展示：逾期行（late）本身已并入今天，所以它的相对时间就是「今天」。 */
+      return '<div class="rv-row'+(open ? ' open' : '')+'">'
+        + '<span class="rv-rel'+(late || relDays === 0 ? ' now' : (relDays < 0 ? ' past' : ''))+'">'+relText+'</span>'
+        + '<span class="rv-day">'+SRS.mind(x.day)+'<i>'+rel+'</i></span>'
         + '<span class="rv-desc">'+roundTicks(round)+'第 '+round+' 遍复习'+(late ? ' · 逾期顺延，并入今天' : '')+'</span>'
         + '<span class="rv-n">'+wc+' 词</span>'
         + '<span class="rv-tag '+(late ? 'tag-orange' : 'tag-green')+'">'+(late ? '顺延' : '今日到期')+'</span>'
