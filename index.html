@@ -1623,6 +1623,10 @@ html.sl-has-session #view-auth{display:none}
 .rv-toggle.rv-do{border-color:color-mix(in srgb, var(--primary) 45%, var(--line2)); color:var(--primary)}
 .rv-toggle.rv-do:hover{background:var(--primary); color:var(--btn-fg); border-color:var(--primary)}
 .rv-row.open{background:var(--panel)}
+/* v2.7.98 可见新增：从详情弹层跳过来时，目标批次行闪一下（一次性高亮，指明就是这一行） */
+.rv-row.flash{animation:rvFlash 1.5s var(--ease) 1; background:color-mix(in srgb, var(--primary) 12%, transparent)}
+@keyframes rvFlash{0%{background:color-mix(in srgb, var(--primary) 26%, transparent)} 100%{background:color-mix(in srgb, var(--primary) 12%, transparent)}}
+@media (prefers-reduced-motion: reduce){ .rv-row.flash{animation:none} }
 .rv-words{flex:1 1 100%; display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:8px;
   padding-left:84px; animation:fxRise var(--dur-2) var(--ease) both}
 .rv-words .rv-w{font-size:var(--fs-small); color:var(--text); background:var(--panel2); border:1px solid var(--line);
@@ -2481,7 +2485,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.97</span>
+            <span hidden id="set-version">2.7.98</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5406,7 +5410,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.97', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.7.98', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5435,7 +5439,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.97', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.7.98', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -8465,9 +8469,27 @@ const AppBrowse = {
     }
     await chain;
   },
+  /* v2.7.98 可见新增：从某个词的详情跳到**它所在的那一批复习**。
+     做法：关掉弹层 → 切到复习页 → 把那一批行滚进视野并高亮一下（不自动开始复习，避免"跳过去就被拉走"）。 */
+  gotoBatch(day){
+    try{
+      AppUI.closeModal();
+      AppUI.go('english');
+      AppUI.englishTab('review');
+      setTimeout(() => {
+        try{
+          const rows = [...document.querySelectorAll('#tab-review .rv-row:not(.rv-gap)')];
+          const row = rows.find(r => (r.querySelector('.rv-day') || {}).textContent && (r.querySelector('.rv-day').textContent.includes(SRS.mind(day))));
+          if(!row) return;
+          row.scrollIntoView({ behavior:'smooth', block:'center' });
+          row.classList.add('flash');
+          setTimeout(() => { try{ row.classList.remove('flash'); }catch(e){} }, 1600);
+        }catch(e){}
+      }, 900);
+    }catch(e){}
+  },
   detail(w){
-    w = decodeURIComponent(w);
-    const r = AppFilter.result;
+    w = decodeURIComponent(w);    const r = AppFilter.result;
     if(!r) return;
     const entries = (WL.cache.get(r.targetId) || {}).entries || [];
     const e = entries.find(x => x.w === w) || { w, ph:'', def:'', phrases:[] };
@@ -8493,6 +8515,17 @@ const AppBrowse = {
       (Array.isArray(e.def) && e.def.length ? '<div class="sec">释义</div><ul>'+e.def.map(([p,v]) => '<li>'+(p?'<b>'+esc(p)+'.</b> ':'')+esc(v)+'</li>').join('')+'</ul>' : (typeof e.def === 'string' && e.def ? '<div class="sec">释义</div><div class="muted">'+esc(e.def)+'</div>' : '<div class="sec">释义</div><div class="muted" id="wd-def">词库未收录释义，正在获取在线翻译…</div>')) +
       (Array.isArray(e.phrases) && e.phrases.length ? '<div class="sec">词组搭配</div><ul>'+e.phrases.slice(0,8).map(([p,v]) => '<li><b>'+esc(p)+'</b>'+(v?' · '+esc(v):'')+'</li>').join('')+'</ul>' : '') +
       '<div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap">' +
+      /* v2.7.98 可见新增：从「这个词」跳到「它所在的那一批」。
+         此前详情弹层只讲这个词自己（状态/节奏/释义），而"我该什么时候复习它"要去复习页翻 ——
+         这里直接给出入口：到期了就「去复习这一批」，没到期就说明"还不用管，X 天后"。
+         按钮只在**确实到期**时出现（不给不存在的动作）。 */
+      (() => {
+        const due = st && !SRS.isMastered(st) && SRS.isDue(st);
+        if(!due) return '';
+        const day = SRS.dueDay(st);
+        return '<button class="btn btn-sm btn-primary" type="button" onclick="AppBrowse.gotoBatch(\'' + esc(day) + '\')"'
+          + ' title="跳到复习清单里这一批">' + icon('refresh') + ' 去复习这一批（' + SRS.mind(day) + '）</button>';
+      })() +
       '<a class="btn btn-sm" href="'+link+'" target="_blank" rel="noopener">'+icon('external')+' 在有道词典查看</a>' +
       '<button class="btn btn-sm" onclick="AppUI.closeModal()">关闭</button></div></div>'
     );
