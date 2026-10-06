@@ -1616,6 +1616,18 @@ html.sl-has-session #view-auth{display:none}
 .cad-node.on{border-color:var(--primary); background:var(--primary-soft); color:var(--primary)}
 .cad-node:focus-visible{outline:2px solid color-mix(in srgb, var(--primary) 55%, transparent); outline-offset:2px}
 .cad-note{margin-top:6px; font-size:var(--fs-micro); color:var(--muted); font-variant-numeric:tabular-nums}
+/* v2.8.1 可见新增：详情弹层里的六轮日程（哪一天做第几遍） */
+.cad-sched{list-style:none; margin:6px 0 0; padding:0; display:flex; flex-direction:column; gap:2px}
+.cad-sched .cs-i{display:flex; align-items:center; gap:var(--gap-between); padding:4px 8px; border-radius:var(--radius-xs); font-size:var(--fs-micro); color:var(--muted); font-variant-numeric:tabular-nums}
+.cad-sched .cs-r{width:16px; text-align:center; font-weight:700; color:var(--text)}
+.cad-sched .cs-d{flex:0 0 auto; min-width:64px}
+.cad-sched .cs-w{margin-left:auto}
+.cad-sched .cs-i.done{background:color-mix(in srgb, var(--primary) 8%, transparent)}
+.cad-sched .cs-i.done .cs-w{color:var(--primary)}
+.cad-sched .cs-i.today{background:var(--primary-soft); color:var(--text)}
+.cad-sched .cs-i.today .cs-w{color:var(--primary); font-weight:700}
+.cad-sched .cs-i.missed .cs-w{color:var(--accent)}
+.cs-sub{margin-left:6px; font-weight:400; color:var(--muted)}
 @media (prefers-reduced-motion: reduce){ .cad-node{transition:none} }
 .rv-desc{flex:1; min-width:120px; color:var(--text)}
 .rv-n{min-width:56px; text-align:right; font-weight:700; color:var(--primary)}
@@ -2491,7 +2503,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.8.0</span>
+            <span hidden id="set-version">2.8.1</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5416,7 +5428,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.8.0', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.8.1', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5445,7 +5457,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.8.0', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.8.1', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7170,6 +7182,27 @@ function roundTicks(n){
    （第 1 / 2 / 4 / 7 / 15 / 21 天各复习一遍）在**单个词**的详情里反而看不到。
    这里给 6 个节点各一枚可点的小片：点一下 → 该节点高亮 + 一行说明读到「第 N 遍 · 学完后第 X 天」。
    复用 ringTicks 的 .rv-tick 视觉语言，不另起一套。 */
+/* v2.8.1 可见新增：详情弹层里的**六轮日程**（把"第几天"变成"哪一天"）。
+   全部可推算：起点 `d0` + `SRS.NODES` 就是六轮的应做日期；已完成 / 今天 / 逾期 / 未来 分别给不同样式。
+   与节奏带、六轮环、设置页时间轴**同一套数据源**（SRS.NODES），这里额外给出**具体日期**。 */
+function cadScheduleHtml(st){
+  try{
+    if(!st || !st.d0) return '';
+    const t = SRS.today(), done = (st.n || 0);
+    const rows = SRS.NODES.map((n, i) => {
+      const day = SRS.dayAdd(st.d0, n);
+      const diff = SRS.dayDiff(t, day);
+      const isDone = i < done;
+      const cls = isDone ? 'done' : (diff === 0 ? 'today' : (diff < 0 ? 'missed' : 'future'));
+      const when = isDone ? '已完成' : (diff === 0 ? '今天' : (diff === 1 ? '明天' : (diff < 0 ? ('逾期 ' + (-diff) + ' 天') : (diff + ' 天后'))));
+      return '<li class="cs-i ' + cls + '"><span class="cs-r">' + (i + 1) + '</span>'
+        + '<span class="cs-d">' + SRS.mind(day) + '</span>'
+        + '<span class="cs-w">' + when + '</span></li>';
+    }).join('');
+    return '<div class="sec">六轮日程<span class="cs-sub">从 ' + SRS.mind(st.d0) + ' 开始</span></div>'
+      + '<ul class="cad-sched">' + rows + '</ul>';
+  }catch(e){ return ''; }
+}
 function cadNodesHtml(){
   const NODES = SRS.NODES || [];
   return '<div class="cad-nodes" role="group" aria-label="六轮复习节点，可逐个查看">' +
@@ -8537,6 +8570,8 @@ const AppBrowse = {
         '</span></div>' +
       /* v2.7.80 可见新增：六轮回看（点节点看"第 N 遍是什么时候"），与结束页的环回看同一语言。 */
       cadNodesHtml() +
+      /* v2.8.1：六轮日程（具体到哪一天） */
+      cadScheduleHtml(st) +
       (Array.isArray(e.def) && e.def.length ? '<div class="sec">释义</div><ul>'+e.def.map(([p,v]) => '<li>'+(p?'<b>'+esc(p)+'.</b> ':'')+esc(v)+'</li>').join('')+'</ul>' : (typeof e.def === 'string' && e.def ? '<div class="sec">释义</div><div class="muted">'+esc(e.def)+'</div>' : '<div class="sec">释义</div><div class="muted" id="wd-def">词库未收录释义，正在获取在线翻译…</div>')) +
       (Array.isArray(e.phrases) && e.phrases.length ? '<div class="sec">词组搭配</div><ul>'+e.phrases.slice(0,8).map(([p,v]) => '<li><b>'+esc(p)+'</b>'+(v?' · '+esc(v):'')+'</li>').join('')+'</ul>' : '') +
       '<div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap">' +
