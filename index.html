@@ -875,6 +875,12 @@ button.srs-dot:focus-visible{outline:2px solid color-mix(in srgb, var(--primary)
 .wlist .op{white-space:nowrap; font-size:var(--fs-small); text-align:right}
 .wlist .op button{color:var(--primary); font-weight:600; font-size:var(--fs-small); padding:4px 6px; border-radius:var(--radius-sm)}
 .wlist .op button:hover{background:var(--primary-soft)}
+/* v2.8.0 可见新增：记录页的词可点开详情（去掉按钮默认外观，保留文字视觉 + 悬停下划线） */
+.rec-word{appearance:none; background:none; border:0; padding:0; margin:0; font:inherit; color:inherit;
+  font-weight:600; cursor:pointer; text-align:left; border-bottom:1px dashed transparent; transition:border-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease)}
+.rec-word:hover{color:var(--primary); border-bottom-color:var(--primary)}
+.rec-word:focus-visible{outline:2px solid color-mix(in srgb, var(--primary) 55%, transparent); outline-offset:2px; border-radius:var(--radius-xs)}
+@media (prefers-reduced-motion: reduce){ .rec-word{transition:none} }
 /* v2.7.69 新元素：浏览行的到期日小标记（与状态标签并排，紧凑且不与「详情」按钮抢注意力） */
 .wlist .op{display:flex; align-items:center; gap:var(--gap-between); justify-content:flex-end}
 .wlist .due-chip{margin:0; font-variant-numeric:tabular-nums; white-space:nowrap}
@@ -2485,7 +2491,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.7.99</span>
+            <span hidden id="set-version">2.8.0</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5410,7 +5416,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.7.99', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.8.0', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5439,7 +5445,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.7.99', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.8.0', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -8169,6 +8175,21 @@ const AppReview = {
 /* ================= 学习记录 ================= */
 const AppRecord = {
   scope: 'all', filter: 'all', q: '', page: 1, per: 50,
+  /* v2.8.0 可见新增：记录页打开某词的详情。
+     复用浏览页的 `AppBrowse.detail`（同一套弹层：六轮节奏、回看、去复习这一批、词组）。
+     差别只有一点：记录页是**跨词库**的，某一行可能不属于当前词表 —— 所以先把 AppFilter.result
+     临时切到该词库，弹层渲染完**立刻还原**，不污染用户当前的词表选择。 */
+  openDetail(listId, encWord){
+    try{
+      const prev = AppFilter.result;
+      const w = WL.byId(listId);
+      if(!w) return;
+      AppFilter.result = { targetId: listId, targetName: w.name || listId,
+        total: (w.entries || []).length, kept: w.entries || [], deriv: false };
+      AppBrowse.detail(encWord);
+      AppFilter.result = prev;
+    }catch(e){}
+  },
   /* v2.7.88：点上面那排统计卡 = 切换下方明细的筛选（同一个 filter 状态，两处入口共用）。 */
   setFilter(v){
     const okv = ['all', 'learning', 'known', 'due'];
@@ -8228,7 +8249,11 @@ const AppRecord = {
         : '<button class="btn btn-sm" onclick="AppRecord.mark(\''+r.listId+'\',\''+enc+'\',\'round\')">复习一遍</button>'
           + '<button class="btn btn-sm" onclick="AppRecord.mark(\''+r.listId+'\',\''+enc+'\',\'reset\')">重新开始</button>';
       const del = '<button class="btn btn-sm btn-danger" onclick="AppRecord.remove(\''+r.listId+'\',\''+enc+'\')">移出记录</button>';
-      return '<tr><td class="w" data-l="单词">'+esc(r.word)+passNote(r.c)+'</td><td class="df"'+(def?'':' data-dw="'+esc(r.word)+'"')+' data-l="释义">'+(def?esc(def):'…')+'</td><td data-l="词库 / 状态">'+listTag+' '+status+'</td><td data-l="复习进度" class="num">'+prog+'</td><td class="muted" style="font-size:12px" data-l="上次学习">'+(r.last?fmtDate(r.last):'—')+'</td><td data-l="下次复习">'+dueTxt+'</td><td class="op" data-l="操作">'+act+' '+del+'</td></tr>';
+      /* v2.8.0 可见新增：记录页的**词本身可点** → 打开同一个详情弹层（浏览页那套，含六轮节奏/回看/去复习这一批）。
+         此前记录页只讲"复习进度到了第几遍"，想看这个词的节奏与释义要另去词汇浏览搜一遍 —— 反向那条路没通。 */
+      const wordCell = '<button type="button" class="rec-word" title="查看 '+esc(r.word)+' 的详情"'
+        + ' onclick="AppRecord.openDetail(\''+r.listId+'\',\''+enc+'\')">'+esc(r.word)+'</button>';
+      return '<tr><td class="w" data-l="单词">'+wordCell+passNote(r.c)+'</td><td class="df"'+(def?'':' data-dw="'+esc(r.word)+'"')+' data-l="释义">'+(def?esc(def):'…')+'</td><td data-l="词库 / 状态">'+listTag+' '+status+'</td><td data-l="复习进度" class="num">'+prog+'</td><td class="muted" style="font-size:12px" data-l="上次学习">'+(r.last?fmtDate(r.last):'—')+'</td><td data-l="下次复习">'+dueTxt+'</td><td class="op" data-l="操作">'+act+' '+del+'</td></tr>';
     }).join('');
     const pager = '<div class="pager"><button class="btn btn-sm" onclick="AppRecord.page--;AppRecord.render()" '+(this.page<=1?'disabled':'')+'>上一页</button><span>第 '+this.page+' / '+pages+' 页 · 共 '+total+' 条</span><button class="btn btn-sm" onclick="AppRecord.page++;AppRecord.render()" '+(this.page>=pages?'disabled':'')+'>下一页</button></div>';
     box.innerHTML =
