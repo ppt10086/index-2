@@ -765,7 +765,11 @@ button.srs-dot:focus-visible{outline:2px solid color-mix(in srgb, var(--primary)
 .fc-btns .hard{background:color-mix(in srgb, var(--text) 7%, transparent); color:var(--text); border:1px solid var(--line)}
 /* v2.7.90：「跳过」是最轻的一档 —— 灰字无底，不抢「记得/不记得」的注意力 */
 .fc-btns .skip{background:transparent; color:var(--muted); border:1px solid var(--line); font-weight:600}
-.fc-btns .skip:hover{color:var(--text); border-color:var(--line2); background:var(--panel2)}.fc-btns .hard:hover{background:color-mix(in srgb, var(--text) 12%, transparent); box-shadow:0 0 0 3px var(--panel2); color:var(--text)}
+.fc-btns .skip:hover{color:var(--text); border-color:var(--line2); background:var(--panel2)}
+/* v2.8.3 可见新增：跳过时旧卡片的一次性淡出上移（240ms，发生在卡片被重建之前） */
+.study-wrap.skipping, .flashcard.skipping{animation:skOut .24s var(--ease) both; pointer-events:none}
+@keyframes skOut{from{opacity:1; transform:translateY(0)} to{opacity:0; transform:translateY(-10px)}}
+@media (prefers-reduced-motion: reduce){ .study-wrap.skipping, .flashcard.skipping{animation:none} }.fc-btns .hard:hover{background:color-mix(in srgb, var(--text) 12%, transparent); box-shadow:0 0 0 3px var(--panel2); color:var(--text)}
 .fc-btns .good{background:color-mix(in srgb, var(--yes) 10%, transparent); color:var(--yes);
   border:1px solid color-mix(in srgb, var(--yes) 32%, transparent);
   -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px)}
@@ -2503,7 +2507,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.8.2</span>
+            <span hidden id="set-version">2.8.3</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5428,7 +5432,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.8.2', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.8.3', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5457,7 +5461,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.8.2', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.8.3', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -7021,11 +7025,20 @@ const AppStudy = {
   },
   /* v2.7.90 可见新增：「跳过」——不写任何词态记录，只往前走一格；被跳过的词仍留在新词池里，下次还会出现。
      与「不记得」的区别：不记得是**判断**（会回炉/留痕），跳过是**不判断**（零副作用）。 */
+  /* v2.8.3 可见新增：「跳过」的一次性反馈 —— **在卡片被重建之前**把它淡出上移一下。
+     为什么这样做：skip() 内部要 next()→render()，卡片 DOM **必然被替换**，所以反馈不能加在卡片内部的按钮上
+     （v2.7.71 已经栽过一次：动效加在会被立刻替换的元素上 = 看不见）。
+     这里把反馈加在**即将被替换的旧卡片**上：先播放 240ms 的淡出上移，再执行前进 —— 于是它真的看得见。 */
   skip(){
     const s = this.state;
     if(!s) return;
     if(s.marks) s.marks.skip = (s.marks.skip || 0) + 1;
-    this.next();
+    const card = document.querySelector('#tab-study .study-wrap, #tab-study .flashcard, #tab-review .flashcard, #tab-review .study-wrap');
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(!card || reduce){ this.next(); return; }
+    if(card.classList.contains('skipping')){ return; }        // 连点保护：动画中不重复触发
+    card.classList.add('skipping');
+    setTimeout(() => { try{ this.next(); }catch(e){} }, 240);
   },
   mark(level){
     const s = this.state;
