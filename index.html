@@ -2503,7 +2503,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.8.1</span>
+            <span hidden id="set-version">2.8.2</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5428,7 +5428,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.8.1', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.8.2', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5457,7 +5457,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.8.1', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.8.2', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -5696,6 +5696,14 @@ const AppUI = {
   clearBandGo(){ clearBandGo(); },          // 全局函数转发（AppStudy / AppReview 也能直接调）
   /* v2.7.4：概览页的「开始学习」流带 —— 加速后把目标页提前渲染好，再整页双向平移过去。
      page：目标页；tab：可选，进入后再切到该子入口（filter / review / browse / record）。 */
+  /* v2.8.2 可见新增：带**批次定位**的流带动作 —— 先走完流带动画切到复习页，再把指定的那一批滚进视野并闪一下。
+     与 v2.7.98 的 `AppBrowse.gotoBatch` 复用同一套高亮（同一条视觉语言），只是入口在概览。 */
+  startFlowToTo(el, page, tab, day){
+    try{
+      this.startFlowTo(el, page, tab);
+      setTimeout(() => { try{ AppBrowse.gotoBatch(day); }catch(e){} }, 900);
+    }catch(e){}
+  },
   startFlowTo(el, page, tab){
     if(this._flowing) return;
     this._flowing = true;
@@ -7363,10 +7371,21 @@ function dashTodoHtml(){
       ? ('其中 ' + overdueN + ' 个是之前顺延的，先清掉最省事')
       : (todayCount ? ('做完这 ' + todayCount + ' 个就收工' + (tomorrowCount ? ' · 明天还有 ' + tomorrowCount + ' 个' : ''))
                     : '趁热过一遍，走完 6 遍自动「已掌握」');
+    /* v2.8.2 可见新增：按钮从"进复习页"升级为"**落到该做的那一批**"。
+       ⚠️ 别用"今天减一天"去近似顺延批 —— 顺延可能是 2 天前、5 天前（实测第一版传了昨天，行日期是 2 天前，定位失败）。
+       正确做法：直接取**复习清单里最早的那一批**（`SRS.batches` 的第一条非 gap 行），它就是要先做的那批。 */
+    const firstBatchDay = (() => {
+      try{
+        const rows0 = SRS.batches(tgt, entries, SRS.today()).filter(x => !x.gap);
+        return rows0.length ? rows0[0].day : SRS.today();
+      }catch(e){ return SRS.today(); }
+    })();
     return '<div class="dash-todo" role="region" aria-label="今日待办">' +
       '<span class="dt-ic" aria-hidden="true">' + icon('refresh', 18) + '</span>' +
       '<span class="dt-txt"><b>今天有 ' + due + ' 个词到期</b><i>' + tip + '</i></span>' +
-      '<button class="btn btn-primary btn-sm" type="button" onclick="AppUI.startFlowTo(this,\'english\',\'review\')">开始复习</button>' +
+      '<button class="btn btn-primary btn-sm" type="button"'
+        + ' onclick="AppUI.startFlowToTo(this,\'english\',\'review\',\'' + firstBatchDay + '\')"'
+        + ' title="进入复习页并定位到该批次">开始复习</button>' +
     '</div>';
   }catch(e){ return ''; }
 }
