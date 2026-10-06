@@ -766,6 +766,9 @@ button.srs-dot:focus-visible{outline:2px solid color-mix(in srgb, var(--primary)
 /* v2.7.90：「跳过」是最轻的一档 —— 灰字无底，不抢「记得/不记得」的注意力 */
 .fc-btns .skip{background:transparent; color:var(--muted); border:1px solid var(--line); font-weight:600}
 .fc-btns .skip:hover{color:var(--text); border-color:var(--line2); background:var(--panel2)}
+/* v2.8.4 可见新增：卡片底部的「本批还剩 N 张 · 已跳过 M 张」 */
+.fc-remain{margin-top:10px; text-align:center; font-size:var(--fs-micro); color:var(--muted); font-variant-numeric:tabular-nums}
+.fc-remain b{color:var(--text)}
 /* v2.8.3 可见新增：跳过时旧卡片的一次性淡出上移（240ms，发生在卡片被重建之前） */
 .study-wrap.skipping, .flashcard.skipping{animation:skOut .24s var(--ease) both; pointer-events:none}
 @keyframes skOut{from{opacity:1; transform:translateY(0)} to{opacity:0; transform:translateY(-10px)}}
@@ -2507,7 +2510,7 @@ html{ overflow-anchor:none }
             <div class="kv"><span class="kk">自动适配屏幕</span><span class="vv"><label class="switch"><input type="checkbox" id="set-autoscale"><span class="sl"></span></label></span></div>
             <div class="kv"><span class="kk">界面缩放</span><span class="vv" style="display:flex;align-items:center;gap:10px"><input type="range" id="set-scale" min="85" max="150" step="5" style="width:130px"><b id="set-scale-val">100%</b></span></div>
             <div class="kv"><span class="kk">外观主题</span><span class="vv"><select id="set-theme" style="width:130px"><option value="light">浅色</option><option value="dark">深色</option><option value="auto">跟随系统</option></select></span></div><div class="kv"><span class="kk">主题色</span><span class="vv" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap"><span class="acc-row" id="set-accent" role="radiogroup" aria-label="主题色"></span><span class="acc-name" id="acc-name">石墨</span></span></div><div class="acc-prev" id="acc-prev" aria-hidden="true"><span class="ap-btn">主按钮</span><span class="ap-chip on">选中态</span><span class="ap-bar"><i style="width:62%"></i></span><span class="ap-tag">标签</span><span class="ap-dot"></span></div><div class="muted" style="font-size:12.5px; line-height:1.6; margin:2px 0 12px; max-width:30em">上面就是主题色的作用范围（主按钮 / 选中态 / 进度 / 标签 / 点缀图标）；底色与文字始终保持中性灰。</div>
-            <span hidden id="set-version">2.8.3</span>
+            <span hidden id="set-version">2.8.4</span>
           </section>
           <section class="set-pane" data-pane="data" hidden>
             <div class="card-title"><span class="dot"></span>数据与备份</div>
@@ -5432,7 +5435,7 @@ const AppData = {
     const s = AppAuth.current();
     if(!s) return;
     const payload = {
-      app:'个人学习系统', version:'2.8.3', exported: new Date().toISOString(),
+      app:'个人学习系统', version:'2.8.4', exported: new Date().toISOString(),
       user: s.user, data: AppAuth.data(),
       users: Store.get('users', {})
     };
@@ -5461,7 +5464,7 @@ const AppData = {
       const s = AppAuth.current();
       if(!s) return;
       const d = AppAuth.data();
-      const snap = { app:'个人学习系统', version:'2.8.3', exported:new Date().toISOString(), user:s.user, data:d };
+      const snap = { app:'个人学习系统', version:'2.8.4', exported:new Date().toISOString(), user:s.user, data:d };
       if(IDB.db){
         IDB.put('backup:auto', snap);
       } else {
@@ -6999,6 +7002,7 @@ const AppStudy = {
       '<div class="fc-hint fc-keys">' + (s.againPending
         ? '<span class="kbd">1</span> 下一个 · <span class="kbd">Esc</span> 结束本轮'
         : '<span class="kbd">空格</span> 显示释义 · <span class="kbd">·</span> 发音 · <span class="kbd">1</span> 不记得 · <span class="kbd">2</span> 记得 · <span class="kbd">3</span> 跳过 · <span class="kbd">Esc</span> 结束本轮') + '</div>' +
+      remainLine(s) +
       '</div>';
     fillPh(e);
     if(s.againPending) startBtnMerge(box);          // v2.7.2：确认态的两键融合动画
@@ -7461,6 +7465,24 @@ function ringHtml(o){
    · total ≤ 24：一排点，已过实心（主题色）、当前描边加重、未到浅色空心；
    · total > 24：退化成一条进度条 + 「idx+1 / total」，避免点阵换行挤压卡片。
    放在卡片外壳（fc-body 之外），因此不会进入 Fit 的测量范围。 */
+/* v2.8.4 可见新增：卡片底部的「本批还剩 N 张 · 已跳过 M 张」。
+   为什么有用：进度点/条只说明"走到第几张"，而**还剩多少**才是用户真正在意的心理预期；
+   跳过的张数也在这里回执一次，避免用户怀疑"跳过的词是不是被我弄丢了"（它其实留在池里）。
+   只在有意义时显示：剩余为 0 或没有跳过时不占位置。 */
+function remainLine(s){
+  try{
+    if(!s || !s.deck) return '';
+    const total = s.deck.length;
+    const left = Math.max(0, total - (s.idx + 1));
+    const skip = (s.marks && s.marks.skip) || 0;
+    if(left <= 0 && !skip) return '';
+    const parts = [];
+    if(left > 0) parts.push('本批还剩 <b>' + left + '</b> 张');
+    else parts.push('本批最后一张');
+    if(skip > 0) parts.push('已跳过 <b>' + skip + '</b> 张（仍在池里）');
+    return '<div class="fc-remain">' + parts.join(' · ') + '</div>';
+  }catch(e){ return ''; }
+}
 function roundDotsHtml(idx, total){
   const n = Math.max(0, total | 0), cur = Math.max(0, Math.min(idx | 0, Math.max(0, n - 1)));
   if(!n) return '';
@@ -8093,7 +8115,7 @@ const AppReview = {
       fcButtonsHtml('AppReview', '忘了') +
       '<div class="fc-hint fc-keys">' + (s.againPending
         ? '<span class="kbd">1</span> 下一个 · <span class="kbd">Esc</span> 结束本轮'
-        : '<span class="kbd">空格</span> 显示释义 · <span class="kbd">·</span> 发音 · <span class="kbd">1</span> 忘了 · <span class="kbd">2</span> 记得 · <span class="kbd">3</span> 跳过 · <span class="kbd">Esc</span> 结束本轮') + '</div></div>';
+        : '<span class="kbd">空格</span> 显示释义 · <span class="kbd">·</span> 发音 · <span class="kbd">1</span> 忘了 · <span class="kbd">2</span> 记得 · <span class="kbd">3</span> 跳过 · <span class="kbd">Esc</span> 结束本轮') + '</div>' + remainLine(s) + '</div>';
     fillPh(e);
     if(s.againPending) startBtnMerge(box);          // v2.7.2：确认态的两键融合动画
     const fdEl = document.getElementById('fc-def');
